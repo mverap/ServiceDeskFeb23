@@ -1201,12 +1201,19 @@ namespace ServiceDesk.Controllers
 
             //Datos usuario 
             var NumeroPenta = Convert.ToInt32(EmployeeId);
-            var InfoUser = _rh.vw_DetalleEmpleado.Where(a => a.NumeroPenta == NumeroPenta).FirstOrDefault();
-            detalle.nombreCompleto = InfoUser.NombreCompleto;
+            //var InfoUser = _rh.vw_DetalleEmpleado.Where(a => a.NumeroPenta == NumeroPenta).FirstOrDefault();
+            //detalle.nombreCompleto = InfoUser.NombreCompleto;
+            //detalle.id = InfoUser.NumeroPenta;
+            //detalle.puesto = InfoUser.Puesto;
+            //detalle.area = InfoUser.Area;
+            //detalle.correo = InfoUser.Email;
+            var InfoUser = _db.vw_INFO_USER_EMPLEADOS.Where(t => t.NumeroPenta == NumeroPenta).FirstOrDefault();
             detalle.id = InfoUser.NumeroPenta;
+            detalle.nombreCompleto = InfoUser.NombreCompleto;
             detalle.puesto = InfoUser.Puesto;
             detalle.area = InfoUser.Area;
             detalle.correo = InfoUser.Email;
+
             //// id tarea
             var IDtarea = TareaId;
             var Taskid = _db.vw_TareasProgramadas.Where(e => e.Id == TareaId).FirstOrDefault();

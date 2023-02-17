@@ -1388,6 +1388,7 @@
                                 @if (Model.detalle.GrupoResolutor == "TI-Soporte")
                                 {
                                     string centro = Model.detalle.Centro;
+                                    if (centro == "Home Office") { centro = "TI-Soporte"; }
                                     if (centro == "Thiers") { centro = "TI-SoporteThiers"; }
                                     if (centro == "Morelia") { centro = "TI-SoporteMorelia"; }
                                     if (centro == "Penta A" || centro == "Penta B" || centro == "Penta C") { centro = "TI-SoporteCDMX"; }

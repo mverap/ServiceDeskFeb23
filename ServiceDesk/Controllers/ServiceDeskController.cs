@@ -1186,41 +1186,41 @@ namespace ServiceDesk.Controllers
 
             if (false)
             {
-                using (var con = new ServiceDeskContext())
-                {
-                    datos.IdTicketPrincipal = vm.subticket.IdTicket;
-                    datos.EmpleadoID = padre.EmpleadoID;
-                    datos.TicketTercero = padre.TicketTercero;
-                    datos.Extencion = padre.Extencion;
-                    datos.NombreTercero = padre.NombreTercero;
-                    datos.Piso = padre.Piso;
-                    datos.EmailTercero = padre.EmailTercero;
-                    datos.ExtensionTercero = padre.ExtensionTercero;
-                    datos.Posicion = padre.Posicion;
-                    datos.NombreCompleto = padre.NombreCompleto;
-                    datos.Area = padre.Area;
-                    datos.PersonasAddNotificar = padre.PersonasAddNotificar;
-                    datos.Correo = padre.Correo;
-                    datos.Comentarios = padre.Comentarios;
-                    datos.TecnicoAsignado = padre.TecnicoAsignado;
-                    datos.NoReasignaciones = padre.NoReasignaciones;
-                    datos.MotivoReasignacion = padre.MotivoReasignacion;
-                    datos.ApruebaReasignacion = padre.ApruebaReasignacion;
-                    datos.MotivoCambioEstatus = padre.MotivoCambioEstatus;
-                    datos.Diagnostico = padre.Diagnostico;
-                    datos.Categoria = Convert.ToInt32(vm.subticket.Categoria);
-                    datos.SubCategoria = Convert.ToInt32(vm.subticket.Subcategoria);
-                    datos.Centro = Convert.ToInt32(vm.subticket.Centro);
-                    datos.GrupoResolutor = vm.subticket.GrupoResolutor;
-                    datos.Prioridad = vm.subticket.Prioridad;
-                    datos.DescripcionIncidencia = vm.subticket.DescIncidencia;
-                    datos.NoReapertura = padre.NoReapertura;
-                    datos.Estatus = "Abierto";
-                    datos.EstatusTicket = 1;
-                    datos.FechaRegistro = DateTime.Now;
-                    con.tbl_TicketDetalle.Add(datos);
-                    con.SaveChanges();
-                }
+                //using (var con = new ServiceDeskContext())
+                //{
+                //    datos.IdTicketPrincipal = vm.subticket.IdTicket;
+                //    datos.EmpleadoID = padre.EmpleadoID;
+                //    datos.TicketTercero = padre.TicketTercero;
+                //    datos.Extencion = padre.Extencion;
+                //    datos.NombreTercero = padre.NombreTercero;
+                //    datos.Piso = padre.Piso;
+                //    datos.EmailTercero = padre.EmailTercero;
+                //    datos.ExtensionTercero = padre.ExtensionTercero;
+                //    datos.Posicion = padre.Posicion;
+                //    datos.NombreCompleto = padre.NombreCompleto;
+                //    datos.Area = padre.Area;
+                //    datos.PersonasAddNotificar = padre.PersonasAddNotificar;
+                //    datos.Correo = padre.Correo;
+                //    datos.Comentarios = padre.Comentarios;
+                //    datos.TecnicoAsignado = padre.TecnicoAsignado;
+                //    datos.NoReasignaciones = padre.NoReasignaciones;
+                //    datos.MotivoReasignacion = padre.MotivoReasignacion;
+                //    datos.ApruebaReasignacion = padre.ApruebaReasignacion;
+                //    datos.MotivoCambioEstatus = padre.MotivoCambioEstatus;
+                //    datos.Diagnostico = padre.Diagnostico;
+                //    datos.Categoria = Convert.ToInt32(vm.subticket.Categoria);
+                //    datos.SubCategoria = Convert.ToInt32(vm.subticket.Subcategoria);
+                //    datos.Centro = Convert.ToInt32(vm.subticket.Centro);
+                //    datos.GrupoResolutor = vm.subticket.GrupoResolutor;
+                //    datos.Prioridad = vm.subticket.Prioridad;
+                //    datos.DescripcionIncidencia = vm.subticket.DescIncidencia;
+                //    datos.NoReapertura = padre.NoReapertura;
+                //    datos.Estatus = "Abierto";
+                //    datos.EstatusTicket = 1;
+                //    datos.FechaRegistro = DateTime.Now;
+                //    con.tbl_TicketDetalle.Add(datos);
+                //    con.SaveChanges();
+                //}
             }
             else {
 

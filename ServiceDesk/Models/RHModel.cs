@@ -17,10 +17,9 @@ namespace ServiceDesk.Models
 
     public partial class RHAdminContext : DbContext
     {
-        public DbSet<vw_DetalleEmpleado> vw_DetalleEmpleado { get; set; }
+        //public DbSet<vw_DetalleEmpleado> vw_DetalleEmpleado { get; set; }
         public DbSet<cat_Supervisor> cat_Supervisor { get; set; }
         public DbSet<RutasCargaArchivosRh> RutasCargaArchivosRh { get; set; }
-        //public DbSet<vw_INFO_USER_EMPLEADOS> vw_INFO_USER_EMPLEADOS { get; set; }
 
 
         public RHAdminContext()
@@ -30,9 +29,7 @@ namespace ServiceDesk.Models
         }
     }
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    //public class vw_INFO_USER_EMPLEADOS { 
 
-    //}
     public class vw_DetalleEmpleado
     {
         [Key]

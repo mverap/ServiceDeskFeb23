@@ -2163,7 +2163,6 @@ namespace ServiceDesk.Controllers
         }
         public ActionResult ProgramarTarea(string Usuario, string id, string EmployeeId)
         {
-
             // copiar y pegar en cualquier actionresult que requiere mandar usuario por un tubo si se intenta pasar de listo
             var userSession = Session["EmpleadoNo"].ToString(); if (userSession != EmployeeId) { return RedirectToAction("Error", "Document"); }
 
@@ -2175,12 +2174,18 @@ namespace ServiceDesk.Controllers
             var vm = new TareasProgramadasEditVM();
             var NumeroPenta = Convert.ToInt32(Usuario);
 
-            var InfoUser = _rh.vw_DetalleEmpleado.Where(a => a.NumeroPenta == NumeroPenta).FirstOrDefault();
-            vm.nombreCompleto = InfoUser.NombreCompleto;
+            //var InfoUser = _rh.vw_DetalleEmpleado.Where(a => a.NumeroPenta == NumeroPenta).FirstOrDefault();
+            //vm.nombreCompleto = InfoUser.NombreCompleto;
+            //vm.id = InfoUser.NumeroPenta;
+            //vm.puesto = InfoUser.Puesto;
+            //vm.area = InfoUser.Area;
+            //vm.correo = InfoUser.Email;
+            var InfoUser = _db.vw_INFO_USER_EMPLEADOS.Where(t => t.NumeroPenta == NumeroPenta).FirstOrDefault();            
             vm.id = InfoUser.NumeroPenta;
-            vm.puesto = InfoUser.Puesto;
+            vm.nombreCompleto = InfoUser.NombreCompleto;
             vm.area = InfoUser.Area;
             vm.correo = InfoUser.Email;
+            vm.puesto = InfoUser.Puesto;
 
             List<SelectListItem> Prioridad = new List<SelectListItem>();
             Prioridad.Add(new SelectListItem() { Text = "Alta", Value = "Alta" });
@@ -2250,12 +2255,18 @@ namespace ServiceDesk.Controllers
             var vm = new TareasProgramadasEditVM();
             var NumeroPenta = Convert.ToInt32(Usuario);
 
-            var InfoUser = _rh.vw_DetalleEmpleado.Where(a => a.NumeroPenta == NumeroPenta).FirstOrDefault();
-            vm.nombreCompleto = InfoUser.NombreCompleto;
+            //var InfoUser = _rh.vw_DetalleEmpleado.Where(a => a.NumeroPenta == NumeroPenta).FirstOrDefault();
+            //vm.nombreCompleto = InfoUser.NombreCompleto;
+            //vm.id = InfoUser.NumeroPenta;
+            //vm.puesto = InfoUser.Puesto;
+            //vm.area = InfoUser.Area;
+            //vm.correo = InfoUser.Email;
+            var InfoUser = _db.vw_INFO_USER_EMPLEADOS.Where(t => t.NumeroPenta == NumeroPenta).FirstOrDefault();
             vm.id = InfoUser.NumeroPenta;
-            vm.puesto = InfoUser.Puesto;
+            vm.nombreCompleto = InfoUser.NombreCompleto;
             vm.area = InfoUser.Area;
             vm.correo = InfoUser.Email;
+            vm.puesto = InfoUser.Puesto;
 
             vm.tareas = _db.tblTareasProgramadas.Where(pointer => pointer.Id == TareaID).SingleOrDefault();
 
@@ -2360,9 +2371,15 @@ namespace ServiceDesk.Controllers
 
             //Datos usuario 
             var NumeroPenta = Convert.ToInt32(EmployeeId);
-            var InfoUser = _rh.vw_DetalleEmpleado.Where(a => a.NumeroPenta == NumeroPenta).FirstOrDefault();
-            detalle.nombreCompleto = InfoUser.NombreCompleto;
+            //var InfoUser = _rh.vw_DetalleEmpleado.Where(a => a.NumeroPenta == NumeroPenta).FirstOrDefault();
+            //detalle.id = InfoUser.NumeroPenta;
+            //detalle.nombreCompleto = InfoUser.NombreCompleto;
+            //detalle.puesto = InfoUser.Puesto;
+            //detalle.area = InfoUser.Area;
+            //detalle.correo = InfoUser.Email;
+            var InfoUser = _db.vw_INFO_USER_EMPLEADOS.Where(t => t.NumeroPenta == NumeroPenta).FirstOrDefault();
             detalle.id = InfoUser.NumeroPenta;
+            detalle.nombreCompleto = InfoUser.NombreCompleto;
             detalle.puesto = InfoUser.Puesto;
             detalle.area = InfoUser.Area;
             detalle.correo = InfoUser.Email;

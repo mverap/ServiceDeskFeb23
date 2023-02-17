@@ -21,62 +21,40 @@ namespace ServiceDesk.Controllers
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         public ActionResult CreateTicket(string Usuario, string id, string EmployeeId)
         {
-
-            if (Session["EmpleadoNo"] != null)
-            {
-
-                Usuario = Session["EmpleadoNo"].ToString();
-
-            }
-            else
-            {
-
-                return RedirectToAction("Login", "Home");
-            }
-
-
-            ViewBag.Id = string.IsNullOrEmpty(id) ? "" : id;
-
+            if (Session["EmpleadoNo"] != null) { Usuario = Session["EmpleadoNo"].ToString(); }
+            else { return RedirectToAction("Login", "Home"); }
 
             var vm = new tbl_TicketDetalle();
             var NumeroPenta = Convert.ToInt32(Usuario);
-
 
             //Cuando manda id de ticket creado
             if (id != null)
             {
                 var Idint = Convert.ToInt32(id);
-
                 var busq = _db.tbl_TicketDetalle.Where(a => a.Id == Idint).FirstOrDefault();
-
                 vm.EmpleadoID = Convert.ToInt32(EmployeeId);
-
             }
 
-            var InfoUser = _rh.vw_DetalleEmpleado.Where(a => a.NumeroPenta == NumeroPenta).FirstOrDefault();
-
-            //var emailInfo = _rh.cat_Supervisor.Where(a => a.EmpleadoID == NumeroPenta).FirstOrDefault();
-
-            //if (emailInfo != null)
-            //{
-            //    vm.Correo = emailInfo.Email;
-            //}
-
+            //var InfoUser = _rh.vw_DetalleEmpleado.Where(a => a.NumeroPenta == NumeroPenta).FirstOrDefault();
+            var InfoUser = _db.vw_INFO_USER_EMPLEADOS.Where(t => t.NumeroPenta == NumeroPenta).FirstOrDefault();
             if (InfoUser != null)
             {
+                //vm.EmpleadoID = InfoUser.NumeroPenta;
+                //vm.NombreCompleto = InfoUser.NombreCompleto;
+                //vm.Area = InfoUser.Area;
+                //vm.Correo = InfoUser.Email;
                 vm.EmpleadoID = InfoUser.NumeroPenta;
                 vm.NombreCompleto = InfoUser.NombreCompleto;
                 vm.Area = InfoUser.Area;
                 vm.Correo = InfoUser.Email;
             }
 
+            ViewBag.Id = string.IsNullOrEmpty(id) ? "" : id;
             //Listas
             ViewBag.Categoria = new SelectList(_db.cat_Categoria.Where(x => x.Activo), "Id", "Categoria");
             ViewBag.SubCategoria = new SelectList(string.Empty, "Value", "Text");
             ViewBag.Centro = new SelectList(_db.cat_Centro.Where(x => x.Activo), "Id", "Centro");
             ViewBag.Matriz = new SelectList(string.Empty, "Value", "Text");
-
-
 
             return View(vm);
         }

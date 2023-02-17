@@ -53,6 +53,9 @@ namespace ServiceDesk.Models
         public DbSet<tbl_User_TI_Exclusion_Filtro_Centro> tbl_User_TI_Exclusion_Filtro_Centro { get; set; }
 
 
+        public DbSet<vw_INFO_USER_EMPLEADOS> vw_INFO_USER_EMPLEADOS { get; set; }
+
+
         //-- TP
         public DbSet<tbl_TareasProgramadas> tblTareasProgramadas { get; set; }
         public DbSet<vw_TareasProgramadas> vw_TareasProgramadas { get; set; }
@@ -487,6 +490,18 @@ namespace ServiceDesk.Models
         public int flag { get; set; }
     }
 
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    [Table("vw_INFO_USER_EMPLEADOS")] public class vw_INFO_USER_EMPLEADOS
+    {
+        [Key] public int NumeroPenta { get; set; }
+        public string Username { get; set; }
+        public string Email { get; set; }
+        public string NombreCompleto { get; set; }
+        public string Area { get; set; }
+        public string Puesto { get; set; }
+
+    }
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     [Table("cat_Categoria")] public class cat_Categoria
     {
