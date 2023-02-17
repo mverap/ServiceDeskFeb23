@@ -1,0 +1,73 @@
+﻿<table width="100%">
+    <tr>
+        <td>
+            <div Class=“infoCancelar” id="infoC">
+
+            &nbsp; @ViewData["title"]
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div Class=“infoCancelar”>
+
+            <textarea class="form-control" cols="200" id="Motivo" name="Motivo" placeholder="" rows="4" style="margin: 0px 39px 0px 10px; max-width: 95% !important; width: 500px; height:199px;resize:none;"></textarea>
+            </div>
+        </td>
+    </tr>
+    @*<tr>
+        <td>
+            <div class="modal-header">
+                <h4 class="modal-title"><b>Ticket enviado</b></h4>
+            </div>
+        </td>
+    </tr>*@
+
+    <tr>
+        <td>
+            <div style="display:none;" class="OKCancelar">
+            <br />
+            <br />
+            <div style="color:forestgreen; top:-10px; font-style:normal;line-height:20px; margin-left:250px; font-size:xxx-large;" class="glyphicon glyphicon-ok">
+            </div>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td style="max-width:100%;min-width:100%;text-align:center;">
+            <div style="display:none;" class="OKCancelar">
+            <label style="color:slategray;max-width:100%;min-width:100%;text-align:center; ">El ticket se canceló correctamente.</label>
+            </div>
+        </td>
+    </tr>
+    @*<tr>
+        <td>
+            <div class="modal-header">
+                <h4 class="modal-title"><b>¡Error de Ticket!</b></h4>
+            </div>
+        </td>
+    </tr>*@
+    <tr>
+        <td>
+
+            <br />
+            <br />
+            <div style="display:none;" class="ErrorCancelar" >
+            <div style="color:red; top:-10px; font-style:normal;line-height:20px; margin-left:250px; font-size:xxx-large;" class="glyphicon glyphicon-ban-circle">
+            </div>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td style="width:100%;">
+            <div style="display:none;" class="ErrorCancelar">
+                <label style="color:slategray;max-width:100%;min-width:100%;text-align:center;">
+                    Ocurrió un error.<br />
+                    Por favor inténtalo nuevamente.
+                </label>
+              </div>
+        </td>
+    </tr>
+</table>
+
+

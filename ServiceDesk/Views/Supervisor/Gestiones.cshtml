@@ -1,0 +1,2106 @@
+﻿
+@using GridMvc
+@using GridMvc.Html
+@model ServiceDesk.ViewModels.DetalleGestiones
+@{
+    ViewBag.Title = "Gestiones";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<meta name="viewport" content="width=device-width" />
+<link href="@Url.Content("~/Content/Gridmvc.css")" rel="stylesheet" />
+<link href="@Url.Content("~/Content/bootstrap.min.css")" rel="stylesheet" />
+<script src="@Url.Content("~/Scripts/jquery-1.9.1.min.js")"></script>
+<script src="@Url.Content("~/Scripts/gridmvc.min.js")"></script>
+
+<style>
+    .td_selected {
+        background: #AAC5E3;
+    }
+    .td_list  { padding-left: 15px; }
+    .td_list2 { padding-left: 15px; }
+    .tab-pane {
+        
+    }
+</style>
+
+<script type="text/javascript">
+    var folio = '@ViewBag.Id';
+    var user = '@ViewBag.user';
+    var user2 = '@ViewBag.user2';
+    var tblSelected = '';
+    var CentrosASupervisar = new Array();
+    var newempleadoid = 0;
+    var gruporesol = 0;
+    var flag_exclusion_is_shown = false;
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    $(document).ready(function () {
+
+        //$("#modalAgregarCentros").modal('show');// delete
+
+        // Añadir centros a supervisar ------------***************
+        $("#btnCloseModalCentro").click(function () { $("#modalAgregarCentros").modal('hide'); });
+        $("#add_centro_btn").click(function () {      $("#modalAgregarCentros").modal('show'); });
+        $("#upload_center").click(function () {
+            var EmployeeID = 0;
+            EmployeeID = $("#user_EmpleadoID").val();
+            if (!(EmployeeID > 0)) { EmployeeID = 0; }
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("uploadRelCenter", "Supervisor")',
+                dataType: 'json',
+                data: {
+                    id: EmployeeID,
+                    centros: CentrosASupervisar
+                },
+                success: function (result) {
+                    if (result == "yes") {}
+                },
+                error: function () {
+                    alert("Error: No se pudieron añadir los centros.");
+                }
+            });
+        });
+        $("#user_Centro option").each(function () {
+            var ele = $(this);
+            console.log("texto: " + ele.val() + ", " + ele.text());
+            if (ele.val() != 0) {
+                $('#tbl_Centros tr:last').after('<tr><td style="width: 100 %;" class="td_list selectable">' + ele.text() + '</td></tr>');
+                CentrosASupervisar.forEach(function (centro) {
+                    if (centro == ele.text()) {
+                        //console.log("Usuario puede supervisar centro: " + ele.text());
+                        //$('#tbl_CentrosSupervisados tr:last').after('<tr id=centroASupervisar' + ele.text() +'><td style="width: 100 %;" class="td_list2 selectable">' + ele.text() + '</td></tr>');
+                    }
+                });
+            }
+        }); // Llenar Centros
+        $("#add_centro_btn").hide(); //ocultar al iniciar pagina
+        $('table').children().delegate('td', 'click', function () {
+            //al hacer click en los centros en modal "agregar centros"
+            $('.td_selected').removeClass('td_selected');
+            if ($(this).hasClass("selectable")) {
+                $(this).addClass("td_selected");
+                tblSelected = $(this).parent().parent().parent().attr("id");
+                //console.log(tblSelected);e
+                if (tblSelected == "tbl_CentrosSupervisados") {
+                    $("#add_centro").attr('disabled', true);
+                    $("#del_centro").attr('disabled', false);
+                } else {
+                    $("#del_centro").attr('disabled', true);
+                    $("#add_centro").attr('disabled', false);
+                }
+            }
+        }); // seleccionar
+        $("#add_centro").click(function () {
+            // Obtener el Centro seleccionado
+            var text = "";
+            $('.td_selected').each(function () { var seleccionado = $(this); text = seleccionado.html(); }); //obtener objeto seleccinoado
+            console.log("Added Center: " + text);
+
+            // Verificar si está en la lista
+            var flagCentroYaSupervisado = false;
+            CentrosASupervisar.forEach(function (centro) { if (text == centro) { flagCentroYaSupervisado = true; } });
+
+            // Añadirlo a lista si no ha sido añadido antes
+            if (flagCentroYaSupervisado) { }
+            else {
+                CentrosASupervisar.push(text);
+                var textCentro = text.replace(/ /g, '');
+                $('#tbl_CentrosSupervisados tr:last').after('<tr id=centroASupervisar' + textCentro +'><td style="width: 100 %;" class="td_list2 selectable">' + text + '</td></tr>');
+            }
+        }); // añadir centros por supervisar
+        $("#del_centro").click(function () {
+            var text = "inicial";
+            console.log("pre busqueda" + text);
+            $('.td_selected').each(function () { var seleccionado = $(this); text = seleccionado.html(); }); //obtener objeto seleccinoado
+            console.log("Centro a borrar: " + text);
+
+            // eliminar de array CentrosASupervisar
+            CentrosASupervisar = CentrosASupervisar.filter(function (centro) { return centro !== text });
+
+            // eliminar de tabla
+            text = "centroASupervisar" + text;
+            text = text.replaceAll(' ', '');
+            console.log("id del centro: " + text);
+            document.getElementById(text).outerHTML = "";
+
+            //listar centros que usuario supervisará
+            console.log("lista de centros que usuario supervisará: ");
+            CentrosASupervisar.forEach(function (centro) {
+                console.log(centro);
+            });
+
+        }); // borrar centros por supervisar
+        $("#user_EmpleadoID").change(function () { checkSupervisor(1); checkExclusion(); });
+        $("#user_GrupoResolutor").change(function () { checkSupervisor(1); checkExclusion(); });
+        $("#checkbox_exclusion").change(function () {
+            var checkedValue = $("#checkbox_exclusion").is(":checked");
+            console.log("cambiado; " + checkedValue);
+        });
+        // Añadir centros a supervisar ------------***************
+
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        if (folio != "") {
+
+            $("#modalGuardado").modal('show');
+
+             var url = '@Url.Action("Usuarios", "Supervisor")';
+        window.location.href = url;
+
+             @*var url = '@Url.Action("Usuarios", "Supervisor")';
+        window.location.href = url + '?EmployeeId=' + user;*@
+
+        }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        if (user2 != "") {
+
+            $("#modalNotificaciones").modal('show');
+            $("#tblSuccess").css('display', 'block');
+            $("#tituloAddUser").css('display', 'block');
+            $("#LeyendaAddUser").css('display', 'block');
+
+        }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        //CATEGORIA - SUBCATEGORIA
+        $("#DDCategoria").change(function () {
+
+
+        $("#DDSubcategoria").empty();
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetCategoria", "Supervisor")',
+                dataType: 'json',
+                data: { id: $("#DDCategoria").val() },
+                success: function (result)
+                {
+                    $("#DDSubcategoria").append('<option value="">SELECCIONE</option>');
+                    $.each(result, function (i, group)
+                    {
+
+                        $("#DDSubcategoria").append('<option value="' + group.Id + '">' +
+                            group.SubCategoria + '</option>');
+                    });
+                }
+            });
+        });
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+    });// END DOCUMENT READY
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    //FUNCIONES
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function goToControlConfig() { window.location = '../ControlCambios/Gestiones?EmployeeId=' + user; }
+    function addExclusion() {
+        empid = $("#user_EmpleadoID").val();
+        $.ajax({
+            type: 'POST',
+            url: '@Url.Action("addExlusionCentros", "Supervisor")',
+            dataType: 'json',
+            data: {
+                id: empid
+            },
+            success: function (result) {
+                console.log("exclusión añadida: user", empid, "esta en lista de exclusiones");
+            },
+            error: function () {
+                console.log("exclusión no añadida:");
+            }
+        });
+    }
+    function delExclusion() {
+        empid = $("#user_EmpleadoID").val();
+        $.ajax({
+            type: 'POST',
+            url: '@Url.Action("delExlusionCentros", "Supervisor")',
+            dataType: 'json',
+            data: {
+                id: empid
+            },
+            success: function (result) {
+                console.log("exclusión borrada: user", empid, "no esta en lista de exclusiones");
+            },
+            error: function () {
+                console.log("exclusión no borrada:");
+            }
+        });
+    }
+    function checkExclusion() {
+        var grupo = gruporesol;
+        var empid = newempleadoid;
+        grupo = $("#user_GrupoResolutor").val();
+        empid = $("#user_EmpleadoID").val();
+        //checkIfExlusionCentros
+        //addExlusionCentros
+        //delExlusionCentros
+        if (grupo == 2) {
+            $("#exclusion_pregunta").show();
+            flag_exclusion_is_shown = true;
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("checkIfExlusionCentros", "Supervisor")',
+                dataType: 'json',
+                data: {
+                    id: empid
+                },
+                success: function (result) {
+                    if (result == "yes") {
+                        $('#checkbox_exclusion').prop('checked', true);
+                    }
+                    else {
+                        $('#checkbox_exclusion').prop('checked', false);
+                    }
+                    console.log("exclusión verificada: user", empid, result, "esta en lista de exclusiones");
+                    //if (result == "yes") { $("#add_centro_btn").show(); }
+                },
+                error: function () {
+                    console.log("exclusión no verificada:");
+                   // alert("Error: Imposible verificar si este usuario está en la lista de exclusiones de filtros, favor de contactar con un administrador.");
+                }
+            });
+        }
+        else {
+            $("#exclusion_pregunta").hide();
+            flag_exclusion_is_shown = false;
+        }
+    }
+    function checkSupervisor(type) {
+        checkExclusion()
+        var grupo = gruporesol;
+        var empid = newempleadoid;
+        console.log("Estate: " + type + ", Grupo: " + grupo + ", empid: " + empid);
+        if (type == 1) {
+            grupo = $("#user_GrupoResolutor").val();
+            empid = $("#user_EmpleadoID").val();
+        } else {
+            fillCentrosASupervisar(empid);
+        }
+        var flag = false;
+
+        $("#add_centro_btn").hide();
+
+        if (empid > 0) {
+            if (grupo == 2) {
+
+                $.ajax({
+                    type: 'POST',
+                    url: '@Url.Action("checkIfSupervisor", "Supervisor")',
+                    dataType: 'json',
+                    data: {
+                        id: empid
+                    },
+                    success: function (result) {
+                        if (result == "yes") {
+                            $("#add_centro_btn").show();
+                        }
+                    },
+                    error: function () {
+                        alert("Error: No se pudo verificar la existencia de este usuario en la Base de Datos, por favor contacte un administrador.");
+                    }
+                });
+            }
+        }
+
+    }
+    function fillCentrosASupervisar(EmployeeId) {
+        CentrosASupervisar = new Array();
+        $("#tbl_CentrosSupervisados tr .selectable").remove();
+        if (EmployeeId != null) {
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("fillCentrosSupervisor", "Supervisor")',
+                dataType: 'json',
+                data: {
+                    EmployeeId: EmployeeId
+                },
+                success: function (result) {
+                    CentrosASupervisar = new Array();
+                    result.forEach(function (centro) {
+                        var textCentro = centro + " ";
+                        CentrosASupervisar.push(centro);
+                        textCentro = textCentro.replace(/ /g, '');
+                        console.log(textCentro);
+                        $('#tbl_CentrosSupervisados tr:last').after('<tr id=centroASupervisar' + textCentro +'><td style="width: 100 %;" class="td_list2 selectable">' + centro + '</td></tr>');
+                    });
+                },
+                error: function (error) {
+                    alert("Error: No se pudo, por favor contacte un administrador: " + error.responseText);
+                }
+            });
+        }
+    }
+    function Alta() {
+        $("#modAlta").modal('show');
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function CancelaSolicitud() {
+        $("#modalAltaDX").modal('hide');
+        $("#modalAltaCat").modal('hide');
+        $("#modalAltaSubcat").modal('hide');
+        //Usuarios
+        $("#modalGuardado").modal('hide');
+        $("#modalNotificaciones").modal('hide');
+        $("#modalAltaNivel").modal('hide');
+        location.reload();
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function AceptaTicket(id) {
+        $("#modalAltaDX").modal('hide');
+        $("#modalNotificaciones").modal('hide');
+        $("#modalAltaCat").modal('hide');
+        $("#modalAltaSubcat").modal('hide');
+        //Usuarios
+         $("#modalGuardado").modal('hide');
+        $("#modalAltaNivel").modal('hide');
+
+         var url = '@Url.Action("Gestiones", "Supervisor")';
+        window.location.href = url + '?EmployeeId=' + id;
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function SaveUser() {
+        // añadir o borrar exclusion
+        if (flag_exclusion_is_shown) {
+            var exclusion = $("#checkbox_exclusion").is(":checked");
+            if (exclusion) { addExclusion(); } else { delExclusion(); }
+        }
+        //Valida correo
+        var add = $('#user_Correo').val().toLowerCase();
+
+        var reg = /^[_a-z0-9-]+(\.[_a-z0-9-]+)*@@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$/;
+
+        if (reg.test(add)) {
+
+            $("#user_Correo").css("border-color", "#ccc");
+
+        }
+        else {
+            $("#user_Correo").css("border-color", "red");
+            $("#user_Correo").focus();
+            alert("Estructura del correo invalida!");
+            return;
+        }
+
+        //Guarda SubTicket
+        $("#form").submit();
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function ShowEditarUsuario(Id) {
+        var dataObtained = false;
+        var tempID = parseInt(Id);
+        console.log("Checking for user: " + parseInt(Id)); // 33
+         $.ajax({
+            type: 'POST',
+            url: '@Url.Action("getdataUsuario", "Supervisor")',
+            dataType: 'json',
+            data: {
+                id: tempID
+            },
+             success: function (result) {
+                 console.log("data obtained from user: " + tempID + ", EmployeeId: " + result.EmpleadoID); // undefined
+                dataObtained = true;
+                $("#user_NombreTecnico").val(result.NombreTecnico);
+                $("#user_EmpleadoID").val(result.EmpleadoID);
+                $("#user_GrupoResolutor").val(result.IdGrupoResolutor);
+                $("#user_Centro").val(result.IdCentro);
+                $("#atc_HoraInicioATC").val(result.HoraInicioATC);
+                $("#atc_HoraFinATC").val(result.HoraFinATC);
+                $("#lab_HoraInicioJornada").val(result.HoraInicioJornada);
+                $("#lab_HoraFinJornada").val(result.HoraFinJornada);
+                $("#user_Correo").val(result.Correo);
+                $("#user_NivelExperiencia").val(result.NivelExperiencia);
+                newempleadoid = result.EmpleadoID;
+                gruporesol = result.IdGrupoResolutor;
+                if (dataObtained) {
+                    //console.log("EmployeeId: " + newempleadoid);
+                    checkSupervisor(2);
+                }
+                //CHECKBOX ATC
+                if (result.Lunesatc == true)
+                {
+                $("#atc_Lunes").prop("checked",true);
+
+                }
+                if (result.Martesatc == true) {
+                    $("#atc_Martes").prop("checked", true);
+
+                }
+                if (result.Miercolesatc == true) {
+                    $("#atc_Miercoles").prop("checked", true);
+
+                }
+                if (result.Juevesatc == true) {
+                    $("#atc_Jueves").prop("checked", true);
+
+                }
+                if (result.Viernesatc == true) {
+                    $("#atc_Viernes").prop("checked", true);
+
+                }
+                if (result.Sabadoatc == true) {
+                    $("#atc_Sabado").prop("checked", true);
+
+                }
+                if (result.Domingoatc == true) {
+                    $("#atc_Domingo").prop("checked", true);
+
+                }
+                //CHECKBOX JORNADA
+                if (result.Luneslab == true) {
+                    $("#lab_Lunes").prop("checked", true);
+
+                }
+                if (result.Marteslab == true) {
+                    $("#lab_Martes").prop("checked", true);
+
+                }
+                if (result.Miercoleslab == true) {
+                    $("#lab_Miercoles").prop("checked", true);
+
+                }
+                if (result.Jueveslab == true) {
+                    $("#lab_Jueves").prop("checked", true);
+
+                }
+                if (result.Vierneslab == true) {
+                    $("#lab_Viernes").prop("checked", true);
+
+                }
+                if (result.Sabadolab == true) {
+                    $("#lab_Sabado").prop("checked", true);
+
+                }
+                if (result.Domingolab == true) {
+                    $("#lab_Domingo").prop("checked", true);
+
+                }
+
+                $("#modAlta").modal('show');
+
+            },
+            error: function () {
+                alert("Error");
+            }
+
+         });
+
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+     function DeleteUsuario(Id) {
+        if (window.confirm('Deseas eliminar el usuario seleccionado?')) {
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("getDeleteUsuario", "Supervisor")',
+                dataType: 'json',
+                data: {
+                    id: Id
+                },
+                success: function (result) {
+
+                    if (result == "Correcto") {
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblSuccess").css('display', 'block');
+                        $("#tituloBajaUser").css('display', 'block');
+                        $("#LeyendaBajaUser").css('display', 'block');
+
+                    }
+                    else {
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblError").css('display', 'block');
+
+                    }
+
+                },
+                error: function () {
+                    alert("Error");
+                }
+
+            });
+        }
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function AltaNivel() {
+
+        $("#modalAltaNivel").modal('show');
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function AddNivelExp() {
+
+
+        $.ajax({
+                type: 'POST',
+                url: '@Url.Action("SaveNivelExperiencia", "Supervisor")',
+                dataType: 'json',
+            data: {
+                Nivel: $("#txtNivelAdd").val()
+            },
+             success: function (result) {
+
+                 if (result == "Correcto") {
+                     $("#modalNotificaciones").modal('show');
+                     $("#modalAltaNivel").modal('hide');
+                     $("#tblSuccess").css('display', 'block');
+                     $("#tituloAddNivel").css('display', 'block');
+                     $("#LeyendaAddNivel").css('display', 'block');
+
+                 }
+                 else
+                 {
+                     $("#modalNotificaciones").modal('show');
+                     $("#modalAltaNivel").modal('hide');
+                     $("#tblError").css('display', 'block');
+
+                 }
+
+                },
+                error: function () {
+                    alert("Error");
+             }
+
+        });
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function ShowEditarNivel(Id) {
+
+         $.ajax({
+                type: 'POST',
+                url: '@Url.Action("ShowEditarNivel", "Supervisor")',
+                dataType: 'json',
+                data: {
+                    id: Id,
+                    Nivel: $("#txtNivelAdd").val()
+                },
+             success: function (result) {
+
+                 $("#txtNivelAdd").val(result.Nivel);
+                 $("#modalAltaNivel").modal('show');
+
+                 $("#idAddNivelExp").css('display','none');
+                 $("#idEditNivelExp").css('display','block');
+                 $("#IdNivel").val(result.Id);
+
+                },
+                error: function () {
+                    alert("Error");
+             }
+
+        });
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+     function EditNivelExp()
+    {
+
+        $.ajax({
+                type: 'POST',
+                url: '@Url.Action("getEditNivel", "Supervisor")',
+                dataType: 'json',
+            data: {
+                id: $("#IdNivel").val(),
+                Nivel: $("#txtNivelAdd").val()
+            },
+             success: function (result) {
+
+                 if (result == "Correcto") {
+                     $("#modalNotificaciones").modal('show');
+                     $("#modalAltaNivel").modal('hide');
+                     $("#tblSuccess").css('display', 'block');
+                     $("#tituloAddNivel").css('display', 'block');
+                     $("#LeyendaAddNivel").css('display', 'block');
+
+                 }
+                 else
+                 {
+                     $("#modalNotificaciones").modal('show');
+                     $("#modalAltaNivel").modal('hide');
+                     $("#tblError").css('display', 'block');
+
+                 }
+
+                },
+                error: function () {
+                    alert("Error");
+             }
+
+        });
+
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function DeleteNivel(Id) {
+        if (window.confirm('Deseas eliminar el Nivel seleccionado?')) {
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("getDeleteNivel", "Supervisor")',
+                dataType: 'json',
+                data: {
+                    id: Id
+                },
+                success: function (result) {
+
+                    if (result == "Correcto") {
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblSuccess").css('display', 'block');
+                        $("#tituloBajaNivel").css('display', 'block');
+                        $("#LeyendaBajaNivel").css('display', 'block');
+
+                    }
+                    else {
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblError").css('display', 'block');
+
+                    }
+
+                },
+                error: function () {
+                    alert("Error");
+                }
+
+            });
+        }
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function AltaDX() {
+        $("#modalAltaDX").modal('show');
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function AddDX() {
+
+        $.ajax({
+                type: 'POST',
+                url: '@Url.Action("AgregarDiagnostico", "Supervisor")',
+                dataType: 'json',
+            data: {
+                cat: $("#DDCategoria").val(),
+                    Subcat: $("#DDSubcategoria").val(),
+                    Diag: $("#txtDiagnostico").val()
+                },
+             success: function (result) {
+
+                 if (result == "Correcto") {
+
+                     $("#modalAltaDX").modal('hide');
+                     $("#modalNotificaciones").modal('show');
+                     $("#tblSuccess").css('display', 'block');
+                     $("#tituloAddDX").css('display', 'block');
+                     $("#LeyendaAddDX").css('display', 'block');
+
+                 }
+                 else
+                 {
+                     $("#modalNotificaciones").modal('show');
+                     $("#tblError").css('display', 'block');
+
+                 }
+
+                },
+                error: function () {
+                    alert("Error");
+             }
+
+        });
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function ShowEditarDX(id) {
+
+
+         $.ajax({
+                type: 'POST',
+                url: '@Url.Action("EditarDiagnostico", "Supervisor")',
+                dataType: 'json',
+                data: {
+                    id: id
+                },
+             success: function (result) {
+
+
+                 $("#DDCategoria").val(result.IdCategoria);
+                 $("#DDCategoria").trigger("change");
+
+
+
+                 $("#DDSubcategoria").val(result.IdSubcategoria);
+                 $("#txtDiagnostico").val(result.Diagnostico);
+                 $("#IdDX").val(result.Id);
+                 $("#modalAltaDX").modal('show');
+
+                 $("#idAddDX").css('display', 'none');
+                 $("#idEditDX ").css('display', 'block');
+
+             },
+             error: function () {
+                 alert("Error");
+             }
+
+        });
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function EditDX() {
+
+
+        $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetEditarDX", "Supervisor")',
+                dataType: 'json',
+            data: {
+                id: $("#IdDX").val(),
+                cat: $("#DDCategoria").val(),
+                Subcat: $("#DDSubcategoria").val(),
+                Diag: $("#txtDiagnostico").val()
+            },
+            success: function (result) {
+
+                if (result == "Correcto") {
+                    $("#modalAltaDX").modal('hide');
+                    $("#modalNotificaciones").modal('show');
+                    $("#tblSuccess").css('display', 'block');
+                    $("#tituloAddDX").css('display', 'block');
+                    $("#LeyendaAddDX").css('display', 'block');
+
+                }
+                else {
+                    $("#modalNotificaciones").modal('show');
+                    $("#modalAltaDX").modal('hide');
+                    $("#tblError").css('display', 'block');
+
+                }
+
+            },
+            error: function ()
+            {
+                alert("Error");
+            }
+
+        });
+
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function DeleteDX(id) {
+
+        if (window.confirm('Deseas eliminar el diagnostico seleccionado?')) {
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetDeleteDX", "Supervisor")',
+                dataType: 'json',
+                data: {
+                    IdDX: id
+                },
+                success: function (result) {
+
+                    if (result == "Correcto") {
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblSuccess").css('display', 'block');
+                        $("#tituloBajaDX").css('display', 'block');
+                        $("#LeyendaBajaDX").css('display', 'block');
+
+                    }
+                    else {
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblError").css('display', 'block');
+
+                    }
+
+                },
+                error: function () {
+                    alert("Error");
+                }
+
+            });
+        }
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function AltaCategoria()
+    {
+        $("#modalAltaCat").modal('show');
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function AddCat() {
+
+        $.ajax({
+                type: 'POST',
+                url: '@Url.Action("AgregarCategoria", "Supervisor")',
+                dataType: 'json',
+            data: {
+                cat: $("#txtCategoria").val(),
+                grupo: $("#DDGrupoResolutor").val()
+                },
+             success: function (result) {
+
+                 if (result == "Correcto") {
+
+                     $("#modalAltaCat").modal('hide');
+                     $("#modalNotificaciones").modal('show');
+                     $("#tblSuccess").css('display', 'block');
+                     $("#tituloAddCAT").css('display', 'block');
+                     $("#LeyendaAddCAT").css('display', 'block');
+
+                 }
+                 else
+                 {
+                     $("#modalNotificaciones").modal('show');
+                     $("#tblError").css('display', 'block');
+
+                 }
+
+                },
+                error: function () {
+                    alert("Error");
+             }
+
+        });
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function ShowEditarCat(id) {
+
+         $.ajax({
+                type: 'POST',
+                url: '@Url.Action("ShowEditCategoria", "Supervisor")',
+                dataType: 'json',
+                data: {
+                    id: id
+                },
+             success: function (result) {
+
+                 $("#txtCategoria").val(result.Categoria);
+                 $("#DDGrupoResolutor option:selected").text(result.Grupo);
+                 $("#IdCat").val(result.Id);
+                 $("#modalAltaCat").modal('show');
+
+                 $("#idAddCat").css('display', 'none');
+                 $("#idEditCat").css('display', 'block');
+
+             },
+             error: function () {
+                 alert("Error");
+             }
+
+        });
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function EditCat() {
+
+        $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetEditarCategoria", "Supervisor")',
+                dataType: 'json',
+            data: {
+                id: $("#IdCat").val(),
+                cat: $("#txtCategoria").val(),
+                grupo: $("#DDGrupoResolutor").val()
+                },
+             success: function (result) {
+
+                 if (result == "Correcto") {
+
+                     $("#modalAltaCat").modal('hide');
+                     $("#modalNotificaciones").modal('show');
+                     $("#tblSuccess").css('display', 'block');
+                     $("#tituloAddCAT").css('display', 'block');
+                     $("#LeyendaAddCAT").css('display', 'block');
+
+                 }
+                 else
+                 {
+                     $("#modalNotificaciones").modal('show');
+                     $("#tblError").css('display', 'block');
+
+                 }
+
+                },
+                error: function () {
+                    alert("Error");
+             }
+
+        });
+
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function DeleteCat(id) {
+        if (window.confirm('Deseas eliminar la cátegoria seleccionada?')) {
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetDeleteCategoria", "Supervisor")',
+                dataType: 'json',
+                data: {
+                    id: id
+                },
+                success: function (result) {
+
+                    if (result == "Correcto") {
+
+                        $("#modalAltaCat").modal('hide');
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblSuccess").css('display', 'block');
+                        $("#tituloBajaCAT").css('display', 'block');
+                        $("#LeyendaBajaCAT").css('display', 'block');
+
+                    }
+                    else {
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblError").css('display', 'block');
+
+                    }
+
+                },
+                error: function () {
+                    alert("Error");
+                }
+
+            });
+        }
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function AltaSubcat() {
+
+        $("#modalAltaSubcat").modal('show');
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function AddSubCat() {
+
+        $.ajax({
+                type: 'POST',
+                url: '@Url.Action("AgregarSubCategoria", "Supervisor")',
+                dataType: 'json',
+            data: {
+                subcat: $("#txtNombreSubcategoria").val(),
+                cat: $("#DDCategoriaB").val(),
+                tipo: $("#DDTipo").val(),
+                prioridad: $("#DDPrioridad").val(),
+                sla: $("#txtSLA").val(),
+                nivel: $("#DDNivelExperiencia").val(),
+                periodo: $("#txtPeriodoGarantia").val()
+                },
+             success: function (result) {
+
+                 if (result == "Correcto") {
+
+                     $("#modalAltaSubcat").modal('hide');
+                     $("#modalNotificaciones").modal('show');
+                     $("#tblSuccess").css('display', 'block');
+                     $("#tituloAddSUBCAT").css('display', 'block');
+                     $("#LeyendaAddSUBCAT").css('display', 'block');
+
+                 }
+                 else
+                 {
+                     $("#modalNotificaciones").modal('show');
+                     $("#tblError").css('display', 'block');
+
+                 }
+
+                },
+                error: function () {
+                    alert("Error");
+             }
+
+        });
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function ShowEditarSubcat(id) {
+
+ $.ajax({
+                type: 'POST',
+                url: '@Url.Action("ShowEditSubcategoria", "Supervisor")',
+                dataType: 'json',
+                data: {
+                    id: id
+                },
+             success: function (result) {
+
+                 $("#txtNombreSubcategoria").val(result.SubCategoria);
+                 $("#DDTipo").val(result.Tipo);
+                 $("#DDPrioridad").val(result.Prioridad);
+                 $("#txtSLA").val(result.SLA);
+                 $("#DDNivelExperiencia").val(result.NivelId);
+
+                 $("#txtPeriodoGarantia").val(result.Periodo);
+                 $("#DDCategoriaB").val(result.CategoriaId);
+
+
+                 //
+                 $("#IdSubCat").val(result.Id);
+                 $("#modalAltaSubcat").modal('show');
+                 $("#idAddSubCat").css('display', 'none');
+                 $("#idEditSubCat").css('display', 'block');
+
+             },
+             error: function () {
+                 alert("Error");
+             }
+
+        });
+
+
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function EditSubCat() {
+
+
+        $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetEditSubCategoria", "Supervisor")',
+                dataType: 'json',
+            data: {
+                id: $("#IdSubCat").val(),
+                subcat: $("#txtNombreSubcategoria").val(),
+                cat: $("#DDCategoriaB").val(),
+                tipo: $("#DDTipo").val(),
+                prioridad: $("#DDPrioridad").val(),
+                sla: $("#txtSLA").val(),
+                nivel: $("#DDNivelExperiencia").val(),
+                periodo: $("#txtPeriodoGarantia").val()
+                },
+             success: function (result) {
+
+                 if (result == "Correcto") {
+
+                     $("#modalAltaSubcat").modal('hide');
+                     $("#modalNotificaciones").modal('show');
+                     $("#tblSuccess").css('display', 'block');
+                     $("#tituloAddSUBCAT").css('display', 'block');
+                     $("#LeyendaAddSUBCAT").css('display', 'block');
+
+                 }
+                 else
+                 {
+                     $("#modalNotificaciones").modal('show');
+                     $("#tblError").css('display', 'block');
+
+                 }
+
+                },
+                error: function () {
+                    alert("Error");
+             }
+
+        });
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function DeleteSubcat(id) {
+if (window.confirm('Deseas eliminar la subcategoria seleccionada?')) {
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetDeleteSubcategoria", "Supervisor")',
+                dataType: 'json',
+                data: {
+                    id: id
+                },
+                success: function (result) {
+
+                    if (result == "Correcto") {
+
+                        $("#modalAltaSubcat").modal('hide');
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblSuccess").css('display', 'block');
+                        $("#tituloBajaSUBCAT").css('display', 'block');
+                        $("#LeyendaBajaSUBCAT").css('display', 'block');
+
+                    }
+                    else {
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblError").css('display', 'block');
+
+                    }
+
+                },
+                error: function () {
+                    alert("Error");
+                }
+
+            });
+        }
+
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function GesTecnicosUser() {
+
+        $("#idGesNiveles").css('display', 'block');
+        $("#GridNiveles").css('display', 'block');
+        $("#idGesTecnicos").css('display', 'block');
+        $("#GridTecnicos").css('display', 'block');
+        //
+        $("#idGesCate").css('display', 'none');
+        $("#GridGescat").css('display', 'none');
+        $("#idGesSubCate").css('display', 'none');
+        $("#GridGesSubcat").css('display', 'none');
+        $("#idGesDx").css('display', 'none');
+        $("#GridGesDX").css('display', 'none');
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function GesPrioridad() {
+
+        $("#idGesCate").css('display','block');
+        $("#idGesSubCate").css('display','block');
+        $("#GridGescat").css('display','block');
+        $("#GridGesSubcat").css('display','block');
+        $("#idGesDx").css('display', 'none');
+        $("#GridGesDX").css('display', 'none');
+        //
+        $("#idGesNiveles").css('display', 'none');
+        $("#idGesTecnicos").css('display', 'none');
+        $("#GridNiveles").css('display', 'none');
+        $("#GridTecnicos").css('display', 'none');
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function GesDX() {
+
+        $("#idGesDx").css('display', 'block');
+        $("#GridGesDX").css('display', 'block');
+        $("#idGesCate").css('display', 'none');
+        $("#idGesSubCate").css('display', 'none');
+        $("#GridGescat").css('display', 'none');
+        $("#GridGesSubcat").css('display', 'none');
+        //
+        $("#idGesNiveles").css('display', 'none');
+        $("#idGesTecnicos").css('display', 'none');
+        $("#GridNiveles").css('display', 'none');
+        $("#GridTecnicos").css('display', 'none');
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function ReturnDash(id) {
+
+         var url = '@Url.Action("Resolutor", "DashBoard")';
+        window.location.href = url + '?EmployeeId=' + id;
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+</script>
+
+
+<div class="row" style="margin-top: 2px; margin-left:-50px;">
+    <div class="col-md-12">
+        <div class="col-md-3">
+            <div style=" background-color:#384049; height:1035px;width:345px; ">
+                <label style="width:90%;"></label>
+                <button style="margin-left:65%;" class="btn btn-danger" onclick="ReturnDash(@Model.EmployeeIdBO);"><span class="glyphicon glyphicon-arrow-left"></span> Regresar</button>
+                <label style="width:90px;"></label>
+                <label style="color:white; font-weight:700; margin-top:28.95px;" onclick="GesTecnicosUser();"><i class="glyphicon glyphicon-user"> </i> Gestionar Resolutores</label>
+                <hr />
+                <label style="width:90px;"></label>
+                <label style="color:white; font-weight:700; margin-top:10px;" onclick="GesPrioridad();"><i class="glyphicon glyphicon-indent-left"> </i>  Gestionar Prioridades</label>
+                <hr />
+                <label style="width:90px;"></label>
+                <label style="color:white; font-weight:700; margin-top:10px;" onclick="GesDX();"><i class="glyphicon glyphicon-list-alt"> </i> Gestionar Diagnósticos</label>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <ul class="nav nav-tabs navbar-left" id="myTab" role="tablist">
+                @*GESTION DIAGNOSTICO*@
+                <li class="nav-item" id="idGesDx" style="display:none">
+                    <a class="nav-link" id="Diagnostico-tab" data-toggle="tab" href="#GesDiagnostico" role="tab" aria-controls="GesDiagnostico" aria-selected="false">
+                        <h4>
+                            <span class="glyphicon glyphicon-list" style="color:black"></span>
+                            <b style="color:black">Gestionar diagnósticos</b>
+                        </h4>
+                    </a>
+                </li>
+                @*GESTION Categoria*@
+                <li class="nav-item" id="idGesCate" style="display:none">
+                    <a class="nav-link" id="Categorias-tab" data-toggle="tab" href="#GesCategorias" role="tab" aria-controls="GesCategorias" aria-selected="false">
+                        <h4><span class="glyphicon glyphicon-list" style="color:black"></span> <b style="color:black">Gestionar categorias</b></h4>
+                    </a>
+                </li>
+                @*GESTION SubCategoria*@
+                <li class="nav-item" id="idGesSubCate" style="display:none">
+                    <a class="nav-link" id="Subcat-tab" data-toggle="tab" href="#GesSubcat" role="tab" aria-controls="GesSubcat" aria-selected="false">
+                        <h4><span class="glyphicon glyphicon-list" style="color:black"></span> <b style="color:black">Gestionar subcategorias</b></h4>
+                    </a>
+                </li>
+                @*Gestionar nivel experiencia*@
+                <li class="nav-item" id="idGesNiveles" style="display:none;">
+                    <a class="nav-link" id="NivelExpId-tab" data-toggle="tab" href="#NivelExp" role="tab" aria-controls="NivelExp" aria-selected="false">
+                        <h4>
+                            <span class="glyphicon glyphicon-list-alt" style="color:black"></span>
+                            <b style="color:black">Gestionar niveles de experiencia</b>
+                        </h4>
+                    </a>
+                </li>
+                @*Gestionar tecnicos*@
+                <li class="nav-item" id="idGesTecnicos" style="display:none;">
+                    <a class="nav-link" id="GestUserId-tab" data-toggle="tab" href="#GestUser" role="tab" aria-controls="GestUser" aria-selected="false">
+                        <h4><span class="glyphicon glyphicon-user" style="color:black"></span> <b style="color:black">Gestionar técnicos</b></h4>
+                    </a>
+                </li>
+            </ul>
+            <div class="tab-content" id="myTabContent">
+                @*GESTION DIAGNOSTICO*@
+                <div class="tab-pane " id="GesDiagnostico" role="tabpanel" aria-labelledby="Diagnostico-tab">
+                    <br />
+                    <div class="container-fluid" id="GridGesDX" style="display:none">
+                        <div class="modal-footer" style="text-align:right">
+                            <button type="button" class="btn btn-primary" style="width: 25%;" onclick="AltaDX();"><i class="glyphicon glyphicon-folder-open"></i> Agregar diagnóstico</button>
+                        </div>
+                        <div class="row">
+                            <div style="max-width: 100%; max-height: 600px; overflow-y: scroll; overflow-x: scroll; font-size: 15px;">
+
+                                @if (Model.diagLst != null)
+                                {
+
+                                    @Html.Grid(Model.diagLst).Columns(col =>
+                               {
+
+                                   col.Add(m => m.Diagnostico).Titled("Diagnóstico").Filterable(true);
+                                   col.Add(m => m.Categoria).Titled("Cátegoria").Filterable(true);
+                                   col.Add(m => m.SubCategoria).Titled("Subcategoria").Filterable(true);
+                                   col.Add().Encoded(false).Sanitized(false)
+                                   .RenderValueAs(data => "<div style='text-align: center'>"
+                                   + "<button type='button' class='btn btn-info glyphicon glyphicon-pencil' title='Editar' onclick='ShowEditarDX(\"" + data.Id + "\");'></button>"
+                                   + "<button type='button' class='btn btn-danger glyphicon glyphicon-eye-close' title='Eliminar' onclick='DeleteDX(\"" + data.Id + "\");'></button>"
+                                   + "</div>").Css("little");
+
+                               })
+
+                                }
+                                else
+                                {
+                                    <label>¡No se encontraron diagnosticos!</label>
+                                }
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @*GESTION Categoria*@
+                <div class="tab-pane " id="GesCategorias" role="tabpanel" aria-labelledby="Categorias-tab">
+                    <br />
+                    <div class="container-fluid" id="GridGescat" style="display:none">
+                        <div class="row">
+                            <div class="modal-footer" style="text-align:right">
+                                <button type="button" class="btn btn-primary" style="width: 25%;" onclick="AltaCategoria();"><i class="glyphicon glyphicon-folder-open"></i> Agregar categoria</button>
+                            </div>
+                            <div class="row">
+                                <div style="max-width: 100%; max-height: 600px; overflow-y: scroll; overflow-x: scroll; font-size: 15px;">
+                                    @if (Model.detCategoria != null)
+                                    {
+
+                                        @Html.Grid(Model.detCategoria).Columns(col =>
+                                   {
+
+                                       col.Add(m => m.Categoria).Titled("Cátegoria").Filterable(true);
+                                       col.Add(m => m.Grupo).Titled("Grupo Resolutor").Filterable(true);
+                                       col.Add().Encoded(false).Sanitized(false)
+                                       .RenderValueAs(data => "<div style='text-align: center'>"
+                                       + "<button type='button' class='btn btn-info glyphicon glyphicon-pencil' title='Editar' onclick='ShowEditarCat(\"" + data.Id + "\");'></button>"
+                                       + "<button type='button' class='btn btn-danger glyphicon glyphicon-eye-close' title='Eliminar' onclick='DeleteCat(\"" + data.Id + "\");'></button>"
+                                       + "</div>").Css("little");
+
+                                   })
+
+                                    }
+                                    else
+                                    {
+                                        <label>¡No se encontraron categorias!</label>
+                                    }
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @*GESTION SubCategoria*@
+                <div class="tab-pane " id="GesSubcat" role="tabpanel" aria-labelledby="Subcat-tab">
+                    <br />
+                    <div class="container-fluid" id="GridGesSubcat" style="display:none;">
+                        <div class="modal-footer" style="text-align:right">
+                            <button type="button" class="btn btn-primary" style="width: 25%;" onclick="AltaSubcat();"><i class="glyphicon glyphicon-folder-open"></i> Agregar Subcategoria</button>
+                        </div>
+                        <div class="row">
+                            <div style="max-width: 150%; max-height: 900px; overflow-y: scroll; overflow-x: scroll; font-size: 15px;">
+                                @if (Model.detSubcat != null)
+                                {
+
+                                    @Html.Grid(Model.detSubcat).Columns(col =>
+                               {
+
+                                   col.Add(m => m.Categoria).Titled("Cátegoria").Filterable(true);
+                                   col.Add(m => m.SubCategoria).Titled("Subcategoría").Filterable(true);
+                                   col.Add(m => m.Tipo).Titled("Tipo").Filterable(true);
+                                   col.Add(m => m.Prioridad).Titled("Prioridad").Filterable(true);
+                                   col.Add(m => m.SLA).Titled("SLA objetivo (hrs)").Filterable(true);
+                                   col.Add(m => m.Nivel).Titled("Nivel de experiencia").Filterable(true);
+                                   col.Add().Encoded(false).Sanitized(false)
+                                   .RenderValueAs(data => "<div style='text-align: center'>"
+                                   + "<button type='button' class='btn btn-info glyphicon glyphicon-pencil' title='Editar' onclick='ShowEditarSubcat(\"" + data.Id + "\");'></button>"
+                                   + "<button type='button' class='btn btn-danger glyphicon glyphicon-eye-close' title='Eliminar' onclick='DeleteSubcat(\"" + data.Id + "\");'></button>"
+                                   + "</div>").Css("little");
+
+                               })
+
+                                }
+                                else
+                                {
+                                    <label>¡No se encontraron subcategorias!</label>
+                                }
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @*GESTIONAR NIVELES*@
+                <div class="tab-pane " id="NivelExp" role="tabpanel" aria-labelledby="NivelExpId-tab">
+                    <br />
+                    <div class="container-fluid" id="GridNiveles" style="display:none">
+                        <div class="modal-footer" style="text-align:right">
+                            <button type="button" class="btn btn-success" style="width: 25%;" onclick="AltaNivel();"><i class="glyphicon glyphicon-folder-open"></i> Agregar nivel de experiencia</button>
+                        </div>
+                        <div class="row">
+                            <div style="max-width: 150%; max-height: 900px; overflow-y: scroll; overflow-x: scroll; font-size: 15px;">
+                                @if (Model.NivExpe != null)
+                                {
+
+                                    @Html.Grid(Model.NivExpe).Columns(col =>
+                               {
+
+                                   col.Add(m => m.Nivel).Titled("Nivel de experiencia").Filterable(true);
+                                   col.Add().Encoded(false).Sanitized(false)
+                                   .RenderValueAs(data => "<div style='text-align: center'>"
+                                   + "<button type='button' class='btn btn-info glyphicon glyphicon-pencil' title='Editar' onclick='ShowEditarNivel(\"" + data.Id + "\");'></button>"
+                                   + "<button type='button' class='btn btn-danger glyphicon glyphicon-eye-close' title='Eliminar' onclick='DeleteNivel(\"" + data.Id + "\");'></button>"
+                                   + "</div>").Css("little");
+
+                               })
+
+                                }
+                                else
+                                {
+                                    <label>¡No se encontraron Niveles!</label>
+                                }
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @*GESTIONAR TECNICOS*@
+                <div class="tab-pane " id="GestUser" role="tabpanel" aria-labelledby="GestUserId-tab">
+                    <br />
+                    <div class="container-fluid" id="GridTecnicos" style="display:none">
+                        <div class="modal-footer" style="text-align:right">
+                            <button type="button" class="btn btn-primary" style="width: 25%;" onclick="Alta();"><i class="glyphicon glyphicon-user"></i> + Agregar Técnico</button>
+                        </div>
+                        <div class="row">
+                            <div style="max-width: 150%; max-height: 900px; overflow-y: scroll; overflow-x: scroll; font-size: 15px;">
+                                @if (Model.userLst != null)
+                                {
+
+                                    @Html.Grid(Model.userLst).Columns(col =>
+                               {
+
+                                   col.Add(m => m.GrupoResolutor).Titled("Grupo resolutor").Filterable(true);
+                                   col.Add(m => m.Centro).Titled("Centro").Filterable(true);
+                                   col.Add(m => m.HorarioATC).Titled("Ventana de Atención").Filterable(true);
+                                   col.Add(m => m.NombreTecnico).Titled("Nombre").Filterable(true);
+                                   col.Add(m => m.HorarioJornada).Titled("Jornada Laboral").Filterable(true);
+                                   col.Add(m => m.Correo).Titled("Correo");
+                                   col.Add().Encoded(false).Sanitized(false)
+                                   .RenderValueAs(data => "<div style='text-align: center'>"
+                                   + "<button type='button' class='btn btn-info glyphicon glyphicon-pencil' title='Editar' onclick='ShowEditarUsuario(\"" + data.Id + "\");'></button>"
+                                   + "<button type='button' class='btn btn-danger glyphicon glyphicon-eye-close' title='Eliminar' onclick='DeleteUsuario(\"" + data.Id + "\");'></button>"
+                                   + "</div>").Css("little");
+
+                               })
+
+                                }
+                                else
+                                {
+                                    <label>¡No se encontraron técnicos!</label>
+                                }
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @using (Html.BeginForm("GuardarUser", "Supervisor", null, FormMethod.Post, new { enctype = "multipart/form-data", id = "form" }))
+                {
+
+
+                    @*@Html.DisplayFor(m => m.EmployeeIdBO)*@
+                    @Html.HiddenFor(m => m.EmployeeIdBO)
+
+
+                    //Modal agregar tecnicos
+                    <div class="modal fade" tabindex="-1" role="dialog" id="modAlta">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                    <h4 class="modal-title">Agregar técnico</h4>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="tab-content">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label class="radio-inline">
+                                                    <b>NOMBRE DEL TÉCNICO</b>
+                                                    @Html.TextBoxFor(m => m.user.NombreTecnico, new { @class = "form-control", style = "width:200%" })
+                                                </label>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="radio-inline">
+                                                    <b>NÚMERO DE EMPLEADO</b>
+                                                    @Html.TextBoxFor(m => m.user.EmpleadoID, new { @class = "form-control" })
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <br />
+                                                <label class="radio-inline">
+                                                    <b>GRUPO RESOLUTOR</b>
+                                                    @Html.DropDownListFor(m => m.user.GrupoResolutor, (SelectList)ViewBag.Grupo, "SELECCIONE", new { @class = "form-control" })
+                                                </label>
+
+                                                <label class="radio-inline" id="exclusion_pregunta">
+                                                    <br />
+                                                    <input type="checkbox" name="Exclusion" value="" id="checkbox_exclusion" class="ChckbxEx"/>
+                                                    Permitir tecnico trabajar varios centros al mismo tiempo
+                                                </label>
+                                               
+                                            </div>
+                                            <div class="col-md-6">
+                                                <br />
+                                                <label class="radio-inline">
+                                                    <b>CENTRO</b>
+                                                    @Html.DropDownListFor(m => m.user.Centro, (SelectList)ViewBag.Centro, "SELECCIONE", new { @class = "form-control" })
+                                                <br /> 
+                                                    <button class="form-control" id="add_centro_btn" type="button">AÑADIR CENTROS</button>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        @*VENTANA DE SERVICIO*@
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <br />
+                                                <table style="width:100%;">
+                                                    <tr>
+                                                        <td>
+                                                            <h5 style="color:dodgerblue"><b>VENTANA DE ATENCIÓN</b></h5>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            @Html.CheckBoxFor(m => m.atc.Lunes)
+                                                            <label>Lunes</label>
+                                                        </td>
+                                                        <td>
+                                                            @Html.CheckBoxFor(m => m.atc.Viernes)
+                                                            <label>Viernes</label>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            @Html.CheckBoxFor(m => m.atc.Martes)
+                                                            <label>Martes</label>
+                                                        </td>
+                                                        <td>
+                                                            @Html.CheckBoxFor(m => m.atc.Sabado)
+                                                            <label>Sabado</label>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            @Html.CheckBoxFor(m => m.atc.Miercoles)
+                                                            <label>Miércoles</label>
+                                                        </td>
+                                                        <td>
+                                                            @Html.CheckBoxFor(m => m.atc.Domingo)
+                                                            <label>Domingo</label>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            @Html.CheckBoxFor(m => m.atc.Jueves)
+                                                            <label>Jueves</label>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <br />
+                                                <table style="width:100%;">
+                                                    <tr>
+                                                        <td>
+                                                            <h5 style="color:dodgerblue"><b>HORA INICIO</b></h5>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <label class="radio-inline">
+                                                                @Html.DropDownListFor(m => m.atc.HoraInicioATC, (SelectList)ViewBag.HoraInicio, "SELECCIONE", new { @class = "form-control" })
+                                                            </label>
+                                                        </td>
+
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <h5 style="color:dodgerblue"><b>HORA FIN</b></h5>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <label class="radio-inline">
+                                                                @Html.DropDownListFor(m => m.atc.HoraFinATC, (SelectList)ViewBag.HoraFin, "SELECCIONE", new { @class = "form-control" })
+                                                            </label>
+                                                        </td>
+
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        @*JORNADA LABORAL*@
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <br />
+                                                <table style="width:100%;">
+                                                    <tr>
+                                                        <td>
+                                                            <h5 style="color:dodgerblue"><b>JORNADA LABORAL</b></h5>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            @Html.CheckBoxFor(m => m.lab.Lunes)
+                                                            <label>Lunes</label>
+                                                        </td>
+                                                        <td>
+                                                            @Html.CheckBoxFor(m => m.lab.Viernes)
+                                                            <label>Viernes</label>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            @Html.CheckBoxFor(m => m.lab.Martes)
+                                                            <label>Martes</label>
+                                                        </td>
+                                                        <td>
+                                                            @Html.CheckBoxFor(m => m.lab.Sabado)
+                                                            <label>Sabado</label>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            @Html.CheckBoxFor(m => m.lab.Miercoles)
+                                                            <label>Miércoles</label>
+                                                        </td>
+                                                        <td>
+                                                            @Html.CheckBoxFor(m => m.lab.Domingo)
+                                                            <label>Domingo</label>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            @Html.CheckBoxFor(m => m.lab.Jueves)
+                                                            <label>Jueves</label>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <br />
+                                                <table style="width:100%;">
+                                                    <tr>
+                                                        <td>
+                                                            <h5 style="color:dodgerblue"><b>HORA INICIO</b></h5>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <label class="radio-inline">
+                                                                @Html.DropDownListFor(m => m.lab.HoraInicioJornada, (SelectList)ViewBag.HoraInicio, "SELECCIONE", new { @class = "form-control" })
+                                                            </label>
+                                                        </td>
+
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <h5 style="color:dodgerblue"><b>HORA FIN</b></h5>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <label class="radio-inline">
+                                                                @Html.DropDownListFor(m => m.lab.HoraFinJornada, (SelectList)ViewBag.HoraFin, "SELECCIONE", new { @class = "form-control" })
+                                                            </label>
+                                                        </td>
+
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                            <div class="col-md-12">
+                                                <br />
+                                                <label class="radio-inline">
+                                                    <b>CORREO ELECTRÓNICO</b>
+                                                    @Html.TextBoxFor(m => m.user.Correo, new { @class = "form-control", style = "width:500%" })
+                                                </label>
+                                            </div>
+                                            <div class="col-md-12">
+                                                <br />
+                                                <label class="radio-inline">
+                                                    <b>NIVEL DE EXPERIENCIA</b>
+                                                    @*@Html.TextBoxFor(m => m.user.NivelExperiencia, new { @class = "form-control", style = "width:500%" })*@
+                                                    @Html.DropDownListFor(m => m.user.NivelExperiencia, (SelectList)ViewBag.NivelExpLst, "SELECCIONE", new { @class = "form-control" })
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                    <button type="button" class="btn btn-success" data-dismiss="modal" onclick="SaveUser();" id="upload_center">Aceptar</button>
+
+                                </div>
+                            </div>
+                            <!-- /.modal-content -->
+                        </div>
+                        <!-- /.modal-dialog -->
+                    </div>
+                }
+
+
+                @*Modal Agregar Centros *@
+                <div class="modal fade" tabindex="-1" role="dialog" id="modalAgregarCentros">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h4 class="modal-title"> Agregar Centros </h4>
+                            </div>
+                            <div>
+                                <br />
+                                <div style="padding-left:30px; padding-right:30px;">
+                                    <p>
+                                        Este Usuario es un Supervisor del Grupo Resolutor TI-Soporte. <br />
+                                        Es posible para este usuario supervisar este Grupo Resolutor en varios centros. <br />
+                                        Por favor seleccione los Centros que este usuario estará supervisando a parte del centro al que pertenece.<br />
+                                        <br />
+                                        Presione Aceptar cuando termine.
+                                    </p>
+                                </div>
+
+                                <div class="col-md-5">
+                                    <b>Lista de Centros:</b>
+                                    <table style="width: 100%; background: lightgray;" id="tbl_Centros" class="centers">
+                                        <tr hidden> </tr>
+                                    </table>
+                                </div>
+                                                                                                
+                                <div class="col-md-2">
+                                    <br /><br />
+                                    <button id="add_centro" style="width: 72px; " class="btn btn-primary"> Añadir </button>
+                                    <br /><br />
+                                    <button id="del_centro" style="width: 72px;" class="btn btn-danger"> Borrar  </button>
+                                    <br /><br />
+                                    <button id="btnCloseModalCentro" style="width: 72px;" class="btn btn-primary">Cerrar</button>
+                                    @*<br /><br />
+                                    <button id="upload_center2" style="width: 72px;" class="btn btn-success">Aceptar</button>*@
+                                </div>
+
+                                <div class="col-md-5">
+                                    <b>Centros a supervisar:</b>
+                                    <table style="width: 100%; background: lightgray;" id="tbl_CentrosSupervisados" class="centers">
+                                        <tr hidden> </tr>
+                                    </table>
+                                </div>
+
+                            </div>
+                            <br />
+                            <div class="modal-footer">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @* Modal Agregar Centros *@
+
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+@*==============================MODALES==============================*@
+
+@*MODAL ALTA NIVEL*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalAltaNivel">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div>
+                <div class="col-md-12">
+                    <table style="width:100%;">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title"><b>Agregar nivel de experiencia</b></h4>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <br />
+                                <br />
+                                <text style="font-weight:bold;color:#808080;font-size:12px;margin: 0px 39px 0px 10px;">
+                                    NIVEL DE EXPERIENCIA
+                                    <br />
+                                    @Html.TextBox("txtNivelAdd", "", new { @class = "form-control" })
+                                    <br />
+                                    <br />
+                            </td>
+                        </tr>
+                        <tr style="display:none;">
+                            <td>
+                                @Html.TextBox("IdNivel", "", new { @class = "form-control" })
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="col-md-8">
+                    <button type="button" class="btn btn-warning" onclick="CancelaSolicitud()">Cancelar</button>
+                    @*<button type="button" class="btn btn-primary" style="display:block" id="idAddNivelExp" onclick="AddNivelExp()">Aceptar</button>*@
+                </div>
+                <div class="col-md-4" style="display:block" id="idAddNivelExp">
+                    <button type="button" class="btn btn-primary" onclick="AddNivelExp()">Aceptar</button>
+                </div>
+                <div class="col-md-4" style="display:none" id="idEditNivelExp">
+                    <button type="button" class="btn btn-primary" onclick="EditNivelExp()">Aceptar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@*AGREGAR DIAGNOSTICO*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalAltaDX">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div>
+                <div class="col-md-12">
+                    <table style="width:100%;">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title"><b>Agregar diagnóstico</b></h4>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <text style="font-weight:bold;color:#808080;font-size:12px;margin: 0px 39px 0px 10px;">
+                                    CATEGORIA
+                                    <br />
+                                    @Html.DropDownList("DDCategoria", (SelectList)ViewBag.Categoria, "SELECCIONE", new { @id = "DDCategoria", @class = "form-control", style = "text-align:center" })
+                                    <br />
+                                    <br />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <text style="font-weight:bold;color:#808080;font-size:12px;margin: 0px 39px 0px 10px;">
+                                    SUBCATEGORIA
+                                    <br />
+                                    @Html.DropDownList("DDSubcategoria", (SelectList)ViewBag.SubCategoria, "SELECCIONE", new { @id = "DDSubcategoria", @class = "form-control", style = "text-align:center" })
+                                    <br />
+                                    <br />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <text style="font-weight:bold;color:#808080;font-size:12px;margin: 0px 39px 0px 10px;">
+                                    NOMBRE DEL DIAGNÓSTICO
+                                    <br />
+                                    @Html.TextBox("txtDiagnostico", "", new { @id = "txtDiagnostico", @class = "form-control" })
+                            </td>
+                        </tr>
+                        <tr style="display:none;">
+                            <td>
+                                @Html.TextBox("IdDX", "", new { @class = "form-control" })
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="col-md-8">
+                    <button type="button" class="btn btn-warning" onclick="CancelaSolicitud()">Cancelar</button>
+                </div>
+                <div class="col-md-4" style="display:block" id="idAddDX">
+                    <button type="button" class="btn btn-primary" onclick="AddDX()">Aceptar</button>
+                </div>
+                <div class="col-md-4" style="display:none" id="idEditDX">
+                    <button type="button" class="btn btn-primary" onclick="EditDX()">Actualizar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@*AGREGAR CATEGORIA*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalAltaCat">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div>
+                <div class="col-md-12">
+                    <table style="width:100%;">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title"><b>Agregar cátalogo</b></h4>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <text style="font-weight:bold;color:#808080;font-size:12px;margin: 0px 39px 0px 10px;">
+                                    NOMBRE DE LA CATEGORIA
+                                    <br />
+                                    @Html.TextBox("txtCategoria", "", new { @class = "form-control" })
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <text style="font-weight:bold;color:#808080;font-size:12px;margin: 0px 39px 0px 10px;">
+                                    GRUPO RESOLUTOR
+                                    <br />
+                                    @Html.DropDownList("DDGrupoResolutor", (SelectList)ViewBag.Grupo, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                                    <br />
+                                    <br />
+                            </td>
+                        </tr>
+                        <tr style="display:none;">
+                            <td>
+                                @Html.TextBox("IdCat", "", new { @class = "form-control" })
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="col-md-8">
+                    <button type="button" class="btn btn-warning" onclick="CancelaSolicitud()">Cancelar</button>
+                </div>
+                <div class="col-md-4" style="display:block" id="idAddCat">
+                    <button type="button" class="btn btn-primary" onclick="AddCat()">Aceptar</button>
+                </div>
+                <div class="col-md-4" style="display:none" id="idEditCat">
+                    <button type="button" class="btn btn-primary" onclick="EditCat()">Aceptar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@*AGREGAR SUBCATEGORIA*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalAltaSubcat">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div>
+                <div class="col-md-12">
+                    <table style="width:100%;">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title"><b>Agregar Subcategoria</b></h4>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <text style="font-weight:bold;color:#808080;font-size:12px;margin: 0px 39px 0px 10px;">
+                                    NOMBRE DE LA SUBCATEGORIA
+                                    <br />
+                                    @Html.TextBox("txtNombreSubcategoria", "", new { @class = "form-control" })
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <text style="font-weight:bold;color:#808080;font-size:12px;margin: 0px 39px 0px 10px;">
+                                    CATEGORIA
+                                    <br />
+                                    @Html.DropDownList("DDCategoriaB", (SelectList)ViewBag.Categoria, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                                    <br />
+                                    <br />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <text style="font-weight:bold;color:#808080;font-size:12px;margin: 0px 39px 0px 10px;">
+                                    TIPO
+                                    <br />
+                                    @Html.DropDownList("DDTipo", (SelectList)ViewBag.Solicitud, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                                    <br />
+                                    <br />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <text style="font-weight:bold;color:#808080;font-size:12px;margin: 0px 39px 0px 10px;">
+                                    PRIORIDAD
+                                    <br />
+                                    @Html.DropDownList("DDPrioridad", (SelectList)ViewBag.Prioridad, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                                    <br />
+                                    <br />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <text style="font-weight:bold;color:#808080;font-size:12px;margin: 0px 39px 0px 10px;">
+                                    SLA OBJETIVO (HRS)
+                                    <br />
+                                    @Html.TextBox("txtSLA", "", new { @class = "form-control" })
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <text style="font-weight:bold;color:#808080;font-size:12px;margin: 0px 39px 0px 10px;">
+                                    NIVEL DE EXPERIENCIA MÍNIMO REQUERIDO
+                                    <br />
+                                    @Html.DropDownList("DDNivelExperiencia", (SelectList)ViewBag.Experiencia, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                                    <br />
+                                    <br />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <text style="font-weight:bold;color:#808080;font-size:12px;margin: 0px 39px 0px 10px;">
+                                    PERIODO DE GARANTÍA (HRS)
+                                    <br />
+                                    @Html.TextBox("txtPeriodoGarantia", "", new { @class = "form-control" })
+                            </td>
+                        </tr>
+                        <tr style="display:none;">
+                            <td>
+                                @Html.TextBox("IdSubCat", "", new { @class = "form-control" })
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="col-md-8">
+                    <button type="button" class="btn btn-warning" onclick="CancelaSolicitud()">Cancelar</button>
+                </div>
+                <div class="col-md-4" style="display:block" id="idAddSubCat">
+                    <button type="button" class="btn btn-primary" onclick="AddSubCat()">Aceptar</button>
+                </div>
+                <div class="col-md-4" style="display:none" id="idEditSubCat">
+                    <button type="button" class="btn btn-primary" onclick="EditSubCat()">Aceptar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@*//Modal de notificaciones*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalNotificaciones">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div>
+                <div class="col-md-12">
+                    <table style="width:100%; display:none;" id="tblSuccess">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title" id="tituloBajaDX" style="display:none;"><b>Eliminar diagnóstico</b></h4>
+                                    <h4 class="modal-title" id="tituloBajaCAT" style="display:none;"><b>Eliminar Cátegoria</b></h4>
+                                    <h4 class="modal-title" id="tituloBajaSUBCAT" style="display:none;"><b>Eliminar Cátegoria</b></h4>
+                                    <h4 class="modal-title" id="tituloAddDX" style="display:none;"><b>Agregar diagnóstico</b></h4>
+                                    <h4 class="modal-title" id="tituloAddCAT" style="display:none;"><b>Agregar cátegoria</b></h4>
+                                    <h4 class="modal-title" id="tituloAddSUBCAT" style="display:none;"><b>Agregar Subcategoria</b></h4>
+                                    <h4 class="modal-title" id="tituloBajaUser" style="display:none;"><b>Eliminar técnico</b></h4>
+                                    <h4 class="modal-title" id="tituloBajaNivel" style="display:none;"><b>Eliminar Nivel</b></h4>
+                                    <h4 class="modal-title" id="tituloAddNivel" style="display:none;"><b>Agregar nivel de experiencia</b></h4>
+                                    <h4 class="modal-title" id="tituloAddUser" style="display:none;"><b>Agregar técnico</b></h4>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <br />
+                                <br />
+                                <div style="color:forestgreen; top:-10px; font-style:normal;line-height:20px; margin-left:250px; font-size:xxx-large;" class="glyphicon glyphicon-ok">
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;">
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaBajaDX">El diagnóstico se dió de baja correctamente</label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaBajaCAT">La cátegoria se dió de baja correctamente</label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaBajaSUBCAT">La subcategoria se dió de baja correctamente</label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaAddDX">El diagnóstico se agregó correctamente</label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaAddCAT">La cátegoria se agregó correctamente</label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaAddSUBCAT">La subcategoria se agregó correctamente</label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaBajaUser">El técnico se dió de baja correctamente</label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaBajaNivel">El nivel se dió de baja correctamente</label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaAddNivel">El nivel de experincia se agregó <br /> correctamente</label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaAddUser">Se creó el técnico correctamente</label>
+                                <br />
+                            </td>
+                        </tr>
+                    </table>
+                    <table style="width:100%; display:none;" id="tblError">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title"><b>¡Error!</b></h4>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <br />
+                                <br />
+                                <div style="color:red; top:-10px; font-style:normal;line-height:20px; margin-left:250px; font-size:xxx-large;" class="glyphicon glyphicon-ban-circle">
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;">
+                                <label style="color:red;  margin-left:200px;">¡Error!</label>
+                                <br />
+                                <label style="color:red; margin-left:150px;">Favor de validarlo con el Administrador</label>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="AceptaTicket(@Model.EmployeeIdBO)">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+

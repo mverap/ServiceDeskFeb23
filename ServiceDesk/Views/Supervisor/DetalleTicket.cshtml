@@ -1,0 +1,2172 @@
+﻿@using GridMvc
+@using GridMvc.Html
+
+@model ServiceDesk.ViewModels.DetalleSelectedTicketVm
+
+@{
+    ViewBag.Title = "DetalleTicket";
+}
+
+
+
+<style type="text/css">
+    .tooltip-container {
+        position: relative;
+        display: flex;
+        /*place-content: center;*/
+    }
+
+    .hide {
+        display: none !important
+    }
+    .show {
+        display: block !important
+    }
+
+    p#tooltip {
+        display: none;
+        position: absolute;
+        top: 0px;
+        left: 100px;
+        z-index: 1;
+        background: red;
+        padding: 8px;
+        font-size: 1rem;
+        color: #fff;
+        border-radius: 2px;
+        animation: fadeIn 0.6s;
+    }
+
+        p#tooltip:before {
+            content: "";
+            position: absolute;
+            top: 0%;
+            left: -40%;
+            offset-rotate: unset 45deg;
+            margin-left: 8px;
+            border: 8px solid transparent;
+            border-top: 8px solid red;
+        }
+
+    .bs-iconsheader button span {
+        font-size: 22px;
+        text-decoration: none;
+        margin: 0 20px;
+        color: steelblue;
+    }
+
+        .bs-iconsheader button span:hover {
+            color: dodgerblue;
+        }
+
+    textarea {
+        resize: none;
+    }
+
+    div.scroll_vertical {
+        height: 350px;
+        width: 90%;
+        overflow: auto;
+        padding: 8px;
+    }
+
+    .RectangleSLA {
+        text-align: center;
+        width: 125px;
+        padding: 10px 12px;
+        border-radius: 3px;
+        margin-left: 5px;
+        background-color: white;
+    }
+</style>
+
+
+<script type="text/javascript">
+
+    var folio = '@ViewBag.Id';
+    var CCenProgreso = '@ViewBag.CC';
+    $(document).ready(function () {
+
+        //$("#gpresolutorContent").addClass("hide");
+
+        if (window.opener) { //Esta linea se ejecuta si es popUp
+            $(".pophide").css('display', 'none'); //ocultar barra breadcrumbs
+            $(".navbar").css('display', 'none'); //ocultar barra superior
+        } else if (window.top !== window.self) { } else { }
+
+        $(".row").bind("keydown", function (event) {
+            var txt = $("#detalle_MotivoCambioEstatus").val();
+            if (txt.length > 14) {
+                butn.disabled = false;
+                tooltip.style.display = 'none';
+            }
+            else {
+                butn.disabled = true;
+            }
+            console.log(txt.length + ": " + txt);
+        });
+
+        $("#ccIndicator").hide();
+        if (CCenProgreso != 0) {
+            //debugger;
+            //const box = document.getElementsByClassName('btn')[0];
+            //box.style.visibility = 'hidden';
+
+            //$(".btn").each(function () {
+            //    this.hidden = true;
+            //});
+            
+            $("#btnSubticket").hide();
+            $("#btnReasignarTecnico").hide();
+            $("#btnCancelar").hide();
+            $("#btnRecategorizar").hide();
+
+            $("#ccIndicator").show();
+            
+        }
+
+        //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        var cat = $('#subticket_Categoria option:selected').text();
+        var subcat = $('#subticket_Subcategoria option:selected').text();
+        var cen = $('#subticket_Centro option:selected').text();
+
+
+        $("#Id").text(cat);
+        $("#Categoria").text(cat);
+        $("#Subcategoria").text(subcat);
+        $("#Centro").text(cen);
+
+        //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        if (folio != "") {
+
+            $("#modalGuardado").modal('show');
+        }
+        //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        //Asigna el valor de Ticket Id del Historico al Detalle Subticket para el guardado
+        var idTicket = $("#detalle_Id").val();
+
+        $("#subticket_IdTicket").val(idTicket);
+
+        $("#detalle_EstadoTicketTecnico").change(function () {
+            var edo = $("#detalle_EstadoTicketTecnico").val();
+
+            //- - - -
+            if (edo == 4) {
+
+                $('#idObserva').css('display', 'block');
+                $('#txtEspera').css('display', 'none');
+                $('#ShowDX').css('display', 'block');
+                $('#txtResuelto').css('display', 'block');
+                $('#divGuardar').css('display', 'none');
+
+
+            }
+            else {
+
+                $('#idObserva').css('display', 'block');
+                $('#ShowDX').css('display', 'none');
+                $('#DX').val("");
+                $('#txtEspera').css('display', 'block');
+                $('#divGuardar').css('display', 'none');
+                $('#txtResuelto').css('display', 'none');
+            }
+            //else {
+            //    $('#txtEspera').css('display', 'none');
+            //    $('#ShowDX').css('display', 'none');
+            //    $('#txtResuelto').css('display', 'none');
+            //    $('#Observaciones').val("");
+            //    $('#idObserva').css('display', 'none');
+            //    $('#DX').val("");
+            //    $('#divGuardar').css('display', 'block');
+
+            //}
+
+
+        });
+
+
+        var butn = document.getElementById("btnGuardarCambioEstatus");
+        butn.setAttribute('disabled', 'disabled');
+        //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        //CATEGORIA - SUBCATEGORIA
+    $("#subticket_Categoria").change(function ()
+        {
+        $("#subticket_Subcategoria").empty();
+        $("#subticket_GrupoResolutor").empty();
+        $("#subticket_Prioridad").empty();
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetCategoria", "Supervisor")',
+                dataType: 'json',
+                data: { id: $("#subticket_Categoria").val() },
+                success: function (result)
+                {
+                    $("#subticket_Subcategoria").append('<option value="">SELECCIONE</option>');
+                    $.each(result, function (i, group)
+                    {
+
+                        $("#subticket_Subcategoria").append('<option value="' + group.Id + '">' +
+                            group.SubCategoria + '</option>');
+                    });
+                }
+            });
+        });
+        //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+         //NUEVO AYB - SE FILTRA POR GRUPO RESOLUTOR LOS CATALOGOS DE RECATEGORIZACIÓN
+        $("#GrupoResCat").change(function ()
+        {
+            $("#RecategorizaCat").empty();
+            $("#RecategorizaSubcat").empty();
+
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetGrupoResolutor", "Supervisor")',
+                dataType: 'json',
+                data: { id: $("#GrupoResCat").val() },
+                success: function (result)
+                {
+                    $("#RecategorizaCat").append('<option value="">SELECCIONE</option>');
+                    $.each(result, function (i, group)
+                    {
+
+                        $("#RecategorizaCat").append('<option value="' + group.Id + '">' +
+                            group.Categoria + '</option>');
+                    });
+                }
+            });
+        });
+        //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        $("#RecategorizaCat").change(function ()
+        {
+            $("#RecategorizaSubcat").empty();
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetCategoria", "Supervisor")',
+                dataType: 'json',
+                data: { id: $("#RecategorizaCat").val() },
+                success: function (result)
+                {
+                    $("#RecategorizaSubcat").append('<option value="">SELECCIONE</option>');
+                    $.each(result, function (i, group)
+                    {
+
+                        $("#RecategorizaSubcat").append('<option value="' + group.Id + '">' +
+                            group.SubCategoria + '</option>');
+                    });
+                }
+            });
+        });
+        //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        //SUBCATEGORIA - MATRIZ
+        $("#subticket_Subcategoria").change(function () {
+            var Id = $('#subticket_Subcategoria').val();
+            $("#subticket_GrupoResolutor").empty();
+            $("#subticket_Prioridad").empty();
+            $.ajax({
+                url: '../Supervisor/GetMatriz',
+                type: "POST",
+                data: {
+                    Id: Id
+                },
+                success: function (result) {
+                    if (result != "") {
+                        $("#subticket_GrupoResolutor").empty();
+                        $("#subticket_Prioridad").empty();
+                        $("#subticket_GrupoResolutor").val();
+                        $("#subticket_Prioridad").val();
+                        $.each(result,
+                            function (i, result) {
+                                $("#subticket_GrupoResolutor").val(result.GrupoAtencion);
+                                $("#subticket_Prioridad").val(result.Prioridad);
+                                $("#subticket_Estatus").val("Abierto");
+
+                            });
+                    }
+
+                },
+                error: function (err) {
+                    alert(err);
+
+                }
+            });
+        });
+        //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        $("#modalTicketCCbtnCerrar").click(function () { $("#modalTicketCC").modal("hide"); });
+
+        $("#RecategorizaSubcat").change(function () {
+            var Id = $('#RecategorizaSubcat').val();
+
+
+            $.ajax({
+                url: '../App/GetMatriz',
+                type: "POST",
+                data: {
+                    Id: Id
+                },
+                success: function (result) {
+                    if (result != "") {
+                        $.each(result,
+                            function (i, result) {
+                                var text = $("#GrupoResCat option:selected").text()
+                                //console.log(":::" + text);
+                                if ($("#GrupoResCat option:selected").text() == result.GrupoAtencion) {
+
+                                }
+                                console.log("grupo resolutor: " + result.GrupoAtencion + ":");
+                                $("#GrupoResCat option").each(function () {
+                                    if ($(this).text() == result.GrupoAtencion) {
+                                        $(this).attr('selected', 'selected');
+                                    }
+                                });
+
+                                changeGP();
+                                //console.log("Grupo resolutor a seleccionar: " + result.GrupoAtencion);
+                            });
+                    }
+
+                },
+                error: function (err) {
+                    alert(err);
+
+                }
+            });
+
+
+        });
+    });//END DOCUMENT READY
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    function changeGP() {
+        var gp = $("#GrupoResCat option:selected").text();
+        var centro = $("#RecategorizaCentro option:selected").text();
+        var flag = false;
+
+        console.log("::GrupoR: " + gp);
+        console.log("::Centro: " + centro);
+
+        if (gp == "TI-Soporte") {
+            switch (centro) {
+                default: centro = gp; break;
+                case "Thiers": centro = "TI-SoporteThiers";             flag = true; break;
+                case "Pentafon Morelia": centro = "TI-SoporteMorelia";  flag = true; break;
+                case "Penta A": centro = "TI-SoporteCDMX";              flag = true; break;
+                case "Penta B": centro = "TI-SoporteCDMX";              flag = true; break;
+                case "Penta C": centro = "TI-SoporteCDMX";              flag = true; break;
+                case "Pentafon Monterrey": centro = "TI-SoporteMTY";    flag = true; break;
+            }
+        } else {
+            centro = gp; 
+        }
+
+
+        console.log("::GrupoRRESOLUTOR: " + centro);
+
+        document.getElementById('gpresolutor').value = centro;
+
+        if (flag) {
+            console.log("show");
+            //$("#gpresolutor").attr("display", "block");
+            //$("#gpresolutorContent").addClass("show");
+            //$("#gpresolutorContent").removeClass("hide");
+
+        } else {
+            console.log("hide");
+            ////$("#gpresolutor").attr("display", "none");
+            //$("#gpresolutorContent").addClass("hide");
+            //$("#gpresolutorContent").removeClass("show");
+        }
+    }
+    //FUNCIONES
+    function AutoAsignacion(id) {
+
+
+        //Validar que no tenga 5 números de reasignaciones
+        $.ajax({
+            url: '../Supervisor/ValidaReasignaciones',
+            type: "POST",
+            data: {
+                TicketId: id
+            },
+            success: function (result) {
+
+                if (result == "Mayor") {
+
+                    alert("El ticket " + id + " ya cuenta con un límite de 10 reasignaciones.");
+                    $("#btnAutoAsignacion").css('display', 'none');
+                    $("#btnSolicitaReasignacion").css('display', 'none');
+
+                }
+                else {
+
+                    $.ajax({
+                        url: '../Tecnico/AutoAsignacion',
+                        type: "POST",
+                        data: {
+                            TicketId: id
+                        },
+                        success: function (result) {
+
+                            if (result == "Correcto") {
+
+                                $("#modalNotificaciones").modal('show');
+                                $("#tblSuccess").css('display', 'block');
+                                $("#tituloAutoAsignacion").css('display', 'block');
+                                $("#LeyendaAutoAsignacion").css('display', 'block');
+
+                            }
+                            else {
+
+                                $("#modalNotificaciones").modal('show');
+                                $("#tblError").css('display', 'block');
+
+                            }
+
+                        },
+                        error: function (err) {
+                            alert(err);
+
+                        }
+                    });
+
+                }
+
+            },
+            error: function (err) {
+                alert(err);
+
+            }
+        });
+
+
+
+    }
+    //Guarda el cambio de estatus
+    function GuardarCambioEstatus() {
+
+        //Guarda
+        $("#form").submit();
+
+    }
+    function hoover() {
+        const tooltip = document.getElementById("tooltip");
+        var txt = $("#detalle_MotivoCambioEstatus").val();
+        if (txt.length > 13) {
+            tooltip.style.display = 'none';
+        }
+        else {
+            tooltip.style.display = 'block';
+        }
+
+    }
+
+    function nothoover() {
+        const tooltip = document.getElementById("tooltip");
+        tooltip.style.display = 'none';
+    }
+    function SubTicket(id) {
+
+        //Validar que el límite sea menor a 10 subtickets por un mismo ticket id
+        $.ajax({
+            url: '../Supervisor/ValidaSubticket',
+            type: "POST",
+            data: {
+                TicketId: id
+            },
+            success: function (result) {
+
+                if (result == "Mayor") {
+
+                    alert("El ticket " + id + " ya cuenta con un límite de 5 subtickets.");
+
+                }
+                else {
+
+                    $("#modalSubticket").modal('show');
+                }
+
+            },
+            error: function (err) {
+                alert(err);
+
+            }
+        });
+    }
+    function CrearControlCambios() { window.location.href = '../ControlCambios/CreacionControlCambios?EmployeeId=' + user + '&ticket=' + @Model.detalle.Id; }
+    function GenerarControlCambios() {
+        // abrir modal
+        $("#modalTicketCC").modal("show");
+        $("#idParaControlDeCambios").html(id);
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function AsignarTecnico(id) {
+
+        //Validar que no tenga 5 números de reasignaciones
+        $.ajax({
+            url: '../Supervisor/ValidaReasignaciones',
+            type: "POST",
+            data: {
+                TicketId: id
+            },
+            success: function (result) {
+
+                if (result == "Mayor") {
+
+                    alert("El ticket " + id + " ya cuenta con un límite de 10 reasignaciones.");
+                    $("#btnAsignarTecnico").css('display', 'none');
+                    $("#btnAprobarReasignacion").css('display', 'none');
+
+                }
+                else {
+
+                    $("#modalAsignarTecnico").modal('show');
+
+                }
+
+            },
+            error: function (err) {
+                alert(err);
+
+            }
+        });
+
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function CancelaSolicitud() {
+
+        $("#modalSubticket").modal('hide');
+        $("#modalCancelarTicket").modal('hide');
+        $("#modalRecategorizacion").modal('hide');
+        $("#modalAsignarTecnico").modal('hide');
+        $("#modalReAsignarTecnico").modal('hide');
+        $("#modalAprobarReasignacion").modal('hide');
+        //
+        $("#modalDownload").modal('hide');
+        $("#modalConfirmarRecate").modal('hide');
+
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function AceptaTicket(id) {
+
+        $("#modalGuardado").modal('hide');
+        $("#modalCancelarTicket").modal('hide');
+        $("#modalNotificaciones").modal('hide');
+        $("#modalRecategorizacion").modal('hide');
+        $("#modalAsignarTecnico").modal('hide');
+        $("#modalReAsignarTecnico").modal('hide');
+        $("#modalAprobarReasignacion").modal('hide');
+
+
+        //Regresar a la parte del DashBoard
+        var userr = $("#EmployeeIdBO").val();
+
+          @*var url = '@Url.Action("DetalleTicket", "Supervisor")';
+        window.location.href = url + '?IdTicket=' + id +'&EmployeeId=' + userr;*@
+
+
+        var url = '@Url.Action("Resolutor", "DashBoard")';
+        window.location.href = url + '?EmployeeId=' + userr;
+
+
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function CancelarTicket() {
+
+
+        $("#modalCancelarTicket").modal('show');
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function AceptaCancelarTicket(id) {
+
+        $.ajax({
+            url: '../Supervisor/CancelarTicket',
+            type: "POST",
+            data: {
+                TicketId: id,
+                Motivo: $("#detalle_ComentariosCancelacion").val()
+            },
+            success: function (result) {
+
+                if (result == "Correcto") {
+                    $("#modalCancelarTicket").modal('hide');
+                    $("#modalNotificaciones").modal('show');
+                    $("#tblSuccess").css('display', 'block');
+                    $("#tituloCancelacion").css('display', 'block');
+                    $("#LeyendaCancelacion").css('display', 'block');
+
+                }
+                else {
+                    $("#modalCancelarTicket").modal('hide');
+                    $("#modalNotificaciones").modal('show');
+                    $("#tblError").css('display', 'block');
+                }
+
+            },
+            error: function (err) {
+                alert(err);
+
+            }
+        });
+
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function Recategorizar() {
+        $("#modalRecategorizacion").modal('show');
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function ShowConfirmarRecate(id)
+    {
+
+
+        var cat = $('#RecategorizaCat option:selected').text();
+        var subcat = $('#RecategorizaSubcat option:selected').text();
+        var gpo = $('#GrupoResCat option:selected').text(); //gpresolutor
+        var textgpo = $("#gpresolutor").val();
+        var ctro = $('#RecategorizaCentro option:selected').text();
+
+        $("#GpoResolutorDesc").text(textgpo);
+        $("#CategoriaDesc").text(cat);
+        $("#SubCategoriaDesc").text(subcat);
+        $("#RecategorizaCentroDesc").text(ctro);
+
+        $("#modalRecategorizacion").modal('hide');//*
+        $("#modalConfirmarRecate").modal('show');
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function AceptaRecategorizarTicket(id) {
+
+        //Validar que los campos sean obligatorios
+        var gpo = $("#GrupoResCat").val();
+        var cat = $("#RecategorizaCat").val();
+        var subcat = $("#RecategorizaSubcat").val();
+        var ctro = $('#RecategorizaCentro').val();
+
+        if (gpo == "" && cat == "" && subcat == "") {
+
+            alert("Es obligatorio llenar los campos para recategorizar el ticket.");
+            return;
+
+        }
+        else
+        {
+
+            $.ajax({
+                url: '../Supervisor/RecategorizarTicket',
+                type: "POST",
+                data: {
+                    TicketId: id,
+                    //Motivo: $("#detalle_ComentariosRecategoriza").val(),
+                    Categoria: $("#RecategorizaCat").val(),
+                    Subcategoria: $("#RecategorizaSubcat").val(), 
+                    Centro: $('#RecategorizaCentro').val()
+                },
+                success: function (result) {
+
+                    if (result == "Correcto") {
+                        $("#modalRecategorizacion").modal('hide');
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblSuccess").css('display', 'block');
+                        $("#tituloRecategoriza").css('display', 'block');
+                        $("#LeyendaRecategoriza").css('display', 'block');
+                        $("#modalConfirmarRecate").modal('hide');//*
+
+                    }
+                    else {
+                        $("#modalConfirmarRecate").modal('hide');//*
+                        $("#modalRecategorizacion").modal('hide');
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblError").css('display', 'block');
+                    }
+
+                },
+                error: function (err) {
+                    alert(err);
+
+                }
+            });
+
+        }
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function AsignaTecnicoTicket(id) {
+
+        var ReasiVal = 0;
+
+        $.ajax({
+            url: '../Supervisor/AsignarTecnico',
+            type: "POST",
+            data: {
+                TicketId: id,
+                Tecnico: $("#AsignaTecnicoLst").val(),
+                Reasigna: ReasiVal
+            },
+            success: function (result) {
+
+                if (result == "Correcto") {
+                    $("#modalAsignarTecnico").modal('hide');
+                    $("#modalNotificaciones").modal('show');
+                    $("#tblSuccess").css('display', 'block');
+                    $("#tituloAsignaTecnico").css('display', 'block');
+                    $("#LeyendaAsignaTecnico").css('display', 'block');
+                    //$("#btnAsignarTecnico").css('display', 'none');
+                    //$("#btnReasignarTecnico").css('display', 'block');
+
+
+                }
+                else {
+                    $("#modalAsignarTecnico").modal('hide');
+                    $("#modalNotificaciones").modal('show');
+                    $("#tblError").css('display', 'block');
+
+                }
+
+            },
+            error: function (err) {
+                alert(err);
+
+            }
+        });
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function GuardaSubticket() {
+
+        //Validar campos
+        var cat = $("#subticket_Categoria").val();
+        var sub = $("#subticket_Subcategoria").val();
+        var cen = $("#subticket_Centro").val();
+        var desc = $("#subticket_DescIncidencia").val();
+
+        if (cat == "" || sub == "" || cen == "" || desc=="")
+        {
+            alert("Es obligatorio llenar los campos.");
+            $("#subticket_Categoria").css('border-color', "red");
+            $("#subticket_Subcategoria").css('border-color', "red");
+            $("#subticket_Centro").css('border-color', "red");
+            $("#subticket_DescIncidencia").css('border-color', "red");
+
+            return;
+        }
+
+        //Guarda SubTicket
+        $("#formSub").submit();
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function ShowTicketVinculado(id) {
+
+        popupWindow = window.open(
+            './TicketVinculado?IdTicket=' + id,
+            '_blank',
+            'directories=no, ' +
+            'status=no, menubar=no, ' +
+            'scrollbars=yes, ' +
+            'resizable=no,height=600, ' +
+            'width=1500,top=250,left=200');
+        popupWindow.focus();
+
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function ShowSubticket(id) {
+
+        var userr = $("#EmployeeIdBO").val();
+
+        popupWindow = window.open(
+            './DetalleSubticket?IdTicket=' + id + '&EmployeeId=' + userr,
+            '_blank',
+            'directories=no, ' +
+            'status=no, menubar=no, ' +
+            'scrollbars=yes, ' +
+            'resizable=no,height=500, ' +
+            'width=1000,top=150,left=200');
+        popupWindow.focus();
+
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function ReasignarTecnico(id) {
+
+        //Validar que no tenga 5 números de reasignaciones
+        $.ajax({
+            url: '../Supervisor/ValidaReasignaciones',
+            type: "POST",
+            data: {
+                TicketId: id
+            },
+            success: function (result) {
+
+                if (result == "Mayor") {
+
+                    alert("El ticket " + id + " ya cuenta con un límite de 10 reasignaciones.");
+                    $("#btnAsignarTecnico").css('display', 'none');
+                    $("#btnAprobarReasignacion").css('display', 'none');
+                    $("#btnReasignarTecnico").css('display', 'none');
+
+                }
+                else {
+
+                    $("#modalReAsignarTecnico").modal('show');
+
+                }
+
+            },
+            error: function (err) {
+                alert(err);
+
+            }
+        });
+
+
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function ReasignaTecnicoTicket(id) {
+
+        var ReasiVal = 1;
+
+        $.ajax({
+            url: '../Supervisor/AsignarTecnico',
+            type: "POST",
+            data: {
+                TicketId: id,
+                Tecnico: $("#ReasignaTecnicoLst").val(),
+                Reasigna: ReasiVal
+            },
+            success: function (result) {
+
+                if (result == "Correcto") {
+                    $("#modalReasignarTecnico").modal('hide');
+                    $("#modalNotificaciones").modal('show');
+                    $("#tblSuccess").css('display', 'block');
+                    $("#tituloReasignaTecnico").css('display', 'block');
+                    $("#LeyendaReasignaTecnico").css('display', 'block');
+
+
+                }
+                else {
+                    $("#modalAsignarTecnico").modal('hide');
+                    $("#modalNotificaciones").modal('show');
+                    $("#tblError").css('display', 'block');
+
+                }
+
+            },
+            error: function (err) {
+                alert(err);
+
+            }
+        });
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function AprobarReasignacion() {
+
+        $("#modalAprobarReasignacion").modal('show');
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function ApruebaAsignacion(id) {
+
+        $.ajax({
+            url: '../Supervisor/ApruebaAsignacion',
+            type: "POST",
+            data: {
+                TicketId: id,
+                Tecnico: $("#AsignaTecnicoApruebaLst").val(),
+            },
+            success: function (result) {
+
+                if (result == "Correcto") {
+
+                    $("#modalNotificaciones").modal('show');
+                    $("#tblSuccess").css('display', 'block');
+                    $("#tituloAsignaTecnico").css('display', 'block');
+                    $("#LeyendaAsignaTecnico").css('display', 'block');
+
+
+                }
+                else {
+
+                    $("#modalNotificaciones").modal('show');
+                    $("#tblError").css('display', 'block');
+
+                }
+
+            },
+            error: function (err) {
+                alert(err);
+
+            }
+        });
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function RechazaAprobacion(id) {
+
+        $.ajax({
+            url: '../Supervisor/RechazaAsignacion',
+            type: "POST",
+            data: {
+                TicketId: id
+            },
+            success: function (result) {
+
+                if (result == "Correcto") {
+
+                    $("#modalNotificaciones").modal('show');
+                    $("#tblSuccess").css('display', 'block');
+                    $("#tituloRechazaAsignacion").css('display', 'block');
+                    $("#LeyendaRechazaAsignacion").css('display', 'block');
+
+
+                }
+                else {
+
+                    $("#modalNotificaciones").modal('show');
+                    $("#tblError").css('display', 'block');
+
+                }
+
+            },
+            error: function (err) {
+                alert(err);
+
+            }
+        });
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+     function returnMenu(id) {
+
+          var url = '@Url.Action("Resolutor", "DashBoard")';
+        window.location.href = url + '?EmployeeId=' + id;
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function ShowAdjuntos(id) {
+
+
+        $("#modalDownload").modal('show');
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function DownloadDocs(id) {
+
+        $("#IdDoc").val(id);
+
+        $("#formAttach").submit();
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+</script>
+
+
+@*DESCARGA DE ARCHIVOS*@
+<div>
+    @using (Html.BeginForm("ExportArchivos", "Supervisor", FormMethod.Post, new { id = "formAttach" }))
+    {
+        @Html.Hidden("IdDoc")
+
+    }
+</div>
+
+
+@*BARRA DE MENÚ*@
+
+@*FIN DE BARRA DE MENÚ*@
+
+<p class="pophide">
+    <br />
+    <a class="pophide" onclick="returnMenu(@Model.EmployeeIdBO);"> Dashboard</a> / Detalle de Ticket
+</p>
+
+@Html.HiddenFor(m => m.EmployeeIdBO)
+
+<div class="row">
+    <div class="col-md-8">
+        <br />
+        <h4>
+            @if (ViewBag.SubticketInfo == "SI")
+            {
+                <b>Subticket ID:</b>
+            }
+            else
+            {
+                <b>Ticket ID:</b>
+            }
+            @if (@ViewBag.idChild != 0)
+            {
+                <span style="font-weight:bold;color:black;font-size:19px;">
+                    @ViewBag.idChild
+                    @Html.HiddenFor(m => m.detalle.Id)
+                </span>
+            }
+            else
+            {
+                <span style="font-weight:bold;color:black;font-size:19px;">
+                    @Html.DisplayFor(m => m.detalle.Id)
+                    @Html.HiddenFor(m => m.detalle.Id)
+                </span>
+            }
+            <span id="ccIndicator">
+                <br />
+                <b>CONTROL DE CAMBIOS ASOCIADO: @ViewBag.CC</b>
+            </span>
+        </h4>
+    </div>
+    <div class="col-sm-2"></div>
+</div>
+
+<div class="row" style="margin-top: 10px;">
+    <div class="col-md-12">
+        <div class="col-md-8">
+            @*HISTORICO Y SUBTICKET*@
+            <div class="col-md-12">
+                <ul class="nav nav-tabs navbar-left" id="myTab" role="tablist">
+                    <li class="nav-item active">
+                        <a class="nav-link" id="historialID-tab" data-toggle="tab" href="#historial" role="tab" aria-controls="historial"
+                           aria-selected="false" style="padding-bottom:1px;padding-top:1px;padding-right:15px;">
+                            <h4 style="color:black;">Historial de Seguimiento</h4>
+                        </a>
+                    </li>
+                    @if (@ViewBag.EdoTicket == "Trabajando")
+                    {
+
+                        if (ViewBag.SubticketInfo != "SI")
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" id="subticketsID-tab" data-toggle="tab" href="#subtickets" role="tab"
+                                   aria-controls="subtickets" aria-selected="false" style="padding-bottom:1px;padding-top:1px;padding-right:15px;">
+                                    <h4 style="color:black;">Subtickets </h4>
+                                </a>
+                            </li>
+
+                        }
+
+                    }
+                    @if (ViewBag.SubticketInfo != "SI")
+                    {
+
+                        <li class="nav-item">
+                            <a class="nav-link" id="vinculacion-tab" data-toggle="tab" href="#vinculacion" role="tab"
+                               aria-controls="Tickets Vinculados" aria-selected="false" style="padding-bottom:1px;padding-top:1px;padding-right:15px;">
+                                <h4 style="color:black;">Tickets Vinculados </h4>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+            <div class="col-md-12">
+                <div class="tab-content" id="myTabContent">
+                    <div class="tab-pane active" id="historial" role="tabpanel" aria-labelledby="historialID-tab">
+                        <div class="col-md-12" style="border:2px solid #A7ADB3;padding:0px;">
+                            <div class="scroll_vertical" style="width: 100%; min-height: 400px;  font-size: 15px; ">
+                                @foreach (var his in Model.historico)
+                                {
+
+                                    if (his.EstatusTicket != 2)
+                                    {
+                                        <div style="border-bottom:1px solid #ccc;border-top:1px solid #ccc;margin-bottom: 10px;padding:15px;width:100%;">
+                                            @if (!string.IsNullOrEmpty(his.TecnicoAsignadoReag2))
+                                            {
+                                                <div>
+                                                    <text style="font-weight:bold;color:black;font-size:14px;">@Html.DisplayFor(m => his.TecnicoAsignadoReag2)</text><br />
+                                                </div>
+                                            }
+                                            else if (!string.IsNullOrEmpty(his.TecnicoAsignadoReag))
+                                            {
+                                                <div>
+                                                    <text style="font-weight:bold;color:black;font-size:14px;">@Html.DisplayFor(m => his.TecnicoAsignadoReag)</text><br />
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div>
+                                                    <text style="font-weight:bold;color:black;font-size:14px;">@Html.DisplayFor(m => his.TecnicoAsignado)</text><br />
+                                                </div>
+                                            }
+                                            <text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => his.FechaRegistro)</text><br />
+                                            <text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => his.Correo)</text><br />
+                                            <text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => his.Estatus)</text><br />
+                                            <text style="font-weight:inherit;color:#808080;font-size:12px;"><b>Usuario: </b>@Html.DisplayFor(m => his.NombreCompleto)</text><br />
+                                            <text style="font-weight:inherit;color:#808080;font-size:12px;"><b>Motivo: </b>@Html.DisplayFor(m => his.Motivo)</text><br />
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        if (his.NoAsignaciones != 0)
+                                        {
+                                            <div style="border-bottom:1px solid #ccc;border-top:1px solid #ccc;margin-bottom: 10px;padding:15px;width:100%;">
+                                                @if (!string.IsNullOrEmpty(his.TecnicoAsignadoReag2))
+                                                {
+                                                    <div>
+                                                        <text style="font-weight:bold;color:black;font-size:14px;">@Html.DisplayFor(m => his.TecnicoAsignadoReag2)</text><br />
+                                                    </div>
+                                                }
+                                                else if (!string.IsNullOrEmpty(his.TecnicoAsignadoReag))
+                                                {
+                                                    <div>
+                                                        <text style="font-weight:bold;color:black;font-size:14px;">@Html.DisplayFor(m => his.TecnicoAsignadoReag)</text><br />
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div>
+                                                        <text style="font-weight:bold;color:black;font-size:14px;">@Html.DisplayFor(m => his.TecnicoAsignado)</text><br />
+                                                    </div>
+                                                }
+                                                <text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => his.FechaRegistro)</text><br />
+                                                <text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => his.Correo)</text><br />
+                                                <text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => his.Estatus)</text><br />
+                                                <text style="font-weight:inherit;color:#808080;font-size:12px;"><b>Usuario: </b>@Html.DisplayFor(m => his.NombreCompleto)</text><br />
+                                                <text style="font-weight:inherit;color:#808080;font-size:12px;"><b>Motivo: </b>@Html.DisplayFor(m => his.Motivo)</text><br />
+                                            </div>
+                                        }
+
+                                    }
+
+
+
+                                }
+                                <div class="col-md-12" style="border:1px solid #ccc; text-align:center; background-color:#FFD5DD">
+                                    <button class="btn btn-link" type="button" id="btnShowAdjuntos" onclick="ShowAdjuntos()">
+                                        <text style="font-weight:bold;color:#069CE3;font-size:14px;">Archivos Adjuntos</text>
+                                    </button><br />
+                                </div>
+                                <div class="col-md-12">
+                                    <br />
+                                    <br />
+                                    <br />
+                                    <br />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            @using (Html.BeginForm("SetCambioEstatus", "Tecnico", null, FormMethod.Post, new { enctype = "multipart/form-data", id = "form" }))
+                            {
+                                if (ViewBag.Regleta != "No muestra")
+                                {
+                                    if (ViewBag.EdoTicket == "Abierto" || ViewBag.EdoTicket == "Asignado" || ViewBag.EdoTicket == "Trabajando" || ViewBag.EdoTicket == "En Espera")
+                                    {
+                                        <div class="row" style="margin-top:10px;">
+                                            @*CAMBIO ESTATUS*@
+                                            <div class="col-md-4" style="padding-left:0px;">
+                                                @Html.HiddenFor(m => m.detalle.Id)
+                                                @Html.HiddenFor(m => m.EmployeeIdBO)
+
+                                                @if (ViewBag.EdoTicket != "Abierto") { 
+                                                    <h5 style="font-weight:bold;color:black;">
+                                                        ESTATUS
+                                                    </h5>
+                                                    @Html.DropDownListFor(m => m.detalle.EstadoTicketTecnico, (SelectList)ViewBag.EstadoTicket, "SELECCIONA UN ESTATUS", new { @class = "form-control", style = "text-align:left; !important; width: 250px;" })
+                                                }
+
+
+                                            </div>
+                                            <div class="col-md-2" id="ShowDX" style="display:none">
+                                                <h5 style="font-weight:bold;color:black;">
+                                                    DIAGNÓSTICO
+                                                </h5>
+                                                @Html.DropDownListFor(m => m.detalle.DXTecnico, (SelectList)ViewBag.DX, "SELECCIONE", new { @class = "form-control", style = "text-align:left; !important; width: 250px;" })
+
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-12 tooltip-container" id="idObserva" style="display:none" onmouseover="hoover()" onmouseout="nothoover()">
+                                                <br />
+                                                <text id="txtEspera" style="font-weight:inherit;color:#808080;font-size:12px; margin:-1%; display:block">OBSERVACIONES (MINÍMO 15 CARACTERES)</text>
+                                                <text id="txtResuelto" style="font-weight:inherit;color:#808080;font-size:12px; margin:-1%; display:none">SOLUCIÓN (MÍNIMO 15 CARACTERES)</text>
+                                                <h5>
+                                                    <br />
+                                                    @Html.TextAreaFor(m => m.detalle.MotivoCambioEstatus, new { @class = "form-control", style = "margin: 0px 39px 0px -1%; max-width: 75% !important; width: 550px; height: 250px;" })
+                                                </h5>
+                                                <div class="col-md-12">
+                                                    <label class="fileContainer">
+                                                        <label>Adjuntar archivo</label>
+                                                        <i class="glyphicon glyphicon-folder-open"></i>
+                                                        <input id="btnAddArchivoCS" type="file" name="upload" accept="application/application" />
+                                                    </label>
+                                                </div>
+                                                <div>
+                                                    <br /> <br /><br /> <br />
+                                                    <div class="tooltip-container" onmouseover="hoover()" onmouseout="nothoover()">
+                                                        <button type="button" class="btn btn-primary" style="display:block;" id="btnGuardarCambioEstatus" onclick="GuardarCambioEstatus()">Guardar</button>
+                                                        <p id="tooltip" style="display:none;">Observaciones: mínimo 15 carácteres.</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            @*<div class="col-md-4" style="display:none;" id="divGuardar" >
+                                <div class="col-md-12 ">
+                                    <br />
+                                    <button type="button" class="btn btn-primary" id="btnGuardarCambioEstatuss" onclick="GuardarCambioEstatus()">Guardar</button>
+                                </div>
+                            </div>*@
+                                            @*CAMBIO ESTATUS*@
+                                        </div>
+
+
+                                    }
+
+                                }
+
+
+                            }
+                        </div>
+                    </div>
+                    @if (@ViewBag.EdoTicket == "Trabajando")
+                    {
+                        if (ViewBag.SubticketInfo != "SI")
+                        {
+                            <div class="tab-pane " id="subtickets" role="tabpanel" aria-labelledby="subticketsID-tab">
+                                <div class="row">
+                                    <div class="col-md-11" style="text-align:right">
+                                        <br />
+                                        <button type="button" class="btn btn-success" id="btnSubticket" onclick="SubTicket(@Model.detalle.Id)">Crear Subticket</button>
+                                    </div>
+                                </div>
+                                <br />
+                                <div class="row">
+                                    <div class="scroll_vertical" style="max-width: 100%; max-height: 600px;  font-size: 15px; ">
+                                        @if (Model.ListSubticket != null)
+                                        {
+
+
+                                            @Html.Grid(Model.ListSubticket).Columns(col =>
+                                       {
+
+                                           col.Add(data => data.Id).Titled("SUB-ID").Filterable(true);
+                                           col.Add(data => data.Categoria).Titled("Categoria").Filterable(true);
+                                           col.Add(data => data.Subcategoria).Titled("Subcategoria").Filterable(true);
+                                           col.Add(data => data.Estatus).Titled("Estatus");
+                                           col.Add().Encoded(false).Sanitized(false)
+                                         .RenderValueAs(data => "<div style='text-align: center'>"
+                                             + "<button type='button' class='btn btn-info glyphicon glyphicon-eye-open' title='Ver' onclick='ShowSubticket(\"" + data.Id + "\");'></button>"
+                                             + "</div>").Css("little");
+
+                                       })
+
+                                        }
+                                        else
+                                        {
+                                            <label>¡No se encontraron Subtickets!</label>
+                                        }
+
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        }
+                    }
+
+                    @*VINCULACIÓN DE TICKETS*@
+                    <div class="tab-pane " id="vinculacion" role="tabpanel" aria-labelledby="vinculacion-tab">
+                        <div class="row">
+                        </div>
+                        <br />
+                        <div class="row">
+                            <div class="scroll_vertical" style="max-width: 100%; max-height: 600px;  font-size: 15px; ">
+                                @if (Model.lstVinculacion != null)
+                                {
+
+
+                                    @Html.Grid(Model.lstVinculacion).Named("ast").Columns(col =>
+                               {
+
+                                   col.Add(data => data.IdTicketChild).Titled("Ticket").Filterable(true);
+                                   col.Add(data => data.Fecha).Titled("Fecha").Filterable(true);
+                                   col.Add(data => data.tiempoSLA).Titled("Tiempo transcurrido").Filterable(true);
+                                   col.Add(data => data.usuario).Titled("Usuario");
+                                   col.Add().Encoded(false).Sanitized(false)
+                                  .RenderValueAs(data => "<div style='text-align: center'>"
+                                      + "<button type='button' class='btn btn-info glyphicon glyphicon-eye-open' title='Ver' onclick='ShowTicketVinculado(\"" + data.IdTicketChild + "\");'></button>"
+                                      + "</div>").Css("little");
+
+                               }).WithPaging(10)
+
+
+
+                                }
+                                else
+                                {
+                                    <label>¡No se encontraron tickets vinculados!</label>}
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+
+
+            </div>
+            @*DETALLE TICKET Y MIS DATOS*@
+        </div>
+        <div class="col-md-4">
+            <div class="row" style="text-align:right;">
+                <div class="col-md-4 col-md-offset-7">
+                    <h4 style="font-weight:bold;"><i class="glyphicon glyphicon-adjust" style="color:@Model.detalle.Color"></i> @Model.detalle.Estatus</h4>
+                </div>
+            </div>
+            @*SLA DANIEL FUENTES*@
+            <div class="row" style="text-align:right;background-color:#F9F9FA;">
+                <div class="col-md-12">
+                    @if (Model.Slas != null)
+                    {
+                        foreach (var sla in Model.Slas)
+                        {
+                            <div class="col-md-3" style="border:2px solid #FFFFFF;border-radius:5px;text-align:center;background-color:@(sla.Color);margin-right:10px;padding:0px;">
+                                <label style="font-size:11px;font-weight:bold;color:black;margin-top:5px;">@Html.DisplayFor(t => sla.Type)</label><br />
+                                <label style="font-size:17px;font-weight:bold;color:black;">@Html.DisplayFor(t => sla.Time)</label>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+            @*SLA DANIEL FUENTES*@
+            <br />
+            @if (ViewBag.SubticketInfo == "SI")
+            {
+                <div class="row" style="text-align:right;">
+                    <div class="col-md-12" style="background-color:#CDEDFC;">
+                        <h4 style="text-align:center"><b>Ticket ID principal: @ViewBag.SubticketId</b></h4>
+                    </div>
+                </div>
+            }
+            <div class="row" style="border-color: #F9F9FA; background-color: #F9F9FA;padding:10px;">
+                <ul class="nav nav-tabs navbar-left" id="myTab" role="tablist">
+                    <li class="nav-item active">
+                        <a class="nav-link" id="datoticket-tab" data-toggle="tab" href="#datoticket"
+                           role="tab" aria-controls="datoticket" aria-selected="false" style="padding-bottom:1px;padding-top:1px;padding-right:15px;">
+                            <h4 style="color:black;"> Datos del Ticket</h4>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="misdatosID-tab" data-toggle="tab" href="#misdatos"
+                           role="tab" aria-controls="misdatos" aria-selected="false" style="padding-bottom:1px;padding-top:1px;padding-right:15px;">
+                            <h4 style="color:black;">Mis Datos</h4>
+                        </a>
+                    </li>
+                </ul>
+                <div class="tab-content" id="myTabContent">
+                    <div class="tab-pane active" id="datoticket" role="tabpanel" aria-labelledby="datoticket-tab">
+                        <br />
+                        <br />
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h4 style="color:black;">Breve descripción de la incidencia</h4>
+                                <h5>@Html.DisplayFor(m => m.detalle.DescripcionIncidencia)</h5>
+                                <p style="margin:15px;"></p>
+                                <h4 style="color:black;">Soporte de la incidencia</h4>
+                                <h5>@Html.DisplayFor(m => m.detalle.ArchivoAdjunto)</h5>
+                                <p style="margin:15px;"></p>
+                                <h4 style="color:black;">Cátegoria</h4>
+                                <h5>@Html.DisplayFor(m => m.detalle.Categoria)</h5>
+                                <p style="margin:15px;"></p>
+                                <h4 style="color:black;">Subcátegoria</h4>
+                                <h5>@Html.DisplayFor(m => m.detalle.SubCategoria)</h5>
+                                <p style="margin:15px;"></p>
+                                <h4 style="color:black;">Centro</h4>
+                                <h5>@Html.DisplayFor(m => m.detalle.Centro)</h5>
+                                <p style="margin:15px;"></p>
+                                <h4 style="color:black;">Personas a notificar el estado del ticket</h4>
+                                <h5>@Html.DisplayFor(m => m.detalle.PersonasAddNotificar)</h5>
+                                <p style="margin:15px;"></p>
+                                <h4 style="color:black;">Grupo resolutor</h4>
+                                @if (Model.detalle.GrupoResolutor == "TI-Soporte")
+                                {
+                                    string centro = Model.detalle.Centro;
+                                    if (centro == "Thiers") { centro = "TI-SoporteThiers"; }
+                                    if (centro == "Morelia") { centro = "TI-SoporteMorelia"; }
+                                    if (centro == "Penta A" || centro == "Penta B" || centro == "Penta C") { centro = "TI-SoporteCDMX"; }
+                                    if (centro == "Monterrey") { centro = "TI-SoporteMTY"; }
+                                    <h5> @centro </h5>
+                                }
+                                else
+                                {
+                                    <h5>@Html.DisplayFor(m => m.detalle.GrupoResolutor)</h5>
+                                }
+                                <p style="margin:15px;"></p>
+                                <h4 style="color:black;"><i class="glyphicon glyphicon-align-right"></i> Prioridad</h4>
+                                <h5>@Html.DisplayFor(m => m.detalle.Prioridad)</h5>
+                                <p style="margin:15px;"></p>
+                                <h4 style="color:black;"><i class="glyphicon glyphicon-user"></i> Técnico asignado</h4>
+                                <h5 style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.TecnicoAsignado)</h5>
+                                <p style="margin:15px;"></p>
+                                <h4 style="color:black;"><i class="glyphicon glyphicon-user"></i> Técnico asignado reapertura</h4>
+                                <h5>@Html.DisplayFor(m => m.detalle.TecnicoAsignadoReag)</h5>
+                                <p style="margin:15px;"></p>
+                                <h4 style="color:black;"><i class="glyphicon glyphicon-user"></i> Técnico asignado reapertura 2</h4>
+                                <h5>@Html.DisplayFor(m => m.detalle.TecnicoAsignadoReag2)</h5>
+                                <p style="margin:15px;"></p>
+                                <h4 style="color:black;"><i class="glyphicon glyphicon-dashboard"></i> Número de reaperturas del ticket</h4>
+                                <h5>@Html.DisplayFor(m => m.detalle.NoReapertura)</h5>
+                                <p style="margin:15px;"></p>
+
+                            </div>
+
+                            @*GESTION DE BOTONES*@
+
+                            @if (ViewBag.EdoTicket == "Abierto" || ViewBag.EdoTicket == "En Espera" && ViewBag.MuestraAsignacion == "SI")
+                            {
+
+                                <div class="col-md-12">
+                                    <br />
+                                    <button type="button" class="btn btn-info btn-block" id="btnAutoAsignacion" onclick="AutoAsignacion(@Model.detalle.Id);">Asignarme ticket</button>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <br />
+                                    <button type="button" class="btn btn-info btn-block" id="btnAsignarTecnico" onclick="AsignarTecnico(@Model.detalle.Id);">Asignar técnico</button>
+                                </div>
+
+
+                                <div class="col-md-12">
+                                    <br />
+                                    <button type="button" class="btn btn-info btn-block" id="btnConvertirCC" onclick="GenerarControlCambios(@Model.detalle.Id);">Crear Control de Cambios</button>
+                                </div>
+
+                                //                                        Control de cambios setup
+
+                            }
+                            else if (@ViewBag.EdoTicket == "Asignado" || @ViewBag.EdoTicket == "Trabajando" || ViewBag.EdoTicket == "En Espera")
+                            {
+
+                                <div class="col-md-12">
+                                    <br />
+                                    <button type="button" class="btn btn-info btn-block" id="btnReasignarTecnico" onclick="ReasignarTecnico(@Model.detalle.Id);">Reasignar técnico</button>
+                                </div>
+                                <div class="col-md-12">
+                                    <br />
+                                    <button type="button" class="btn btn-info btn-block" id="btnCancelar" onclick="CancelarTicket();">Cancelar</button>
+                                </div>
+
+                            }
+
+                            @if (ViewBag.EdoTicket == "Asignado" || ViewBag.EdoTicket == "Trabajando")
+                            {
+
+                                <div class="col-md-12">
+                                    <br />
+                                    <button type="button" class="btn btn-info btn-block" id="btnRecategorizar" onclick="Recategorizar();">Recategorizar ticket</button>
+                                </div>
+
+                                if (ViewBag.Aprobar == "SI")
+                                {
+                                    <div class="col-md-12">
+                                        <br />
+                                        <button type="button" class="btn btn-danger btn-block" id="btnAprobarReasignacion" onclick="AprobarReasignacion();">Aprobar/Rechazar Reasignación</button>
+                                    </div>
+                                }
+
+                            }
+
+                            @if (ViewBag.EdoTicket == "Abierto")
+                            {
+
+                                <div class="col-md-12">
+                                    <br />
+                                    <button type="button" class="btn btn-info btn-block" id="btnRecategorizar" onclick="Recategorizar();">Recategorizar ticket</button>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <br />
+                                    <button type="button" class="btn btn-info btn-block" id="btnCancelar" onclick="CancelarTicket();">Cancelar</button>
+                                </div>
+                            }
+
+
+                            @*FIN DE GESTION DE BOTONES*@
+                        </div>
+                    </div>
+                    @*MIS DATOS*@
+                    <div class="tab-pane " id="misdatos" role="tabpanel" aria-labelledby="misdatosID-tab">
+                        <br />
+                        <br />
+                        <div class="row">
+                            <div class="col-md-12">
+                                <br /><text style="font-weight:bold;color:black;font-size:14px;">
+                                    ID Empleado<text />
+                                    <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.EmployeeIdBO)</text>
+                                    <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Nombre completo</text>
+                                    <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.NombreCompleto)</text>
+                                    <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Correo electrónico</text>
+                                    <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.Correo)</text>
+                                    <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Área</text>
+                                    <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.Area)</text>
+                                    <br />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+@*==============================MODALES==============================*@
+
+@*//Modal de TICKET A CONTROL DE CAMBIOS*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalTicketCC">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div>
+                <div class="col-md-12">
+                    <table style="width:100%;">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title"><b>Generar Control de Cambios</b></h4>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;">
+
+                                <br />
+                                <div class="col-md-12" style="font-size: 1.3em; display: flex; align-items: center; justify-content: center; padding-bottom:20px;">
+                                    <span class="glyphicon glyphicon-alert" style="color: orange; font-size: 3em;"></span>
+                                </div>
+                                <div class="col-md-12" style="font-size: 1.3em; display: flex; align-items: center; justify-content: center;">
+                                    <div> ¿Está usted seguro que desea generar un <br />Control de Cambios a partir de este ticket? <br /> (Ticket: @Model.detalle.Id)</div>
+                                </div>
+                                <br />
+                                <br />
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="modalTicketCCbtnAceptar" onClick="CrearControlCambios()">Aceptar</button>
+                <button type="button" class="btn btn-danger" id="modalTicketCCbtnCerrar">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@*//Modal de TICKET VINCULADO*@
+@*<div class="modal fade" tabindex="-1" role="dialog" id="modalTicketVinculado">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div> @Html.Action("TicketVinculado", "Supervisor", new { IdTicket = Model.detalle.Id})</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" onclick="AceptaTicket()">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>*@
+
+
+@*//Modal de Reasignar tecnico*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalReAsignarTecnico">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div>
+                <div class="col-md-12">
+                    @Html.HiddenFor(m => m.EmployeeIdBO)
+                    <table style="width:100%;">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title"><b>Reasignar técnico</b></h4>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;">
+                                <br />
+                                <b>TÉCNICO</b><br />
+                                @Html.DropDownList("ReasignaTecnicoLst", (SelectList)ViewBag.UserLst, "SELECCIONE", new { @class = "form-control", style = "text-align:center; width: 100%;" })
+                                <br />
+                                <br />
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" onclick="CancelaSolicitud()">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="ReasignaTecnicoTicket(@Model.detalle.Id)">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@*//Modal de Cancelacion de Ticket*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalCancelarTicket">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div>
+                <div class="col-md-12">
+                    @Html.HiddenFor(m => m.EmployeeIdBO)
+                    <table style="width:100%;">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title"><b>Cancelar ticket</b></h4>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <br />
+                                <br />
+                                <text style="font-weight:bold;color:#808080;font-size:12px;margin: 0px 39px 0px 10px;">
+                                    MOTIVO DE CANCELACIÓN DEL TICKET
+                                    <br />
+                                    @Html.TextAreaFor(m => m.detalle.ComentariosCancelacion, new { @class = "form-control", style = "margin: 0px 39px 0px 10px; max-width: 75% !important; width: 559px; height: 250px;" })
+                                    <br />
+                                    <br />
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" onclick="CancelaSolicitud()">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="AceptaCancelarTicket(@Model.detalle.Id)">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@*//Modal de Recategorización Ticket*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalRecategorizacion">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div>
+                <div class="col-md-12">
+                    @Html.HiddenFor(m => m.EmployeeIdBO)
+                    <table style="width:100%;">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title"><b>Recategorización</b></h4>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;">
+                                @*<br />
+                                <b>GRUPO RESOLUTOR*</b><br />*@
+                                @Html.DropDownList("GrupoResCat", (SelectList)ViewBag.GrupoResolutorCat, "SELECCIONE SUBCATEGORIA", new { @class = "form-control hidden", style = "text-align:center", onChange = "changeGP()" })
+                                <br />
+                                <b>GRUPO RESOLUTOR*</b><br />
+                                <input type="text" id="gpresolutor" name="fname" class="form-control" readonly >
+                                <br />
+                            </td>
+                            <td id="gpresolutorContent">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;">
+                                <b>CENTRO*</b><br />
+                                @Html.DropDownList("RecategorizaCentro", (SelectList)ViewBag.Centro, "SELECCIONE", new { @class = "form-control", style = "text-align:center", onChange = "changeGP()" })
+                                <br />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;">
+                                <b>CATEGORÍA*</b><br />
+                                @Html.DropDownList("RecategorizaCat", (SelectList)ViewBag.Categoria, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                                <br />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;">
+                                <b>SUBCATEGORÍA*</b><br />
+                                @Html.DropDownList("RecategorizaSubcat", (SelectList)ViewBag.SubCategoria, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                                <br />
+                            </td>
+                        </tr>
+                        @*<tr>
+            <td>
+                <br />
+                <text style="font-weight:bold;color:#808080;font-size:12px;margin: 0px 39px 0px 10px;">
+                    MOTIVO DE RECATEGORIZACIÓN DEL TICKET
+                    <br />
+                    @Html.TextAreaFor(m => m.detalle.ComentariosRecategoriza, new { @class = "form-control", style = "margin: 0px 39px 0px 10px; max-width: 75% !important; width: 559px; height: 250px;" })
+                    <br />
+                    <br />
+            </td>
+        </tr>*@
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" onclick="CancelaSolicitud()">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="ShowConfirmarRecate(@Model.detalle.Id)">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@*Modal Confirmar datos*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalConfirmarRecate">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Confirmar datos de recategorización</h4>
+            </div>
+            <div>
+                <div class="col-md-12">
+                    @Html.HiddenFor(m => m.EmployeeIdBO)
+                    <table style="width:100%;">
+                        <tr>
+                            <td style="width:100%;"><b style="color:red">Estas por recategorizar el ticket con la siguiente información.</b><br /></td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;"><b style="color:red">¿Es correcto el cambio?</b> <br /></td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;"><b>Grupo Resolutor</b></td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;"><label style="color:slategray" id="GpoResolutorDesc"></label></td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;"><b>Categoría</b></td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;"><label style="color:slategray" id="CategoriaDesc"></label></td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;"><b>SubCategoría</b></td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;"><label style="color:slategray" id="SubCategoriaDesc"></label></td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;"><b>Centro</b></td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;"><label style="color:slategray" id="RecategorizaCentroDesc"></label></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" onclick="CancelaSolicitud()">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="AceptaRecategorizarTicket(@Model.detalle.Id)">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+@*//Modal de Asignar tecnico*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalAsignarTecnico">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div>
+                <div class="col-md-12">
+                    @Html.HiddenFor(m => m.EmployeeIdBO)
+                    <table style="width:100%;">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title"><b>Asignar técnico</b></h4>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;">
+                                <br />
+                                <b>TÉCNICO</b><br />
+                                @Html.DropDownList("AsignaTecnicoLst", (SelectList)ViewBag.UserLst, "SELECCIONE", new { @class = "form-control", style = "text-align:center; width: 100%;" })
+                                <br />
+                                <br />
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" onclick="CancelaSolicitud()">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="AsignaTecnicoTicket(@Model.detalle.Id)">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@*APROBAR O RECHAZAR REASIGNACIÓN*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalAprobarReasignacion">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div>
+                <div class="col-md-12">
+                    @Html.HiddenFor(m => m.EmployeeIdBO)
+                    <table style="width:100%;">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title"><b>Reasignar técnico</b></h4>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;">
+                                <br />
+                                <b>MOTIVO</b><br />
+                                @Html.DisplayFor(m => m.detalle.MotivoReasignacion)
+                                @Html.HiddenFor(m => m.detalle.MotivoReasignacion)
+                                <br />
+                                <br />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;">
+                                <br />
+                                <b>TÉCNICO</b><br />
+                                @Html.DropDownList("AsignaTecnicoApruebaLst", (SelectList)ViewBag.UserLst, "SELECCIONE", new { @class = "form-control", style = "text-align:center; width: 100%;" })
+                                <br />
+                                <br />
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" onclick="RechazaAprobacion(@Model.detalle.Id)">Rechazar</button>
+                <button type="button" class="btn btn-success" onclick="ApruebaAsignacion(@Model.detalle.Id)">Aprobar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@*//Modal de Notificaciones*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalNotificaciones">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div>
+                <div class="col-md-12">
+                    <table style="width:100%; display:none;" id="tblSuccess">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title" id="tituloCancelacion" style="display:none;"><b>Ticket cancelado</b></h4>
+                                    <h4 class="modal-title" id="tituloRecategoriza" style="display:none;"><b>Recategorizar ticket</b></h4>
+                                    <h4 class="modal-title" id="tituloAsignaTecnico" style="display:none;"><b>Asignación técnico</b></h4>
+                                    <h4 class="modal-title" id="tituloReasignaTecnico" style="display:none;"><b>Reasignación técnico</b></h4>
+                                    <h4 class="modal-title" id="tituloRechazaAsignacion" style="display:none;"><b>Solicitud Rechazada</b></h4>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <br />
+                                <br />
+                                <div style="color:forestgreen; top:-10px; font-style:normal;line-height:20px; margin-left:250px; font-size:xxx-large;" class="glyphicon glyphicon-ok">
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;">
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaCancelacion">El ticket se canceló correctamente</label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaRecategoriza">El ticket se recategorizó correctamente</label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaAsignaTecnico">El ticket se asignó correctamente</label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaReasignaTecnico">El ticket se Reasignó correctamente</label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaRechazaAsignacion">Se rechazó la solicitud de reasignación del <br /> ticket.</label>
+                                <br />
+                            </td>
+                        </tr>
+                    </table>
+                    <table style="width:100%; display:none;" id="tblError">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title"><b>¡Error!</b></h4>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <br />
+                                <br />
+                                <div style="color:red; top:-10px; font-style:normal;line-height:20px; margin-left:250px; font-size:xxx-large;" class="glyphicon glyphicon-ban-circle">
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;">
+                                <label style="color:red;  margin-left:200px;">¡Error al guardar!</label>
+                                <br />
+                                <label style="color:red; margin-left:150px;">Favor de validarlo con el Administrador</label>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="AceptaTicket(@Model.detalle.Id)">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@*Modal de DESCARGA ARCHIVOS*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalDownload">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div>
+                <div class="col-md-12">
+                    <table style="width:100%;">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title"><b>Archivos Adjuntos</b></h4>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="row">
+                                    <div class="scroll_vertical" style="max-width: 100%; max-height: 700px;  font-size: 15px; ">
+                                        @if (Model.Docs != null)
+                                        {
+
+
+                                            @Html.Grid(Model.Docs).Columns(col =>
+                                       {
+
+                                           col.Add(data => data.Nombre).Titled("Archivo").Filterable(true);
+                                           col.Add(data => data.Extension).Titled("Tipo");
+                                           col.Add().Encoded(false).Sanitized(false)
+                                         .RenderValueAs(data => "<div style='text-align: center'>"
+                                             + "<button type='button' class='btn btn-success glyphicon glyphicon-download' title='Descargar' onclick='DownloadDocs(\"" + data.Id + "\");'></button>"
+                                             + "</div>").Css("little");
+
+                                       })
+
+                                        }
+                                        else
+                                        {
+                                            <label>¡No se encontraron Archivos Adjuntos!</label>
+                                        }
+
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" onclick="CancelaSolicitud()">Cerrar</button>
+                @*<button type="button" class="btn btn-primary" onclick="AceptaTicket(@Model.detalle.Id)">Aceptar</button>*@
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@using (Html.BeginForm("SetSubticket", "Supervisor", null, FormMethod.Post, new { enctype = "multipart/form-data", id = "formSub" }))
+{
+    @*==============================MODALES==============================*@
+
+    @*Modal Confirmar datos*@
+    <div class="modal fade" tabindex="-1" role="dialog" id="modalSubticket">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Crear subticket</h4>
+                </div>
+                @Html.HiddenFor(m => m.EmployeeIdBO)
+
+                <div>
+                    <div class="col-md-6">
+                        <table style="width:100%;">
+                            <tr style="display:none">
+                                <td style="width:100%;">
+                                    <label>
+                                        @Html.TextBoxFor(m => m.subticket.IdTicket)
+                                        @Html.HiddenFor(m => m.subticket.IdTicket)
+                                    </label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:100%;">
+                                    <br />
+                                    <b>CATEGORÍA*</b><br />
+                                    @Html.DropDownListFor(m => m.subticket.Categoria, (SelectList)ViewBag.Categoria, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                                    <br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:100%;">
+                                    <b>SUBCATEGORÍA*</b><br />
+                                    @Html.DropDownListFor(m => m.subticket.Subcategoria, (SelectList)ViewBag.SubCategoria, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                                    <br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:100%;">
+                                    <b>CENTRO*</b><br />
+                                    @Html.DropDownListFor(m => m.subticket.Centro, (SelectList)ViewBag.Centro, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                                    <br />
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table style="width:100%;">
+                            <tr>
+                                <td style="width:100%;">
+                                    <br />
+                                    <b>GRUPO RESOLUTOR</b><br />
+                                    @Html.TextBoxFor(m => m.subticket.GrupoResolutor, new { @class = "form-control", @readonly = "true" })
+                                    <br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:100%;">
+                                    <b>PRIORIDAD</b><br />
+                                    @Html.TextBoxFor(m => m.subticket.Prioridad, new { @class = "form-control", @readonly = "true" })
+                                    <br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:100%;">
+                                    <b>ESTATUS</b><br />
+                                    @Html.TextBoxFor(m => m.subticket.Estatus, new { @class = "form-control", @readonly = "true" })
+                                    <br />
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-12">
+                        <table style="width:100%;">
+                            <tr>
+                                <td style="width:100%;">
+                                    <br />
+                                    <text style="font-weight:inherit;color:#808080;font-size:12px; margin:-1%;">BREVE DESCRIPCIÓN DE LA INCIDENCIA*</text>
+                                    <br />
+                                    @Html.TextAreaFor(m => m.subticket.DescIncidencia, new { @class = "form-control", style = "margin: 0px 39px 0px -1%; max-width: 75% !important; width: 700px; height: 250px;" })
+                                    <br />
+                                    <br />
+                                    <text style="font-weight:inherit;color:#808080;font-size:12px; margin:-1%;">SOPORTE DE LA INCIDENCIA</text><br />
+                                    @*<button type="button" class="btn btn-primary" id="" onclick="AddArchivoSubticket()">Adjuntar Archivo</button>*@
+                                    <label class="fileContainer">
+                                        <label>Adjuntar archivo</label>
+                                        <i class="glyphicon glyphicon-folder-open"></i>
+                                        <input id="btnAddArchivoSubticket" type="file" name="upload" accept="application/application" />
+                                    </label>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" onclick="CancelaSolicitud()">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnGuardaSubticket" onclick="GuardaSubticket()">Aceptar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @*==============================MODALES==============================*@
+
+
+    //Modal de notificaciones
+    <div class="modal fade" tabindex="-1" role="dialog" id="modalGuardado">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div>
+                    <div class="col-md-12">
+                        <table style="width:100%;">
+                            @if (ViewBag.Id != "0")
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="modal-header">
+                                            <h4 class="modal-title"><b>Subticket creado</b></h4>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>
+                                        <br />
+                                        <br />
+                                        <div style="color:forestgreen; top:-10px; font-style:normal;line-height:20px; margin-left:250px; font-size:xxx-large;" class="glyphicon glyphicon-ok">
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="width:100%;">
+                                        <label style="color:slategray; margin-left:150px;">¡El Subticket se ha creado correctamente!</label>
+                                        <br />
+                                        <label style="color:slategray; margin-left:200px;">ID: SUB-@ViewBag.Id</label>
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="modal-header">
+                                            <h4 class="modal-title"><b>¡Error!</b></h4>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <br />
+                                        <br />
+                                        <div style="color:red; top:-10px; font-style:normal;line-height:20px; margin-left:250px; font-size:xxx-large;" class="glyphicon glyphicon-ban-circle">
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="width:100%;">
+                                        <label style="color:red;  margin-left:200px;">¡Error al Generar el SubTicket!</label>
+                                        <br />
+                                        <label style="color:red; margin-left:150px;">Favor de validarlo con el Administrador</label>
+                                    </td>
+                                </tr>
+
+                            }
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="AceptaTicket(@Model.detalle.Id)">Aceptar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}
+
+
+
+
+
+
+
+
+
+
+

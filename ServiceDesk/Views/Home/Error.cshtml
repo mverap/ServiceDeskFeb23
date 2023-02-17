@@ -1,0 +1,143 @@
+﻿@model ServiceDesk.ViewModels.LoginVm
+@{
+    ViewBag.Title = "Error";
+    Layout = "";
+}
+
+<script src="@Url.Content("~/Scripts/bootstrap.min.js")"></script>
+<link href="@Url.Content("~/Content/bootstrap.min.css")" rel="stylesheet" />
+<style>
+    textarea:focus, input:focus {
+        outline: none;
+    }
+</style>
+<script>
+    $("#incorrecta").css("display", "block");
+</script>
+
+
+<table style="width: 22%; margin-left: 38%; margin-top: 5%;">
+    <!-- Inicio de contenido -->
+    @using (Html.BeginForm("Inicio", "Home", FormMethod.Post, new { id = "formInicio" }))
+    {
+        <tr style="text-align: center;">
+            <td>
+                <div>
+                    <img src="~/Content/Images/ptf_click.png" alt="ServiceDesk" width="325" height="225" />
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="3"></td>
+        </tr>
+        <tr>
+            <td colspan="3" style="text-align: center;">
+                <h3 style="color: black;">Inicio de sesión</h3>
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="3">
+                <table style="width: 100%; font-size: 20px;">
+                    <tr>
+                        <td style="width: 15%; text-align: left;">
+                            <i class="fa fa-child" aria-hidden="true"></i>
+                        </td>
+                        <td style="width: 70%; text-align: center;padding-left:5px;">
+                            @Html.TextBoxFor(a => a.Usuario,
+                            new
+                            {
+                                id = "txt_usuario",
+                                Style = "border: 0px;",
+                                placeholder = "Usuario"
+                            })
+                        </td>
+                        <td style="width: 15%;"></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="3">
+                <br />
+            </td>
+        </tr>
+        <tr>
+            <td colspan="3">
+                <table style="width:100%;">
+                    <tr>
+                        <td style="width:100%;background-color:#049FE5;border:2px solid #049FE5"></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="3">
+                <br />
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="3">
+                <table style="width: 100%; font-size: 20px;">
+                    <tr>
+                        <td style="width: 15%; text-align: center;">
+                            <i class="fa fa-key"></i>
+
+                        </td>
+                        <td style="width: 70%; text-align: center;padding-left:5px;">
+                            @Html.TextBoxFor(a => a.Password,
+                            new
+                            {
+                                id = "txt_password",
+                                Style = "border: 0px;",
+                                placeholder = "Contraseña",
+                                type = "password"
+                            })
+                        </td>
+                        <td style="width: 15%;"></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr><td style="background-color: white">.</td></tr>
+        <tr>
+            <td colspan="3">
+                <div style="width: 100%;">
+                    <div style="background-color: #5CB85C; width: 80%; margin-left: 10%;">
+                        <button class="btn btn-success btn-block" style="border: 0;" onclick="Entrar();">
+                            Ingresar
+
+                            <i class="fa fa-sign-out" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr><td style="background-color: white">.</td></tr>
+        <tr>
+            <td colspan="3"></td>
+        </tr>
+        <tr>
+            <td colspan="3">
+                <div id="incorrecta" style="display: none;">
+                    <table style="width: 100%;">
+                        <tr style="background-color: #D9534F;">
+                            <td style="text-align: center;">
+                                <h5 style="color: white;">Contraseña y/o Usuario incorrecto.</h5>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="3">
+                <div style="text-align:right;font-size:9px;margin-top:15px;">
+                    Pentafon 2022.
+                </div>
+            </td>
+        </tr>
+    }
+</table>
+

@@ -1,0 +1,341 @@
+﻿@using GridMvc
+@using GridMvc.Html
+
+@model ServiceDesk.ViewModels.DetalleSelectedTicketVm
+
+@{
+    ViewBag.Title = "DetalleTicket";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style type="text/css">
+    .bs-iconsheader button span {
+        font-size: 22px;
+        text-decoration: none;
+        margin: 0 20px;
+        color: steelblue;
+    }
+
+        .bs-iconsheader button span:hover {
+            color: dodgerblue;
+        }
+
+    textarea {
+        resize: none;
+    }
+
+    div.scroll_vertical {
+        height: 350px;
+        width: 90%;
+        overflow: auto;
+        padding: 8px;
+    }
+
+    .RectangleSLA {
+        text-align: center;
+        width: 125px;
+        padding: 10px 12px;
+        border-radius: 3px;
+        margin-left: 5px;
+        background-color: white;
+        border: 1px solid grey;
+    }
+</style>
+<script>
+    if (window.opener) { //Esta linea se ejecuta si es popUp            
+        $(".pophide").css('display', 'none'); //ocultar barra breadcrumbs
+        $(".navbar").css('display', 'none'); //ocultar barra superior  
+    } else if (window.top !== window.self) { } else { }
+</script>
+
+
+<p class="pophide">
+    <br />
+    <a style="color: dodgerblue" onclick="returnMenu()">Dashboard</a>
+</p>
+
+<script type="text/javascript">
+    var user =  '@ViewBag.user';
+    var folio = '@ViewBag.Id';
+
+    function returnMenu() {
+        var url = '@Url.Action("Dashboard", "Directivo")'
+        window.location.href = url + '?EmployeeId=' + user
+    }
+
+</script>
+
+
+<div class="row">
+    <div class="col-md-8">
+        <br />
+        <h4>
+            <b>Ticket ID:</b>
+            @if (@ViewBag.idChild != 0)
+            {
+                <span style="font-weight:bold;color:black;font-size:19px;">
+                    @ViewBag.idChild
+                    @Html.HiddenFor(m => m.detalle.Id)
+                </span>
+            }
+            else
+            {
+                <span style="font-weight:bold;color:black;font-size:19px;">
+                    @Html.DisplayFor(m => m.detalle.Id)
+                    @Html.HiddenFor(m => m.detalle.Id)
+                </span>
+            }
+        </h4>
+    </div>
+    <div class="col-sm-2"></div>
+</div>
+
+<div class="row" style="margin-top: 10px;">
+    <div class="col-md-12">
+        <div class="Detail1">
+            @if (ViewBag.SubticketInfo == "SI")
+            {
+                <div class="row" style="text-align:right;">
+                    <div class="col-md-12" style="background-color:#CDEDFC;">
+                        <h4 style="text-align:center"><b>Ticket ID principal: @ViewBag.SubticketId</b></h4>
+                    </div>
+                </div>
+            }
+            <div class="DetailTic">
+                <div class="nav nav-tabs navbar-left" id="myTab" role="tablist" style="width:100%; border: 1px solid grey">
+
+                    <div class="tab-content" id="myTabContent" style="max-width:100%">
+                        <div class="ConteinerHeader" style="display:flex">
+                            <div class="header-1" style="width: 80%;border-bottom:grey 1px solid;display: flex; padding-left: 10px">
+                                <h4><b style="color:black">Datos del Ticket</b></h4>
+                            </div>
+                            <div class="header-1" style="width: 20%; display: flex;padding-left: 10px; border-left: grey 1px solid">
+                                <h4><b style="color:black">Datos del Usuario</b></h4>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12" style=" width: 40%; height: 500px; position:relative; display:block">
+                            <div class="row" style="text-align:right; ">
+                                <div class="col-md-8" style="padding-top: 4px; display: flex">
+                                    @*SLA DANIEL FUENTES*@
+                                    <div class="row" style="text-align:right;">
+                                        <div class="col-md-12">
+                                            @if (Model.Slas != null)
+                                            {
+                                                foreach (var sla in Model.Slas)
+                                                {
+                                                    if (sla.Type == "Tiempo Actual" || sla.Type == "En Garantia" || sla.Type == "En espera") { }
+                                                    else
+                                                    {
+                                                        @*<div class="col-md-3" style="border:2px solid #FFFFFF;border-radius:5px;text-align:center;background-color:@(sla.Color);margin-right:10px;padding:0px;">*@
+                                                        <div class="col-md-4" style="border:2px solid #b4b4b4 ;border-radius:10px;text-align:center;margin-right:20px;padding:0px;">
+                                                            <label style="font-size:15px;font-weight:bold;color:black;margin-top:5px;">@Html.DisplayFor(t => sla.Type)</label><br />
+                                                            <label style="font-size:17px;font-weight:bold;color:black;">@Html.DisplayFor(t => sla.Time)</label>
+                                                        </div>
+                                                    }
+                                                }
+                                            }
+                                        </div>
+                                    </div>
+                                    @*SLA DANIEL FUENTES*@
+                                </div>
+                            </div>
+
+                            <br /><text style="font-weight:bold;color:black;font-size:14px;">
+                                Breve descripción de la incidencia<text />
+                                <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.DescripcionIncidencia)</text>
+                                <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Soporte de la incidencia</text>
+                                <br /><text style="font-weight:inherit;color:dodgerblue;font-size:12px;">@Html.DisplayFor(m => m.detalle.ArchivoAdjunto)</text>
+                                <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Cátegoria</text>
+                                <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.Categoria)</text>
+                                <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Subcátegoria</text>
+                                <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.SubCategoria)</text>
+                                <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Centro</text>
+                                <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.Centro)</text>
+                                <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Personas a notificar el estado del ticket</text>
+                                <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.PersonasAddNotificar)</text>
+
+                        </div>
+                        <div class="col-md-12" style="position: relative; display: block; width: 40%; height: 500px">
+                            <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Grupo resolutor</text>
+                            <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.GrupoResolutor)</text>
+                            <br /><br /><text style="font-weight:bold;color:black;font-size:14px;"><i class="glyphicon glyphicon-align-right"></i> Prioridad</text>
+                            <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.Prioridad)</text>
+                            <br /><br /><text style="font-weight:bold;color:black;font-size:14px;"><i class="glyphicon glyphicon-user"></i> Técnico asignado</text>
+                            <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.TecnicoAsignado)</text>
+                            <br /><br /><text style="font-weight:bold;color:black;font-size:14px;"><i class="glyphicon glyphicon-user"></i> Técnico asignado reapertura</text>
+                            <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.TecnicoAsignadoReag)</text>
+                            <br /><br /><text style="font-weight:bold;color:black;font-size:14px;"><i class="glyphicon glyphicon-user"></i> Técnico asignado reapertura 2</text>
+                            <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.TecnicoAsignadoReag2)</text>
+                            <br /><br /><text style="font-weight:bold;color:black;font-size:14px;"><i class="glyphicon glyphicon-dashboard"></i> Número de reaperturas del ticket</text>
+
+                            <br /><text style="font-weight:inherit;color:#808080;font-size:12px;" id="totTime3"></text>
+                        </div>
+                        <div class="DetailMisDatos" style="border-top:grey 1px solid;border-left:grey 1px solid; position:relative; display:block; width:20%; float:right; height:500px; padding-left: 10px">
+
+                            <div class="tab-pane " id="misdatos">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <br /><text style="font-weight:bold;color:black;font-size:14px;">
+                                            ID Empleado<text />
+                                            <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.EmpleadoID)</text>
+                                            <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Nombre completo</text>
+                                            <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.NombreCompleto)</text>
+                                            <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Correo electrónico</text>
+                                            <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.Correo)</text>
+                                            <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Área</text>
+                                            <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.Area)</text>
+                                            <br />
+                                    </div>
+                                </div>
+                                //
+                            </div>
+                        </div>
+
+
+
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="Footer" style="position:relative; display:block; width:100%;padding-top:570px;">
+                <div class="conr-historial" style="border-top:grey 1px solid; border-left: grey 1px solid; border-right: grey 1px solid; height:60px; padding-top: 10px; padding-left:10px">
+                    @*HISTORICO Y SUBTICKET*@
+                    <h4>
+                        <b style="color:black">Historial de Seguimiento</b>
+                    </h4>
+                </div>
+
+                <div class="tab-content" id="myTabContent" style="border: 1px solid grey">
+                    <div class="tab-pane active" id="historial" role="tabpanel" aria-labelledby="historialID-tab">
+                        <br />
+                        <br />
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="scroll_vertical" style="width: 100%; max-height: 600px;  font-size: 15px; ">
+                                    @foreach (var his in Model.historico)
+                                    {
+
+                                        if (his.EstatusTicket != 2)
+                                        {
+                                            <div class="col-md-12" style="border:1px solid #ccc;margin-bottom: 5px;padding:20px; ">
+                                                    @if (!string.IsNullOrEmpty(his.TecnicoAsignadoReag2))
+                                                    {
+                                                        <div>
+                                                            <text style="font-weight:bold;color:black;font-size:14px;">@Html.DisplayFor(m => his.TecnicoAsignadoReag2)</text><br />
+                                                        </div>
+                                                    }
+                                                    else if (!string.IsNullOrEmpty(his.TecnicoAsignadoReag))
+                                                    {
+                                                        <div>
+                                                            <text style="font-weight:bold;color:black;font-size:14px;">@Html.DisplayFor(m => his.TecnicoAsignadoReag)</text><br />
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div>
+                                                            <text style="font-weight:bold;color:black;font-size:14px;">@Html.DisplayFor(m => his.TecnicoAsignado)</text><br />
+                                                        </div>
+                                                    }
+                                                <text style="font-weight:inherit;color:#808080;font-size:12px; float:right;">@Html.DisplayFor(m => his.FechaRegistro)</text><br />
+                                                <text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => his.Correo)</text><br />
+                                                <text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => his.Estatus)</text><br />
+                                                <text style="font-weight:bold;color:black;font-size:14px;"> Usuario: @Html.DisplayFor(m => his.NombreCompleto)</text><br />
+                                                <text style="font-weight:inherit;color:#808080;font-size:12px;"><b>Motivo: </b>@Html.DisplayFor(m => his.Motivo)</text><br />
+
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            if (his.NoAsignaciones != 0)
+                                            {
+                                            <div class="col-md-12" style="border:1px solid #ccc;margin-bottom: 5px;padding:20px; ">
+                                                    @if (!string.IsNullOrEmpty(his.TecnicoAsignadoReag2))
+                                                    {
+                                                        <div>
+                                                            <text style="font-weight:bold;color:black;font-size:14px;">@Html.DisplayFor(m => his.TecnicoAsignadoReag2)</text><br />
+                                                        </div>
+                                                    }
+                                                    else if (!string.IsNullOrEmpty(his.TecnicoAsignadoReag))
+                                                    {
+                                                        <div>
+                                                            <text style="font-weight:bold;color:black;font-size:14px;">@Html.DisplayFor(m => his.TecnicoAsignadoReag)</text><br />
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div>
+                                                            <text style="font-weight:bold;color:black;font-size:14px;">@Html.DisplayFor(m => his.TecnicoAsignado)</text><br />
+                                                        </div>
+                                                    }
+                                                <text style="font-weight:inherit;color:#808080;font-size:12px; float:right;">@Html.DisplayFor(m => his.FechaRegistro)</text><br />
+                                                <text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => his.Correo)</text><br />
+                                                <text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => his.Estatus)</text><br />
+                                                <text style="font-weight:bold;color:black;font-size:14px;"> Usuario: @Html.DisplayFor(m => his.NombreCompleto)</text><br />
+                                                <text style="font-weight:inherit;color:#808080;font-size:12px;"><b>Motivo: </b>@Html.DisplayFor(m => his.Motivo)</text><br />
+
+                                            </div>
+                                            }
+
+                                        }
+
+                                       
+
+                                    }
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+
+                    @if (@ViewBag.EdoTicket == "Trabajando")
+                    {
+                        <div class="tab-pane " id="subtickets" role="tabpanel" aria-labelledby="subticketsID-tab">
+                            <br />
+                            <br />
+                            @if (ViewBag.SubticketInfo != "SI")
+                            {
+                                <div class="row">
+                                    <div class="col-md-11" style="text-align:right">
+                                        <br />
+                                    </div>
+                                </div>
+                            }
+
+                            <br />
+                            @if (ViewBag.SubticketInfo != "SI")
+                            {
+                                <div class="row">
+                                    <div class="scroll_vertical" style="width: 100%; max-height: 600px;  font-size: 15px; ">
+                                        @if (Model.ListSubticket != null)
+                                        {
+                                            @Html.Grid(Model.ListSubticket).Columns(col =>
+                                            {
+
+                                                col.Add(data => data.Id).Titled("SUB-ID").Filterable(true);
+                                                col.Add(data => data.Categoria).Titled("Categoria").Filterable(true);
+                                                col.Add(data => data.Subcategoria).Titled("Subcategoria").Filterable(true);
+                                                col.Add(data => data.Estatus).Titled("Estatus");
+                                                col.Add().Encoded(false).Sanitized(false)
+                                                .RenderValueAs(data => "<div style='text-align: center'>"
+                                                    + "<button type='button' class='btn btn-info glyphicon glyphicon-eye-open' title='Ver' onclick='ShowSubticket(\"" + data.Id + "\");'></button>"
+                                                    + "</div>").Css("little");
+                                            })
+                                        }
+                                        else
+                                        { <label>¡No se encontraron Subtickets!</label>}
+
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

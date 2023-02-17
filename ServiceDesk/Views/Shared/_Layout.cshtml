@@ -1,0 +1,86 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title</title>
+    @Scripts.Render("~/bundles/jquery")
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+    @RenderSection("scripts", required: false)
+    <!-- CSS AREA -->
+    <!-- JS AREA -->
+    @*CHARGIN SCRIPTS*@
+
+
+    <script src="@Url.Content("~/Scripts/bootstrap.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/bootstrap-datepicker.js")"></script>
+    <script src="@Url.Content("~/Scripts/bootstrap-datepicker.es.min.js")"></script>
+    <!-- CSS -->
+    <link href="@Url.Content("~/Content/bootstrap.min.css")" rel="stylesheet" />
+    <link href="@Url.Content("~/Content/bootstrap-datepicker3.css")" rel="stylesheet" />
+    <link href="~/Content/font-awesome-4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+    <style>
+        .btnP {
+            background-color: #007bff;
+            color: white;
+        }
+
+        a {
+            cursor: pointer;
+        }
+    </style>
+    <script>
+        function refresh() {
+            window.setTimeout(function () {
+                location.reload();
+            }, 1200);
+        }
+        function fastRefresh() {
+            window.setTimeout(function () {
+                location.reload();
+            }, 0);
+        }
+    </script>
+</head>
+<body>
+    <script type="text/javascript">
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        $(document).ready(function () { });
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        function logOut() {             $("#formLogout").submit(); }
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        function redirHome() {          window.location = '../Home/Index';}
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        function goToUserDesk(id) {     window.location = '../DashBoard/Index?EmployeeId=' + id; }
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        function goToTechSupDesk(id) {/*window.location = '../DashBoard/Resolutor?EmployeeId=' + id;*/ returnMenu(id); }
+
+        function goToTareas(user) { window.location = '../Supervisor/GridTickets?EmployeeId=' + user; }
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        var controller = '@ViewBag.Rol';
+        function returnMenu(user) {
+            var urlMenu = "";
+            if (controller == "Solicitante")                                urlMenu = '../Dashboard/Index?EmployeeId=' + user;
+            if (controller == "Directivo" || controller == "ServiceDesk")   urlMenu = '../' + controller + '/Dashboard?EmployeeId=' + user;
+            if (controller == "Tecnico")                                    urlMenu = '../Dashboard/Tecnico?EmployeeId=' + user;
+            if (controller == "Tecnico")                                    urlMenu = '../Dashboard/Resolutor?EmployeeId=' + user; // DUDA: tecnico va usar el dashboard de técnico o el de resolutor?
+            if (controller == "Resolutor" || controller == "Supervisor")    urlMenu = '../Dashboard/Resolutor?EmployeeId=' + user;
+            window.location = urlMenu;
+        }
+        function goToControl(user)          { window.location = '../ControlCambios/DashboardCC?EmployeeId=' + user; }
+        function goToReportes(user)         { window.location = '../Reportes/Graficos?EmployeeId='       + user; }
+        function goToGridTickets(user)      { window.location = '../Reportes/gridTickets?EmployeeId='    + user; }
+        function goToGridTickets2(user)     { window.location = '../Reportes/GridEncuesta?EmployeeId='    + user; }
+    </script>
+    @if (Request.IsAuthenticated)
+    {@Html.Action("PartialMenu", "Home")}
+    @RenderBody()
+</body>
+</html>
+
+
+@*{@Html.Action("PartialMenu", "Home")}*@
+    @*{@Html.Action("../Home/PartialMenu")}*@

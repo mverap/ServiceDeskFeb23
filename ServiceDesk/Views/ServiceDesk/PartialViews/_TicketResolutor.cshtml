@@ -1,0 +1,150 @@
+﻿@model ServiceDesk.ViewModels.vmDashbordResolutor
+<style>
+    /*    * {
+        margin: 0;
+        padding: 0;
+    }*/
+
+    body {
+        /*font-family: arial,sans-serif;*/
+        font-size: 100%;
+        /*margin: 3em;*/
+        /*background: #666;*/
+        color: #fff;
+    }
+
+    h2, p {
+        font-size: 100%;
+        font-weight: normal;
+    }
+
+    .bodyTicket-ul, .bodyTicket-li {
+        list-style: none;
+    }
+
+    .bodyTicket-ul {
+        overflow: hidden;
+        /*padding: 3em;*/
+    }
+
+        .bodyTicket-ul .bodyTicket-li a {
+            text-decoration: none;
+            color: #000;
+            background: #f9f9fa;
+            display: block;
+            height: 130px;
+            width: 14em;
+            padding: 1em;
+        }
+
+        .bodyTicket-ul .bodyTicket-li {
+            margin: 1em;
+            float: left;
+        }
+
+            .bodyTicket-ul .bodyTicket-li a {
+                text-decoration: none;
+                color: #000;
+                background: #f9f9fa;
+                display: block;
+                height: 130px;
+                width: 14em;
+                /*padding: 1em;*/
+                /* Firefox */
+                -moz-box-shadow: 5px 5px 7px rgba(33,33,33,1);
+                /* Safari+Chrome */
+                -webkit-box-shadow: 5px 5px 7px rgba(33,33,33,.7);
+                /* Opera */
+                box-shadow: 5px 5px 7px rgba(33,33,33,.7);
+            }
+</style>
+
+<div style="height:600px;width:1000px;margin-top:0px; overflow-y: scroll;position:absolute">
+
+    <table width="1050px" style="height:600px;">
+        <tr>
+            <td>
+                @if (Model.lstResumenResolutor.Count < 20)
+                {
+                    <ul style="margin-top:-280px;" class="bodyTicket-ul">
+                        @foreach (var item in Model.lstResumenResolutor)
+                        {
+                            <li class="bodyTicket-li">
+                                @if (item.estatus == "Abierto" && item.isPadre == false && Model.lstResumenResolutor.Count() > 1)
+                                {
+                                    <input type="checkbox" id="check_@item.tickedID" name="vincular" class="form-check" style="position:absolute;" />
+                                }
+
+                                <a style="text-decoration: none;" onclick="goToDetail(@item.tickedID)">
+                                    @if (item.isSubTicket == true)
+                                    {
+                                        <h2><b>SUB-@item.idSubTicket</b></h2>
+                                    }
+                                    else
+                                    {
+                                        <h2><b>Ticket ID: @item.tickedID</b></h2>
+                                    }
+                                    <p><b>Categoria: @item.categoria</b></p>
+                                    <h2>
+                                        @if (item.prioridad == "Baja")
+                                        {
+                                            <i class="fa fa-circle Oval"></i>
+                                        }
+                                        @if (item.prioridad == "Medio")
+                                        {
+                                            <i class="fa fa-circle OvalTrabajando"></i>
+                                        }
+                                        @if (item.prioridad == "Alto")
+                                        {
+                                            <i class="fa fa-circle OvalCancelado"></i>
+                                        }
+                                        <b>Prioridad @item.prioridad</b>
+                                    </h2>
+                                    @if (item.totVinculados > 0)
+                                    {
+                                        <span style="background-color:#d2deeb;min-width:13%;max-width:13%;position:absolute;">Tickets vinculados:&nbsp; @item.totVinculados</span>
+                                    }
+                                    @if (item.isSubTicket == true)
+                                    {
+                                        <span style="background-color:#007bff;min-width:13%;max-width:13%;color:white;position:absolute;">Ticket principal:&nbsp; @item.idTicketPadre</span>
+                                    }
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <ul style="margin-top:-210px;">
+                        @foreach (var item in Model.lstResumenResolutor)
+                        {
+                            <li>
+                                <a style="text-decoration: none;">
+                                    <h2><b>Ticket ID::: @item.tickedID</b></h2>
+                                    <p><b>Categoria: @item.categoria</b></p>
+                                    <h2>
+                                        @if (item.prioridad == "Baja")
+                                        {
+                                            <i class="fa fa-circle Oval"></i>
+                                        }
+                                        @if (item.prioridad == "Media")
+                                        {
+                                            <i class="fa fa-circle OvalTrabajando"></i>
+                                        }
+                                        @if (item.prioridad == "Alta")
+                                        {
+                                            <i class="fa fa-circle OvalCancelado"></i>
+                                        }
+                                        <b>Prioridad @item.prioridad</b>
+                                    </h2>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                }
+            </td>
+        </tr>
+    </table>
+
+
+</div>

@@ -1,0 +1,263 @@
+﻿@using GridMvc
+@using GridMvc.Html
+@model ServiceDesk.ViewModels.CCDashboard
+@{
+    ViewBag.Title = "Creacion de Control de Cambios";
+}
+
+<style>
+    .button {
+        background-color: Transparent;
+        background-repeat: no-repeat;
+        border: none;
+        cursor: pointer;
+        overflow: hidden;
+        outline: none;
+        margin-left: 14%;
+    }
+
+    .labelMenu {
+        color: white;
+        font-weight: 700;
+        margin-top: 28.95px;
+    }
+
+    .menu {
+        background-color: #384049;
+        height: 1035px;
+        width: 345px;
+    }
+
+    .labelModal {
+        font-weight: bold;
+        color: #808080;
+        font-size: 12px;
+        margin: 0px 39px 0px 10px;
+    }
+</style>
+<script type="text/javascript">
+    var folio = '@ViewBag.Id';
+    var user = '@ViewBag.user';
+    var conteo = '@ViewBag.conteoControl';
+    var job = '@ViewBag.job';
+    var Emtramce = '@ViewBag.Emtramce';
+    var ticket = '@ViewBag.ticket';
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    $(document).ready(function () {
+        console.log("valores, ID: " + conteo + "    User: " + user);
+        $("#fakeIDtext").prop("value", conteo);
+        $("#tbl_CC_Implementer_Nombre").disabled = "enabled";
+        $("#tbl_CC_Dashboard_ChangeOwner").prop("value", user);
+        if (Emtramce == 1) { }
+
+        if (ticket != 0) {
+            var url = "../ControlCambios/EditarCC?EmployeeId=@ViewBag.user&CCid=@ViewBag.ID&ticket=" + ticket;
+            $('#formCC').attr('action', url);
+        }
+
+        $("#tbl_CC_Dashboard_GrupoResolutor").change(function () {
+            // Obtener tecnicos
+            var grupo = $("#tbl_CC_Dashboard_GrupoResolutor option:selected").text();
+            //alert("grupo seleccionado: " + grupo);
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetImps", "ControlCambios")',
+                dataType: 'json',
+                data: {
+                    grupoReslutor: grupo,
+                },
+                success: function (result) {
+                    $("#tbl_CC_Dashboard_Implementer").empty();
+                    $("#tbl_CC_Dashboard_Implementer").append('<option value="0">SELECCIONE</option>');
+                    $.each(result, function (i, tecnico) {
+                        $("#tbl_CC_Dashboard_Implementer").append('<option value="' + tecnico.EmployeeId + '">' + tecnico.Nombre + '</option>');
+                    });
+                },
+                error: function ()
+                {
+                    alert("Error obteniendo técnicos del grupo resolutor.");
+                }
+            });
+        });
+
+    });// END DOCUMENT READY
+
+    function Cencelar() { window.location = '../ControlCambios/DashboardCC?EmployeeId=' + user; }
+    function goToControl() { window.location = '../ControlCambios/DashboardCC?EmployeeId=' + user; }
+    function goToControlConfig() { window.location = '../ControlCambios/Gestiones?EmployeeId=' + user; }
+    function Aceptar() {
+        var flag = true;
+        var elemento = document.getElementById("tbl_CC_Dashboard_TipoDeCambio"); console.log( "text " + elemento.text );
+        if (elemento != null) { alert("Tipo de cambio es un campo obligatorio"); flag = false; }
+        elemento = document.getElementById("tbl_CC_Dashboard_Categoria"); if (elemento != null) { alert("Categoria es un campo obligatorio"); flag = false; console.log(elemento.text); }
+        elemento = document.getElementById("tbl_CC_Dashboard_Subcategoria"); if (elemento != null) { alert("Subcategoria es un campo obligatorio"); flag = false; console.log(elemento.value); }
+        // Elemento invalido, rellene dato correctamente
+
+        //    flash(elemento)
+        flag = false;
+        if (flag) { $("#formCC").submit(function (event) { } ); } // Enviar todos los datos
+    }
+    function returnMenu() { var url = '@Url.Action("Resolutor", "Dashboard")'; window.location.href = url + '?EmployeeId=' + user; }
+
+    //function flash(ele)
+    //{
+    //    var element = ele;
+    //    var btn = document.getElementById("btn");
+
+    //    element.focus();
+    //    var time = 800;
+    //    btn.focus(); console.log("Change").delay(800, "fx");
+    //    element.focus(); console.log("Change2").delay(time);
+    //    btn.focus(); console.log("Change").delay(time);
+    //    element.focus(); console.log("Change2".delay(time))
+    //    btn.focus(); console.log("Change").delay(time);
+    //    element.focus(); console.log("Change2")
+
+    //    //for (int c = 0; c <= 9; c++) {
+
+    //    //}
+    //}
+</script>
+
+<div class="col-lg-12">
+    <form action="../ControlCambios/EditarCC?EmployeeId=@ViewBag.user&CCid=@ViewBag.ID" enctype="multipart/form-data" id="formCC" method="post">
+        <div class="col-lg-12" style="padding:0px;" id="inputss">    
+            <div class="col-lg-8">
+                <p><br /><a style="color: dodgerblue" onclick="returnMenu()">Dashboard</a> / <a style="color: dodgerblue" onclick="goToControl()"> Control de Cambios </a> / Edición de Control de Cambios </p>
+                <div class="col-lg-12">
+                    <div class="col-lg-6" style="display: flex; align-items: center; justify-content: center;"> <BR /><BR /><BR />
+                        <text class="labelModal"> Id <br />                     <input class="form-control" data-val="true" data-val-number="The field id must be a number." data-val-required="The id field is required." disabled="disabled" id="fakeIDtext" type="text" value=""> <br />
+                        <text class="labelModal"> Tipo de cambio* <br />        @Html.DropDownListFor(c => c.tbl_CC_Dashboard.TipoDeCambio, (SelectList)ViewBag.TipoDeCambio, "SELECCION", new { @class = "form-control", style = "text-align:center" }) <br />
+                        <text class="labelModal"> Categoría* <br />             @Html.DropDownListFor(c => c.tbl_CC_Dashboard.Categoria, (SelectList)ViewBag.Categoria, "SELECCION", new { @class = "form-control", style = "text-align:center" }) <br />
+                        <text class="labelModal"> Subcategoría* <br />          @Html.DropDownListFor(c => c.tbl_CC_Dashboard.Subcategoria, (SelectList)ViewBag.Subcategoria, "SELECCION", new { @class = "form-control", style = "text-align:center" }) <br />
+                        <text class="labelModal"> Artículo* <br />              @Html.TextBoxFor(c => c.tbl_CC_Dashboard.Articulo, "", new { @class = "form-control" }) <br />
+                        <text class="labelModal"> Flujo de trabajo* <br />      @Html.DropDownListFor(c => c.tbl_CC_Dashboard.FlujoDeTrabajo, (SelectList)ViewBag.Flujodetrabajo, "SELECCION", new { @class = "form-control", style = "text-align:center" }) <br />
+                        <text class="labelModal"> Impacto* <br />               @Html.DropDownListFor(c => c.tbl_CC_Dashboard.Impacto, (SelectList)ViewBag.Impacto, "SELECCION", new { @class = "form-control", style = "text-align:center" }) <br />
+                    </div>
+                    <div class="col-lg-6" style="display: flex; align-items: center; justify-content: center;"> <BR /><BR /><BR />
+                        <text class="labelModal"> Urgencia* <br />              @Html.DropDownListFor(c => c.tbl_CC_Dashboard.Urgencia, (SelectList)ViewBag.Urgencia, "SELECCION", new { @class = "form-control", style = "text-align:center" }) <br />
+                        <text class="labelModal"> Prioridad* <br />             @Html.DropDownListFor(c => c.tbl_CC_Dashboard.Prioridad, (SelectList)ViewBag.Prioridad, "SELECCION", new { @class = "form-control", style = "text-align:center" }) <br />
+                        <text class="labelModal"> Riesgo* <br />                @Html.DropDownListFor(c => c.tbl_CC_Dashboard.Riesgo, (SelectList)ViewBag.Riesgo, "SELECCION", new { @class = "form-control", style = "text-align:center" }) <br />
+                        <text class="labelModal"> Servicios afectados* <br />   @Html.DropDownListFor(c => c.tbl_CC_Dashboard.ServiciosAfectados, (SelectList)ViewBag.Serviciosafectados, "SELECCION", new { @class = "form-control", style = "text-align:center" }) <br />
+                        <text class="labelModal"> Motivos del cambio* <br />    @Html.DropDownListFor(c => c.tbl_CC_Dashboard.MotivosDelCambio, (SelectList)ViewBag.Motivosdelcambio, "SELECCION", new { @class = "form-control", style = "text-align:center" }) <br />
+                        <text class="labelModal"> Grupo resolutor* <br />       @Html.DropDownListFor(c => c.tbl_CC_Dashboard.GrupoResolutor, (SelectList)ViewBag.Gruporesolutor, "SELECCION", new { @class = "form-control", style = "text-align:center" }) <br />
+                        <text class="labelModal"> Titulo <br />                 @Html.TextBoxFor(c => c.tbl_CC_Dashboard.Titulo, "", new { @class = "form-control" }) <br />
+                    </div>
+                </div>
+                    <div class="col-lg-1"></div>
+                <div class="col-lg-10 container" style="margin-left:40px">
+                    <div>
+                        <label class="labelModal" style="">Descripción*  </label>
+                    </div>
+                    <div>
+                        @Html.TextBoxFor(c => c.tbl_CC_Dashboard.Descripcion, "", new { @class = "form-control", @style = "" }) <br />
+                        <div class="col-md-4" style="float:right;">  <button type="submit" id="btn" class="btn btn-primary" @*onclick="Aceptar(this)"*@>Aceptar</button>  </div>
+                        <div class="col-md-4" style="float:right;">  <button type="button" class="btn btn-warning" onclick="Cencelar()">Cancelar</button>    </div>
+                    </div>
+                  
+                </div>
+            </div>
+            <div class="col-lg-4" style="background-color: #E6EFF7; display: flex; align-items: center; justify-content: center; padding:0px">
+                <table style="width:100%; " >
+                    <tr>
+                        <td>
+                            @{
+                                if (Model.ticket != 0)
+                                {
+                                    <label style="color: black; background-color:lightsteelblue; display: flex; align-items: center; justify-content: center; padding:10px">
+                                        Ticket Id: @Model.ticket @Html.HiddenFor(t => t.ticket)
+                                    </label>
+                                }
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding-left: 20px;">
+                            Change owner* <br />          @Html.TextBoxFor(c => c.tbl_CC_Dashboard.ChangeOwner, "", new { @class = "form-control", @disabled = "disabled" }) <br />
+                            Change requester* <br />      @Html.DropDownListFor(c => c.tbl_CC_Dashboard.ChangeRequester, (SelectList)ViewBag.requester, "SELECCION", new { @class = "form-control", style = "text-align:center" }) <br />
+                            Change manager* <br />        @Html.DropDownListFor(c => c.tbl_CC_Dashboard.ChangeManager, (SelectList)ViewBag.Manager, "SELECCION", new { @class = "form-control", style = "text-align:center" }) <br />
+                            Change aprover* <br />        @Html.DropDownListFor(c => c.tbl_CC_Dashboard.ChangeApprover, (SelectList)ViewBag.Approver, "SELECCION", new { @class = "form-control", style = "text-align:center" }) <br />
+                            Change aprover 2 <br />       @Html.DropDownListFor(c => c.tbl_CC_Dashboard.ChangeApprover2, (SelectList)ViewBag.Approver, "SELECCION", new { @class = "form-control", style = "text-align:center" }) <br />
+                            Change aprover 3 <br />       @Html.DropDownListFor(c => c.tbl_CC_Dashboard.ChangeApprover3, (SelectList)ViewBag.Approver, "SELECCION", new { @class = "form-control", style = "text-align:center" }) <br />
+                            Implementer* <br />           @Html.DropDownListFor(c => c.tbl_CC_Dashboard.Implementer, (SelectList)ViewBag.Implementer, "SELECCION", new { @class = "form-control", style = "text-align:center" }) <br />
+                            Line manager* <br />          @Html.DropDownListFor(c => c.tbl_CC_Dashboard.LineManager, (SelectList)ViewBag.Line, "SELECCION", new { @class = "form-control", style = "text-align:center" }) <br />
+                            Reviewer* <br />              @Html.DropDownListFor(c => c.tbl_CC_Dashboard.Reviewer, (SelectList)ViewBag.Reviewer, "SELECCION", new { @class = "form-control", style = "text-align:center" }) <br />
+                            <BR /><BR /><BR /><BR /><BR /><BR /><BR /><BR /><BR />
+                        </td>
+                    </tr>
+                </table>
+                    @*<div class="col-lg-12" style="padding-top:20px">
+                    </div>
+                    <div class="col-lg-12">
+                    </div>
+                <text class="labelModal" style="width:fit-content">
+                </text>*@
+            </div>
+    </div>        
+        <br /><br /><br /><br /><br />
+    </form>
+</div>
+
+
+
+
+
+
+
+@*BARRA DE MENÚ*@
+@*<nav class="navbar navbar-default navbar-fixed-top pophide" style="background:red; color: dodgerblue!important;">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+            <ul class="nav navbar-nav navbar-right">
+                <li class="dropdown" style="background-color:red;">
+                    <a style="color: white !important" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> <span class="glyphicon glyphicon-bell"></span></a>
+
+                </li>
+                <li class="dropdown" style="background-color:red;">
+                    <a style="color: white !important" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> <span class="fa fa-bars"></span></a>
+                    <ul class="dropdown-menu">
+
+                        @if (ViewBag.rol == "Directivo") { }
+                        else
+                        {
+                            <a> <li style="margin-left:5%" class="fa fa-clock-o" onclick="goToTareas(@ViewBag.user);">&nbsp;Tareas Programadas</li> </a>
+                            <a> <li style="margin-left:5%" class="fa fa-share-alt" onclick="goToControl(@ViewBag.user);">&nbsp;Control de Cambios</li> </a>
+                            <a> <li style="margin-left:5%" class="fa fa-cog" onclick="goToControlConfig(@ViewBag.user);">&nbsp;Gestiones de Control de Cambios</li> </a>
+                        }
+                        <a style="color: dodgerblue" onclick="returnMenu()">
+                        <li style="margin-left:5%" class="fa  fa-pie-chart">&nbsp;Reportes</li>
+                        </a>
+                        <a>
+                        <li style="margin-left:5%" class="fa fa-toggle-on">&nbsp;Cerrar sesión</li>
+                        </a>
+                    </ul>
+                </li>
+                @if (Request.IsAuthenticated)
+                {
+                    <li style="font-size: 12px;">
+                        <a href="#" style="color: white">
+                            @User.Identity.Name
+                        </a>
+                    </li>
+                    <li style="font-size: 12px; color: white">
+                        @using (Html.BeginForm("CloseSession", "Home", FormMethod.Post, new { id = "formLogout" }))
+                        {
+
+                        }
+                        <a style="color: white !important" href="#"
+                           class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" onclick="logOut();"
+                           aria-expanded="false">
+                            Salir
+                            <span class="glyphicon glyphicon-off"></span>
+                        </a>
+
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</nav>*@
+@*FIN DE BARRA DE MENÚ*@

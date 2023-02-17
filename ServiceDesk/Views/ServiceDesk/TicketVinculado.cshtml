@@ -1,0 +1,354 @@
+﻿@using GridMvc
+@using GridMvc.Html
+@model ServiceDesk.ViewModels.DetalleSelectedTicketVm
+@{
+    ViewBag.Title = "TicketVinculado";
+    Layout = "~/Views/Shared/_Layout_PopUp.cshtml";
+}
+
+
+<script src="~/Scripts/jquery-1.9.1.min.js"></script>
+
+
+<style type="text/css">
+
+    .bs-iconsheader button span {
+        font-size: 22px;
+        text-decoration: none;
+        margin: 0 20px;
+        color: steelblue;
+    }
+
+        .bs-iconsheader button span:hover {
+            color: dodgerblue;
+        }
+
+    textarea {
+        resize: none;
+    }
+
+
+    div.scroll_vertical {
+        height: 350px;
+        width: 90%;
+        overflow: auto;
+        /*        border: 1px solid;*/
+        padding: 8px;
+    }
+</style>
+
+
+<script type="text/javascript">
+
+    $(document).ready(function () {
+
+
+    });//END DOCUMENT READY
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    //FUNCIONES
+    function CancelaSolicitud() {
+
+       
+        $("#modalDownload").modal('hide');
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function ShowAdjuntos() {
+
+
+        $("#modalDownload").modal('show');
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function DownloadDocs(id) {
+
+        $("#IdDoc").val(id);
+
+        $("#formAttach").submit();
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+</script>
+
+@*DESCARGA DE ARCHIVOS*@
+<div>
+    @using (Html.BeginForm("ExportArchivos", "Supervisor", FormMethod.Post, new { id = "formAttach" }))
+    {
+        @Html.Hidden("IdDoc")
+
+    }
+</div>
+
+
+<div class="row" style="margin-top: -35px;">
+    <div class="col-md-8">
+        <h4>
+            <b>Ticket vinculado</b>
+        </h4>
+        <br />
+        <h4>
+            <b>Ticket ID:</b>
+            <span style="font-weight:bold;color:black;font-size:19px;">
+                @Html.DisplayFor(m => m.detalle.Id)
+                @Html.HiddenFor(m => m.detalle.Id)
+            </span>
+        </h4>
+    </div>
+    <div class="col-sm-2"></div>
+</div>
+
+<div class="row" style="margin-top: 5px;">
+    <div class="col-md-12">
+        <div class="col-md-8">
+            @*HISTORICO Y SUBTICKET*@
+            <div class="col-md-12">
+                <ul class="nav nav-tabs navbar-left" id="myTab" role="tablist">
+                    <li class="nav-item active">
+                        <a class="nav-link" id="historialID-tab" data-toggle="tab" href="#historial" role="tab" aria-controls="historial"
+                           aria-selected="false" style="padding-bottom:1px;padding-top:1px;padding-right:15px;">
+                            <h4 style="color:black;">Historial de Seguimiento</h4>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="col-md-12">
+                <div class="tab-content" id="myTabContent">
+                    <div class="tab-pane active" id="historial" role="tabpanel" aria-labelledby="historialID-tab">
+                        <div class="col-md-12" style="border:2px solid #A7ADB3;padding:0px;">
+                            <div class="scroll_vertical" style="width: 100%; min-height: 400px;  font-size: 15px; ">
+                                @foreach (var his in Model.historico)
+                                {
+
+                                <div style="border-bottom:1px solid #ccc;border-top:1px solid #ccc;margin-bottom: 10px;padding:15px;width:100%;">
+                                    @if (!string.IsNullOrEmpty(his.TecnicoAsignadoReag2))
+                                    {
+                                        <div>
+                                            <text style="font-weight:bold;color:black;font-size:14px;">@Html.DisplayFor(m => his.TecnicoAsignadoReag2)</text><br />
+                                        </div>
+                                    }
+                                    else if (!string.IsNullOrEmpty(his.TecnicoAsignadoReag))
+                                    {
+                                        <div>
+                                            <text style="font-weight:bold;color:black;font-size:14px;">@Html.DisplayFor(m => his.TecnicoAsignadoReag)</text><br />
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div>
+                                            <text style="font-weight:bold;color:black;font-size:14px;">@Html.DisplayFor(m => his.TecnicoAsignado)</text><br />
+                                        </div>
+                                    }
+                                    <text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => his.FechaRegistro)</text><br />
+                                    <text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => his.Correo)</text><br />
+                                    <text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => his.Estatus)</text><br />
+                                    <text style="font-weight:inherit;color:#808080;font-size:12px;"><b>Usuario: </b>@Html.DisplayFor(m => his.NombreCompleto)</text><br />
+                                    <text style="font-weight:inherit;color:#808080;font-size:12px;"><b>Motivo: </b>@Html.DisplayFor(m => his.Motivo)</text><br />
+                                </div>
+
+                                }
+                                <div class="col-md-12" style="border:1px solid #ccc; text-align:center; background-color:#FFD5DD">
+                                    <button class="btn btn-link" type="button" id="btnShowAdjuntos" onclick="ShowAdjuntos()">
+                                        <text style="font-weight:bold;color:#069CE3;font-size:14px;">Archivos Adjuntos</text>
+                                    </button><br />
+                                </div>
+                                <div class="col-md-12">
+                                    <br />
+                                    <br />
+                                    <br />
+                                    <br />
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            @*DETALLE TICKET Y MIS DATOS*@
+        </div>
+        <div class="col-md-4">
+            <div class="row" style="text-align:right;">
+                <div class="col-md-4 col-md-offset-7">
+                    <h4 style="font-weight:bold;"><i class="glyphicon glyphicon-adjust" style="color:@Model.detalle.Color"></i> @Model.detalle.Estatus</h4>
+                </div>
+            </div>
+            @*SLA DANIEL FUENTES*@
+            <div class="row" style="text-align:right;background-color:#F9F9FA;">
+                <div class="col-md-12">
+                    @if (Model.Slas != null)
+                    {
+                        foreach (var sla in Model.Slas)
+                        {
+                            <div class="col-md-3" style="border:2px solid #FFFFFF;border-radius:5px;text-align:center;background-color:@(sla.Color);margin-right:10px;padding:0px;">
+                                <label style="font-size:11px;font-weight:bold;color:black;margin-top:5px;">@Html.DisplayFor(t => sla.Type)</label><br />
+                                <label style="font-size:17px;font-weight:bold;color:black;">@Html.DisplayFor(t => sla.Time)</label>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+            @*SLA DANIEL FUENTES*@
+            <br />
+            <div class="row" style="border-color: #F9F9FA; background-color: #F9F9FA;padding:10px;">
+                <ul class="nav nav-tabs navbar-left" id="myTab" role="tablist">
+                    <li class="nav-item active">
+                        <a class="nav-link" id="datoticket-tab" data-toggle="tab" href="#datoticket"
+                           role="tab" aria-controls="datoticket" aria-selected="false" style="padding-bottom:1px;padding-top:1px;padding-right:15px;">
+                            <h4 style="color:black;"> Datos del Ticket</h4>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="misdatosID-tab" data-toggle="tab" href="#misdatos"
+                           role="tab" aria-controls="misdatos" aria-selected="false" style="padding-bottom:1px;padding-top:1px;padding-right:15px;">
+                            <h4 style="color:black;">Mis Datos</h4>
+                        </a>
+                    </li>
+                </ul>
+                <div class="tab-content" id="myTabContent">
+                    <div class="tab-pane active" id="datoticket" role="tabpanel" aria-labelledby="datoticket-tab">
+                        <br />
+                        <br />
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h4 style="color:black;">Breve descripción de la incidencia</h4>
+                                <h5>@Html.DisplayFor(m => m.detalle.DescripcionIncidencia)</h5>
+                                <p style="margin:15px;"></p>
+                                <h4 style="color:black;">Soporte de la incidencia</h4>
+                                <h5>@Html.DisplayFor(m => m.detalle.ArchivoAdjunto)</h5>
+                                <p style="margin:15px;"></p>
+                                <h4 style="color:black;">Cátegoria</h4>
+                                <h5>@Html.DisplayFor(m => m.detalle.Categoria)</h5>
+                                <p style="margin:15px;"></p>
+                                <h4 style="color:black;">Subcátegoria</h4>
+                                <h5>@Html.DisplayFor(m => m.detalle.SubCategoria)</h5>
+                                <p style="margin:15px;"></p>
+                                <h4 style="color:black;">Centro</h4>
+                                <h5>@Html.DisplayFor(m => m.detalle.Centro)</h5>
+                                <p style="margin:15px;"></p>
+                                <h4 style="color:black;">Personas a notificar el estado del ticket</h4>
+                                <h5>@Html.DisplayFor(m => m.detalle.PersonasAddNotificar)</h5>
+                                <p style="margin:15px;"></p>
+                                <h4 style="color:black;">Grupo resolutor</h4>
+                                <h5>@Html.DisplayFor(m => m.detalle.GrupoResolutor)</h5>
+                                <p style="margin:15px;"></p>
+                                <h4 style="color:black;"><i class="glyphicon glyphicon-align-right"></i> Prioridad</h4>
+                                <h5>@Html.DisplayFor(m => m.detalle.Prioridad)</h5>
+                                <p style="margin:15px;"></p>
+                                <h4 style="color:black;"><i class="glyphicon glyphicon-user"></i> Técnico asignado</h4>
+                                <h5 style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.TecnicoAsignado)</h5>
+                                <p style="margin:15px;"></p>
+                                <h4 style="color:black;"><i class="glyphicon glyphicon-user"></i> Técnico asignado reapertura</h4>
+                                <h5>@Html.DisplayFor(m => m.detalle.TecnicoAsignadoReag)</h5>
+                                <p style="margin:15px;"></p>
+                                <h4 style="color:black;"><i class="glyphicon glyphicon-user"></i> Técnico asignado reapertura 2</h4>
+                                <h5>@Html.DisplayFor(m => m.detalle.TecnicoAsignadoReag2)</h5>
+                                <p style="margin:15px;"></p>
+                                <h4 style="color:black;"><i class="glyphicon glyphicon-dashboard"></i> Número de reaperturas del ticket</h4>
+                                <h5>@Html.DisplayFor(m => m.detalle.NoReapertura)</h5>
+                                <p style="margin:15px;"></p>
+                                <h4 style="color:black;"><i class="glyphicon glyphicon-time"></i> Tiempo del ticket en espera</h4>
+                                <h5 id="totTime3"></h5>
+                            </div>
+                        </div>
+                    </div>
+                    @*MIS DATOS*@
+                    <div class="tab-pane " id="misdatos" role="tabpanel" aria-labelledby="misdatosID-tab">
+                        <br />
+                        <br />
+                        <div class="row">
+                            <div class="col-md-12">
+                                <br /><text style="font-weight:bold;color:black;font-size:14px;">
+                                    ID Empleado<text />
+                                    <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.EmpleadoID)</text>
+                                    <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Nombre completo</text>
+                                    <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.NombreCompleto)</text>
+                                    <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Correo electrónico</text>
+                                    <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.Correo)</text>
+                                    <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Área</text>
+                                    <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.Area)</text>
+                                    <br />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+@*Modal de DESCARGA ARCHIVOS*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalDownload">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div>
+                <div class="col-md-12">
+                    <table style="width:100%;">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title"><b>Archivos Adjuntos</b></h4>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="row">
+                                    <div class="scroll_vertical" style="max-width: 100%; max-height: 700px;  font-size: 15px; ">
+                                        @if (Model.Docs != null)
+                                        {
+
+
+                                            @Html.Grid(Model.Docs).Columns(col =>
+                                       {
+
+                                           col.Add(data => data.Nombre).Titled("Archivo").Filterable(true);
+                                           col.Add(data => data.Extension).Titled("Tipo");
+                                           col.Add().Encoded(false).Sanitized(false)
+                                         .RenderValueAs(data => "<div style='text-align: center'>"
+                                             + "<button type='button' class='btn btn-success glyphicon glyphicon-download' title='Descargar' onclick='DownloadDocs(\"" + data.Id + "\");'></button>"
+                                             + "</div>").Css("little");
+
+                                       })
+
+                                        }
+                                        else
+                                        {
+                                            <label>¡No se encontraron Archivos Adjuntos!</label>
+                                        }
+
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" onclick="CancelaSolicitud()">Cerrar</button>
+                @*<button type="button" class="btn btn-primary" onclick="AceptaTicket(@Model.detalle.Id)">Aceptar</button>*@
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,246 @@
+﻿@model ServiceDesk.ViewModels.DetalleTareaCC
+@{
+    ViewBag.Title = "DetalleTareaCC";
+}
+@using GridMvc
+@using GridMvc.Html
+
+<head>
+    <style type="text/css">
+        .bs-iconsheader button span {
+            font-size: 22px;
+            text-decoration: none;
+            margin: 0 20px;
+            color: steelblue;
+        }
+
+            .bs-iconsheader button span:hover {
+                color: dodgerblue;
+            }
+
+        textarea {
+            resize: none;
+        }
+
+        div.scroll_vertical {
+            height: 350px;
+            width: 90%;
+            overflow: auto;
+            padding: 8px;
+        }
+
+        .RectangleSLA {
+            text-align: center;
+            width: 125px;
+            padding: 10px 12px;
+            border-radius: 3px;
+            margin-left: 5px;
+            background-color: white;
+        }
+
+        body {
+            padding-top:0;
+        }
+    </style>
+
+    <script type="text/javascript">
+        var folio = @*'@ViewBag.Id'*@ 1923;
+        var enRevision = '@ViewBag.EnRevision';
+        var currentEstatus = '@ViewBag.currentEstatus'
+        $(document).ready(function () {
+            var his = '@ViewBag.his';
+            if (his == 1) $("#modalDownload").modal('show');
+            if (window.opener) { //Esta linea se ejecuta si es popUp
+                $(".pophide").css('display', 'none'); 
+                $(".navbar").css('display', 'none'); 
+            } else if (window.top !== window.self) { } else { }
+
+            var refresh = '@ViewBag.refresh';
+            if (refresh == 1) { refreshParent(); window.close(); } 
+
+            if (currentEstatus == "Finalizada") { $(".hiddenIfRevision").hide(); }
+            $("#btnGuardarCambios").hide();
+
+            hideComentarios();
+            estatusChange();
+            if (enRevision == 1) $(".hiddenIfRevision").hide();
+            //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+            //window.onunload = refreshParent();
+        });
+        function estatusChange() {
+            var valor = $("#tbl_CC_Tareas_Estatus").val();
+            console.log("changed: " + valor);
+
+            if (valor == "Por Iniciar" || valor == "En Proceso" || valor == "Finalizada" || valor == "No aplica") { ShowComentarios(); }
+            else { hideComentarios(); }
+
+            if (valor != 0 || valor != "0") {
+                $("#btnGuardarCambios").show();
+                console.log("show boton");
+            } else {
+                $("#btnGuardarCambios").hide();
+                console.log("hide boton");
+            }
+        }
+        function refreshParent() { window.opener.location.reload(); }
+        function hideComentarios() { $("#DivAbajo").hide(); }
+        function ShowComentarios() { $("#DivAbajo").show(); }
+        function ShowAdjuntos(id) { $("#modalDownload").modal('show'); }
+        function CancelaSolicitud() { $("#modalDownload").modal('hide'); }
+        function DownloadDocs(id) { $("#IdDoc").val(id); $("#formAttach").submit(); }
+        function SubmitChange() { var form = document.getElementById("formCanceladoCC"); form.submit();
+        }
+
+        function cerrar() { window.close(); }
+    </script>
+</head>
+<h2 style="text-align:center">Detalle Tarea (@Model.tbl_CC_Tareas.Id)</h2>
+
+
+<div class="row" style="margin-top: 10px;">
+    <div class="col-md-12">
+        <div class="col-md-8">
+            @*HISTORICO*@
+            <div class="col-md-12">
+                <ul class="nav nav-tabs navbar-left" id="myTab" role="tablist">
+                    <li class="nav-item active">
+                        <a class="nav-link" id="historialID-tab" data-toggle="tab" href="#historial" role="tab" aria-controls="historial"
+                           aria-selected="false" style="padding-bottom:1px;padding-top:1px;padding-right:15px;">
+                            <h4 style="color:black;">Historial de Seguimiento</h4>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="col-md-12">
+                <div class="tab-content" id="myTabContent">
+                    <div class="tab-pane active" id="historial" role="tabpanel" aria-labelledby="historialID-tab">
+                        <div class="col-md-12" style="border:2px solid #A7ADB3;padding:0px;">
+                            <div class="scroll_vertical" style="width: 100%; min-height: 400px;  font-size: 15px; ">
+                                @foreach (var his in Model.vw_his_CC_Tareas)
+                                {
+                                    <div style="border-bottom:1px solid #ccc;border-top:1px solid #ccc;margin-bottom: 10px;padding:15px;width:100%;">
+                                        <text style="font-weight: inherit; color: #808080; font-size: 12px; float: right;">@Html.DisplayFor(m => his.Evento): @Html.DisplayFor(m => his.Fecha)</text>
+                                        <div> <text style="font-weight:bold;color:black;font-size:14px;">@Html.DisplayFor(m => his.Nombre)</text> <br /> </div>
+                                        <text style="font-weight:inherit;color:#808080;font-size:12px;"><b>Correo:</b> @Html.DisplayFor(m => his.Correo)</text><br />
+                                        <text style="font-weight:inherit;color:#808080;font-size:12px;"><b>Comentarios:</b> @Html.DisplayFor(m => his.Comentario)</text><br />
+                                        <br />
+                                    </div>
+                                }
+                                <div class="col-md-12" style="border:1px solid #ccc; text-align:center; background-color:#FFD5DD">
+                                    <button class="btn btn-link" type="button" id="btnShowAdjuntos" onclick="ShowAdjuntos()">
+                                        <text style="font-weight:bold;color:#069CE3;font-size:14px;">Archivos Adjuntos</text>
+                                    </button>
+                                    <br />
+                                </div>
+                                <div class="col-md-12">
+                                    <br />
+                                    <br />
+                                    <br />
+                                    <br />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @*DETALLE TICKET Y MIS DATOS*@
+
+        </div>
+    </div>
+</div>
+
+<div style="padding:50px; padding-bottom:10px; padding-top:20px;" class="hiddenIfRevision">
+    <form action="../ControlCambios/TareaCCEstatus?EmployeeId=@Model.EmployeeID&TareaId=@Model.tbl_CC_Tareas.Id" enctype="multipart/form-data" id="formCanceladoCC" method="post">
+        <table style="width:85%; margin:auto;">
+            <tr>
+                <td>
+                    <label>Estatus</label>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    @Html.DropDownListFor(m => m.tbl_CC_Tareas.Estatus, (SelectList)ViewBag.Estatus, new { @class = "form-control", style = "text-align:left; !important; width: 550px;", onChange="estatusChange()"})
+                </td>
+                <td>
+                    <button type="submit" class="btn btn-success" id="btnGuardarCambios" style="float: right; width: 270px;" onclick="this.disabled = true; SubmitChange()">Guardar Cambios</button>
+                </td>
+            </tr>
+            <tr id="DivAbajo">
+                <td>
+                    <br />
+                    <label>Comentario</label>
+                    @Html.TextAreaFor(m => m.tbl_CC_Tareas.Comentario, new { @class = "form-control", style = "text-align:left; !important; width: 550px; rows:4; cols:50;" })
+                </td>
+                <td>
+                    <label class="fileContainer" style="float:right; margin-top:26px;">
+                        <label>Soporte de la Tarea</label> <i class="glyphicon glyphicon-folder-open" ></i>
+                        <input name="upload" type="file" accept="application/application" class="btn btn-primary" Multiple="Multiple" style="width: 270px; height:55px; text-align:center;" placeholder="Subir Archivos"/>
+                    </label>
+                </td>
+            </tr>
+
+        </table>
+
+    </form>
+</div>
+
+<div style="padding:50px; padding-top:15px;">
+    <button onclick="cerrar()" class="form-control btn btn-danger">Cerrar</button>
+</div>
+
+@*DESCARGA DE ARCHIVOS*@
+<div>
+    @using (Html.BeginForm("ExportArchivosTarea", "Supervisor", FormMethod.Post, new { id = "formAttach" }))
+    {@Html.Hidden("IdDoc")}
+</div>
+
+@*Modal de DESCARGA ARCHIVOS*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalDownload">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div>
+                <div class="col-md-12">
+                    <table style="width:100%;">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title">
+                                        <b>Archivos Adjuntos</b>
+                                    </h4>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="row">
+                                    <div class="scroll_vertical" style="max-width: 100%; max-height: 700px;  font-size: 15px; ">
+                                        @if (Model.Docs != null)
+                                        {
+                                            @Html.Grid(Model.Docs).Columns(col =>
+                                            {
+                                                col.Add(data => data.Nombre).Titled("Archivo").Filterable(true);
+                                                //col.Add(data => data.Extension).Titled("Tipo");
+                                                col.Add().Encoded(false).Sanitized(false)
+                                                    .RenderValueAs(data => "<div style='text-align: center'>"
+                                                    + "<button type='button' class='btn btn-success glyphicon glyphicon-download' title='Descargar' onclick='DownloadDocs(\""
+                                                    + data.Id + "\");'></button>" + "</div>")
+                                                    .Css("little");
+                                            })
+                                        }
+                                        else
+                                        { <label>¡No se encontraron Archivos Adjuntos!</label>}
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" onclick="CancelaSolicitud()">Cerrar</button>
+                @*<button type="button" class="btn btn-primary" onclick="AceptaTicket(@Model.detalle.Id)">Aceptar</button>*@
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,493 @@
+﻿@model ServiceDesk.ViewModels.vmDashbordResolutor
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+
+    .input {
+        width: 186px;
+        height: 25px;
+        /*font-family: Arial;*/
+        font-size: 14px;
+        font-weight: normal;
+        font-stretch: normal;
+        font-style: normal;
+        line-height: 1.79;
+        letter-spacing: -0.23px;
+    }
+
+    .Rectangle {
+        width: 400px;
+        height: 36px;
+        border-radius: 3px;
+        border: solid 1px #f9f9fa;
+        background-color: #fbfbfb;
+    }
+
+    .Rectangle-Copy {
+        width: 960px;
+        height: 64px;
+        /*margin: 64px 0 896px;*/
+        /*padding: 7px 36px 7px 690px;*/
+        background-color: #3b424a;
+    }
+
+    .Label {
+        width: 169px;
+        height: 20px;
+        /*font-family: SFUIText;*/
+        font-size: 14px;
+        font-weight: normal;
+        font-stretch: normal;
+        font-style: normal;
+        line-height: 1.43;
+        letter-spacing: 0.23px;
+        text-align: center;
+        color: var(--colours-global-plain-white);
+    }
+
+    .UI-Buttons-Text-Styles-Label-White-Regular {
+        width: 234px;
+        height: 50px;
+        padding: 15px 32px 15px 33px;
+    }
+
+    label {
+        width: 235px;
+        height: 896px;
+        /*width: 123px;*/
+        height: 24px;
+        /*font-family: SFUIText;*/
+        font-size: 12px;
+        font-weight: bold;
+        font-stretch: normal;
+        font-style: normal;
+        line-height: normal;
+        letter-spacing: 0.2px;
+        text-align: center;
+    }
+
+    .img.TicketsBarEmpty {
+        width: 480px;
+        height: 960px;
+        margin: 64px 0 0;
+        object-fit: contain;
+    }
+
+    .inbox {
+        position: absolute;
+        margin-top: 8px;
+        margin-left: 10px;
+    }
+
+    .RectangleTicket {
+        width: 350px;
+        height: 31px;
+        text-align: center;
+    }
+
+
+    .Oval {
+        width: 18px;
+        height: 18px;
+        color: #17be17;
+    }
+
+    .OvalTrabajando {
+        width: 18px;
+        height: 18px;
+        color: orange;
+    }
+
+    .OvalAsignado {
+        width: 18px;
+        height: 18px;
+        color: #007bff;
+    }
+
+    .OvalCancelado {
+        width: 18px;
+        height: 18px;
+        color: #dc3545;
+    }
+
+    .OvalEnEspera {
+        width: 18px;
+        height: 18px;
+        color: #ffcb03;
+    }
+
+
+    .OvalCerrado {
+        width: 18px;
+        height: 18px;
+        color: gray;
+    }
+
+    .OvalEnGarantia {
+        width: 18px;
+        height: 18px;
+        color: #e83e8c;
+    }
+
+    .labelS:hover {
+        /*background-color: #0060ff !important;*/
+        box-shadow: 3px 3px 5px black;
+        /*  background-color: #2a708a;
+        color: #fff !important;*/
+    }
+
+
+    .labelS:active,
+    .labelS:target {
+        color: white;
+        background-color: #0060ff !important;
+        border-color: #0060ff !important;
+    }
+
+    .labelS {
+        background-color: #868e96;
+    }
+
+    .labelSelected {
+        background-color: #007bff !important;
+    }
+
+    .looking-for:hover {
+        box-shadow: 3px 3px 5px black;
+    }
+
+    .looking-for-span:active,
+    .looking-for:active {
+        color: white !important;
+        background-color: #ced2d7 !important;
+    }
+
+    .RectangleTicket:hover {
+        box-shadow: 1px 1px 1px black;
+        background-color: #ced2d7 !important;
+    }
+
+    .RectangleTicket:active {
+        box-shadow: 1px 1px 1px black;
+        background-color: #dfebfa !important;
+    }
+
+    .navbar-default .navbar-nav > .open > a, .navbar-default .navbar-nav > .open > a:focus, .navbar-default .navbar-nav > .open > a:hover {
+        background-color: red !important;
+    }
+</style>
+<script type="text/javascript">
+    var user =  @ViewBag.user;
+    var _type = "";
+    $(document).ready(function () {
+    });
+    $(document).on("change", "[name='Filtro']", function (e) {
+       
+        if (_type == "") { alert("Debes seleccionar el tipo de ticket a buscar"); return; }
+        var filtro = parseInt($("#Filtro").val());
+
+        $(".labelS").removeClass("labelSelected");
+        $(".RectangleTicket").css("background-color", "");
+        if (filtro == 'Abierto') {
+            $("#btn_Abierto").addClass("labelSelected")
+        } else if (filtro == 'Asignado') {
+            $("#btn_Asignado").addClass("labelSelected")
+        } else if (filtro == 'En Espera') {
+            $("#btn_En Espera").addClass("labelSelected")
+
+        } else if (filtro == 'Trabajando') {
+            $("#btn_Trabajando").addClass("labelSelected")
+            $("#btn_Trabajando").addClass("labelSelected")
+
+        } else if (filtro == 'Resuelto') {
+            $("#btn_Resuelto").addClass("labelSelected")
+        } else if (filtro == 'En Garantía') {
+            $("#btn_En Garantía").addClass("labelSelected")
+
+        } else if (filtro == 'Cerrado') {
+            $("#btn_Cerrado").addClass("labelSelected")
+
+        } else if (filtro == 'Cancelado') {
+            $("#btn_Cancelado").addClass("labelSelected")
+        }
+        //_type = e.currentTarget.children[0].id.split('_')[1]
+        $('#partialView').load('../DashBoard/GetTecnicoTickets', { user: user, type: _type, idFiltro: filtro });
+
+    });
+
+    $(document).on("click", "[name='RectangleTicket']", function (e) {
+        debugger;
+        $(".labelS").removeClass("labelSelected");
+        //$(".RectangleTicket").css("background-color", "");
+        $("#" + e.currentTarget.children[0].id).addClass("labelSelected")
+        _type = e.currentTarget.children[0].id.split('_')[1]
+        $('#partialView').load('../DashBoard/GetTecnicoTickets', { user: user , type: e.currentTarget.id.split('_')[1] });
+    });
+
+    $(document).on("click", "[name='vincular']", function (e) {
+        debugger;
+
+        $("#btnVincular").css("display", "block");
+        $("#btnVincular").css("margin-left", "80%");
+        $("#btnVincular").css("min-width", "50%");
+
+        //var formData = new FormData();
+        //var totalFiles = document.getElementById("FileUpload").files.length;
+        //for (var i = 0; i < totalFiles; i++) {
+        //    var file = document.getElementById("FileUpload").files[i];
+
+        //    formData.append("FileUpload", file);
+        //}
+    });
+
+    function getModalVincular() {
+        //debugger;
+        var list = $("input[name='vincular']:checked").map(function () {
+            return this.id.split('_')[1];
+        }).get();
+
+
+
+         $("#View").remove();
+                        $("#modal-content-detail").append("<div id='View'></div>");
+                        $('#View').load('@Url.Action("dtaVincular", "DashBoard")', {
+                            list: list,
+                            user: user
+                        }, function () {
+                            $('#ModalDetalleSolicitud').modal({
+                                show: true,
+                                backdrop: 'static',
+                                keyboard: false,
+                            });
+
+                        });
+
+
+        @*$.ajax({
+            url: '@Url.Action("dtaVincular", "DashBoard")',
+            type: "POST",
+            data: {
+                list: list,
+                user: user
+            },
+            success: function (data) {
+                debugger;
+                if (data.success) {
+
+                    refresh();
+                } else {
+                    alert(data.message);
+                    refresh()
+                }
+            },
+            error: function (err) {
+                alert("Error", data.message);
+            }
+        });*@
+    }
+
+    function searchTicket() {
+        debugger;
+        var ticket = $("#searchTicket").val()
+        if (ticket == "") {
+            alert("ingresa un ticket a buscar");
+            $("#searchTicket").focus();
+            return;
+        }
+        //ticket = $("<input id='ticket' name='ticket'>").attr("type", "hidden").val(ticket);
+        var user = $("<input id='user' name='user'>").attr("type", "hidden").val(@ViewBag.user);
+        //$('#formTicketsByType').append($(ticket));
+        //$('#formTicketsByType').append($(user));
+        //$('#formTicketsByType').submit();
+
+        $('#partialView').load('../DashBoard/getTicketTecnicoById', { ticket: ticket, user: @ViewBag.user });
+    }
+
+    function goToDetail(Ticket) {
+        location.href = '@Url.Action("DetalleTicket", "Tecnico")?IdTicket=' + parseInt(Ticket);
+    }
+
+    function CerrarModal() {
+        //$(function () {
+        $('#ModalDetalleSolicitud').modal('toggle');
+        //});
+        fastRefresh();
+    }
+
+    function SaveVinculacion() {
+        debugger;
+        var ticketPadre = $("input[name='TicketPadre']:checked").map(function () {
+            return this.id.split('_')[1];
+        }).get();
+        var lstTicket = $("input[name='TicketPadre']").map(function () {
+            return this.id.split('_')[1];
+        }).get();
+
+        $.ajax({
+            url: '@Url.Action("VincularTicket", "DashBoard")',
+            type: "POST",
+            data: {
+                ticketPadre: ticketPadre,
+                user: user,
+                lstTIcket: lstTicket
+            },
+            success: function (data) {
+                debugger;
+                if (data == "OK") {
+                    $(".OKVincular").css('display','block')
+                    $("#bandejaVincular").css('display','none')
+                    $("#SaveVinculacion").css('display','none')
+                    $("#totVinculados").css('display','none')
+                    $("#btnCancelTicket").css('display','none')
+                    $("#okCerrar").css('display','block')
+                    //refresh();
+                } else {
+                    alert(data.message);
+                    refresh()
+                }
+            },
+            error: function (err) {
+                alert("Error", data.message);
+            }
+        });
+    }
+</script>
+
+<style type="text/css">
+    .nav .dropdown-menu {
+        background-color: white;
+        /*background-color: rgba(66, 66, 66, 0.9);*/
+        /*background: white;*/
+        /*background: rgba(66, 66, 66, 0.9);*/
+        color: dodgerblue;
+        /*color: rgba(66, 66, 66, 0.9);*/
+        color: dodgerblue;
+    }
+
+    .dropdown-menu li a {
+        color: dodgerblue;
+    }
+</style>
+
+
+
+<div class="row">
+    <div class="col-md-12">
+        @*<table width="1384px" style="margin-left: -10%;">*@
+        <table style="min-width:100%;max-width:100%;" class="table">
+            <tr style="min-width:40%;max-width:40%;">
+                <td class="img.TicketsBarEmpty " style="background-color: #3b424a;">
+                    <button class="btn btnP" style="display:none;position:relative;" id="btnVincular" onclick="getModalVincular()">Vincular Tickets</button>
+                </td>
+                <td style="width: 500px;background-color: #3b424a;">
+                    @Html.DropDownList("Filtro", new SelectList(ViewBag.filtro, "Value", "Text"), "SELECCIONE",
+                                 new { @class = "form-control", @style = "max-width:80% !important;margin-left: 20%;" })
+
+                </td>
+                <td style="width:500px" class="Rectangle-Copy">
+                    @using (Html.BeginForm("getTicketById", "DashBoard", FormMethod.Get, new { enctype = "multipart/form-data", id = "formTicketsByType" }))
+                    {
+                        <div class="input-group Rectangle" style=" margin-left: 10%;">
+                            <input type="text" class="form-control" id="searchTicket" placeholder="Buscar ID de ticket" style="max-width:90%;">
+                            <div class="input-group-append looking-for" onclick="searchTicket()">
+                                <span class="input-group-text looking-for-span" style="height:100%;min-width:100%;max-width:100%">&nbsp;<i class="fa fa-search" style="color: #007bff;margin-top:2%;font-size:16px"></i></span>
+                            </div>
+                        </div>
+                    }
+                </td>
+            </tr>
+            <tr style="min-width:60%;max-width:60%;">
+                <td style="background-color: #f9f9fa;">
+                    <div style="height:600px;">
+                        <div style="display:block;" id="containerTickets">
+                            @if (Model.lstTicket.Count > 0)
+                            {
+                                foreach (var data in Model.lstTicket)
+                                {
+
+                                    <div class="RectangleTicket" name="RectangleTicket" style="margin-top:1%;" id="ticket_@data.estado">
+                                        @if (data.estado == "En Garantía")
+                                        {
+                                            <label style="color:white;border-radius: 12px;" name='btnTypeTicket' id="btn_Garantia" class="labelS" data-value="1">
+                                                <span style="position:relative;margin-top:1px;">@data.estado (@data.total)</span>
+                                            </label>
+                                        }
+                                        else if (data.estado == "En Espera")
+                                        {
+                                            <label style="color:white;border-radius: 12px;" name='btnTypeTicket' id="btn_Espera" class="labelS" data-value="1">
+                                                <span style="position:relative;margin-top:1px;">@data.estado (@data.total)</span>
+                                            </label>
+                                        }
+                                        else
+                                        {
+                                            <label style="color:white;border-radius: 12px;" name='btnTypeTicket' id="btn_@data.estado" class="labelS" data-value="1">
+                                                <span style="position:relative;margin-top:1px;">@data.estado (@data.total)</span>
+                                            </label>
+                                        }
+
+                                    </div>
+                                }
+                            }
+                            @*<div class="RectangleTicket" name="RectangleTicket" style="margin-top:1%;" id="ticket_">
+            <label style="color:white;border-radius: 12px;" name='btnTypeTicket' id="btnProceso" class="labelS labelSelected" data-value="1">
+                <span style="position:relative;margin-top:1px;">EN PROCESO</span>
+            </label>
+        </div>*@
+                        </div>
+                        @*<div style="display:block;" id="msjNoTickets">
+                                @if (Model.Tickets.Count == 0)
+                                {
+                                    <i class="fa fa-inbox inbox" style="font-size:38px;color:#868e96;text-align:center !important;padding-left: 10%; padding-top: 15%" aria-hidden="true"></i>
+                                    <span style="margin-left: 7%; margin-top: 18%;position: absolute;">
+                                        No hay tickets por mostrar
+                                    </span>
+
+                            </div>*@
+                    </div>
+                </td>
+                <td style="">
+                    <div id="partialView" style="max-width:100%;min-width:100%;background-color:white;height:600px;width:100%;">
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+
+
+
+
+<div id="ModalDetalleSolicitud" class="modal modal-licitacion" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" style="color:black;"><b><span id="titleModal">Vincular tickets</span></b></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body" id="ModalBody">
+                <div id="modal-content-detail"></div>
+            </div>
+            <div class="modal-footer">
+                <table width="100%">
+                    <tr>
+                        <td width="80%">
+                            <button type="button" class="btn btn-secondary" style="color:black;" onclick="CerrarModal();">Cancelar</button>&nbsp;
+                        </td>
+                        <td>
+                            <button type="button" id="btnCancelTicket" class="btn btn-secondary btnP" id="SaveVinculacion" onclick="SaveVinculacion();">Aceptar</button>
+                            <button type="button" class="btn btn-secondary btnP" id="okCerrar" style="display:none;" onclick="CerrarModal();">Aceptar</button>
+                        </td>
+                    </tr>
+                </table>
+
+            </div>
+        </div>
+    </div>
+</div>
+

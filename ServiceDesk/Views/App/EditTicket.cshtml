@@ -1,0 +1,565 @@
+﻿@model ServiceDesk.Models.tbl_TicketDetalle
+@{
+    ViewBag.Title = "EditTicket";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<script type="text/javascript">
+
+
+    var folio = '@ViewBag.Id';
+
+
+    $(document).ready(function () {
+        //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        if (folio != "") {
+
+            $("#modalGuardado").modal('show');
+        }
+        //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        $("#TicketTercero").on('click', function () {
+            if ($(this).is(':checked')) {
+                $("#ShowNombreTer").css('display', 'block');
+                $("#ShowEmailTerc").css('display', 'block');
+                $("#ShowExtensionTerc").css('display', 'block');
+                //
+                $("#MuestraExtension").css('display', 'none');
+                $("#ShowPiso").css('display', 'none');
+                $("#ShowPosicion").css('display', 'none');
+
+            } else {
+                $("#ShowNombreTer").css('display', 'none');
+                $("#ShowEmailTerc").css('display', 'none');
+                $("#ShowExtensionTerc").css('display', 'none');
+                //
+                $("#MuestraExtension").css('display', 'block');
+                $("#ShowPiso").css('display', 'block');
+                $("#ShowPosicion").css('display', 'block');
+            }
+        });
+        //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+         //CATEGORIA - SUBCATEGORIA
+        $("#Categoria").change(function ()
+        {
+            $("#SubCategoria").empty();
+            $("#GrupoResolutor").empty();
+            $("#AreaResolutor").empty();
+            $("#Prioridad").empty();
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetCategoria", "App")',
+                dataType: 'json',
+                data: { id: $("#Categoria").val() },
+                success: function (result)
+                {
+                    $("#SubCategoria").append('<option value="">SELECCIONE</option>');
+                    $.each(result, function (i, group)
+                    {
+
+                        $("#SubCategoria").append('<option value="' + group.Id + '">' +
+                            group.SubCategoria + '</option>');
+                    });
+                }
+            });
+        });
+        //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        //SUBCATEGORIA - MATRIZ
+        $("#SubCategoria").change(function () {
+            var Id = $('#SubCategoria').val();
+            $("#GrupoResolutor").empty();
+            $("#AreaResolutor").empty();
+            $("#Prioridad").empty();
+            $.ajax({
+                //url: '../App/GetMatriz',
+                 url: '@Url.Action("GetMatriz", "App")',
+                type: "POST",
+                data: {
+                    Id: Id
+                },
+                success: function (result) {
+                    if (result != "") {
+                        $("#AreaResolutor").empty();
+                        $("#GrupoResolutor").empty();
+                        $("#Prioridad").empty();
+                        $("#GrupoResolutor").val();
+                        $("#Prioridad").val();
+                        $.each(result,
+                            function (i, result) {
+                                $("#AreaResolutor").val(result.AreaAtencion);
+                                $("#GrupoResolutor").val(result.GrupoAtencion);
+                                $("#Prioridad").val(result.Prioridad);
+
+                            });
+                    }
+
+                },
+                error: function (err) {
+                    alert(err);
+
+                }
+            });
+        });
+        //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    }); //END DOCUMENT
+    //FUNCIONES
+    function changeGP() {
+        var gp = $("#GrupoResolutor").val();
+        var centro = $("#Centro option:selected").text();
+        console.log("Grupo Resolutor: " + gp);
+        console.log("Centro: " + centro);
+
+        if (gp == "TI-Soporte") {
+            switch (centro) {
+                default: centro = gp;
+                    break;
+                case "Thiers": centro = "TI-SoporteThiers";
+                    break;
+                case "Pentafon Morelia": centro = "TI-SoporteMorelia";
+                    break;
+                case "Penta A": centro = "TI-SoporteCDMX";
+                    break;
+                case "Penta B": centro = "TI-SoporteCDMX";
+                    break;
+                case "Penta C": centro = "TI-SoporteCDMX";
+                    break;
+                case "Pentafon Monterrey": centro = "TI-SoporteMTY";
+                    break;
+            }
+        }
+
+        document.getElementById('gpresolutor').value = centro;
+    }
+
+    function addNotificar() {
+        var add = $('#comment').val().toLowerCase();
+        var notificantes = $('#PersonasAddNotificar').val();
+
+        var reg = /^[_a-z0-9-]+(\.[_a-z0-9-]+)*@@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$/;
+
+
+        if (reg.test(add)) {
+
+            $("#comment").val("");
+
+            if (notificantes == "") {
+                $("#PersonasAddNotificar").val(add);
+            }
+            else {
+                $("#PersonasAddNotificar").val(notificantes + ", " + add);
+            }
+        }
+        else {
+            alert("Estructura del correo invalida!");
+        }
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function limpiar() {
+        $("#PersonasAddNotificar").val("");
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function EnviarSolicitud() {
+
+        var desc = $("#DescripcionIncidencia").val();
+        var cat = $('#Categoria option:selected').text();
+        var subcat = $('#SubCategoria option:selected').text();
+        var cen = $('#Centro option:selected').text();
+        var pers = $("#PersonasAddNotificar").val();
+        var gpo = $().val();
+        var sopo = $("#uploadBtn").val();
+
+        $("#IncidenciaDesc").text(desc);
+        $("#CategoriaDesc").text(cat);
+        $("#SubCategoriaDesc").text(subcat);
+        $("#CentroDesc").text(cen);
+        $("#NotificarDesc").text(pers);
+        $("#GrupoResolutorDesc").text(gpo);
+        $("#SoporteDesc").text(sopo);
+
+
+
+        $("#modalConfirmar").modal('show');
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function CancelaSolicitud() {
+
+        $("#modalConfirmar").modal('hide');
+        $("#modalGuardado").modal('hide');
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function AceptaTicket() {
+
+        $("#modalGuardado").modal('hide');
+        //Regresar a la parte del DashBoard
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function AceptaSolicitud() {
+        //Hacer obligatorios los campos
+        var desc = $("#DescripcionIncidencia").val();
+        var cat = $("#Categoria").val();
+        var subcat = $("#SubCategoria").val();
+        var cent = $("#Centro").val();
+
+        if (desc == "") {
+            $("#DescripcionIncidencia").focus();
+            $("#DescripcionIncidencia").css('border-color', "red");
+            alert("Es obligatorio colocar: Descripción de la Incidencia.");
+            $("#modalConfirmar").modal('hide');
+            return;
+        }
+        if (cat == "") {
+            $("#Categoria").focus();
+            $("#Categoria").css('border-color', "red");
+            alert("Es obligatorio seleccionar: Categoría.");
+            $("#modalConfirmar").modal('hide');
+            return;
+        }
+        if (subcat == "") {
+            $("#SubCategoria").focus();
+            $("#SubCategoria").css('border-color', "red");
+            alert("Es obligatorio seleccionar: SubCategoría.");
+            $("#modalConfirmar").modal('hide');
+            return;
+        }
+        if (cent == "") {
+            $("#Centro").focus();
+            $("#Centro").css('border-color', "red");
+            alert("Es obligatorio seleccionar: Centro.");
+            $("#modalConfirmar").modal('hide');
+            return;
+        }
+
+
+        //Guarda Ticket
+        $("#formFinal").submit();
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function Regresar() {
+
+          var id = $("#EmpleadoID").val();
+
+
+        var url = '@Url.Action("Index", "DashBoard")';
+        window.location.href = url + '?EmployeeId=' + id;
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+</script>
+
+
+
+@using (Html.BeginForm("SetEditTicket", "App", FormMethod.Post, new { enctype = "multipart/form-data", id = "formFinal" }))
+{
+    <div class="container-fluid">
+
+        <div>
+            @Html.HiddenFor(m => m.Id)
+        </div>
+
+        <div class="row" style="margin-top: 10px;">
+            <div class="col-md-12">
+                <div class="col-md-4">
+                    <h5>Datos del solicitante</h5>
+                </div>
+                <div class="col-md-4">
+                    <label style="color:darkgray">* Campos Obligatorios</label>
+                </div>
+                <div class="col-md-4" style="border-color: lightblue; background-color: aliceblue;">
+                    <b style="border-color:red">Mis datos</b>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="col-md-4">
+                    <br />
+                    @Html.CheckBoxFor(m => m.TicketTercero)
+                    <label>Generar ticket para tercero</label>
+                </div>
+                <div class="col-md-4">
+                </div>
+                <div class="col-md-4" style="border-color: lightblue; background-color: aliceblue;">
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="col-md-4" style="display:block;" id="MuestraExtension">
+                    <br />
+                    <label>EXTENSIÓN</label>
+                    <br />
+                    @Html.TextBoxFor(m => m.Extencion, new { @class = "form-control" })
+                </div>
+                <div class="col-md-4" style="display:none;" id="ShowNombreTer">
+                    <br />
+                    <label>NOMBRE COMPLETO DEL TERCERO</label>
+                    <br />
+                    @Html.TextBoxFor(m => m.NombreTercero, new { @class = "form-control" })
+                </div>
+                <div class="col-md-4" style="display:block" id="ShowPiso">
+                    <br />
+                    <label>PISO</label>
+                    <br />
+                    @Html.TextBoxFor(m => m.Piso, new { @class = "form-control" })
+                </div>
+                <div class="col-md-4" style="display:none" id="ShowEmailTerc">
+                    <br />
+                    <label>CORREO ELECTRÓNICO DEL TERCERO</label>
+                    <br />
+                    @Html.TextBoxFor(m => m.EmailTercero, new { @class = "form-control" })
+                </div>
+                <div class="col-md-4" style="border-color: lightblue; background-color: aliceblue;">
+                    <br />
+                    <label>ID DE EMPLEADO</label>
+                    <br />
+                    @Html.TextBoxFor(m => m.EmpleadoID, new { @class = "form-control", @readonly = "true" })
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="col-md-8" style="display:block;" id="ShowPosicion">
+                    <br />
+                    <label>POSICIÓN (NOMBRE DEL EQUIPO)</label>
+                    <br />
+                    @Html.TextBoxFor(m => m.Posicion, new { @class = "form-control" })
+                </div>
+                <div class="col-md-8" style="display:none;" id="ShowExtensionTerc">
+                    <br />
+                    <label>EXTENSIÓN DEL TERCERO</label>
+                    <br />
+                    @Html.TextBoxFor(m => m.ExtensionTercero, new { @class = "form-control" })
+                </div>
+                <div class="col-md-4" style="border-color: lightblue; background-color: aliceblue;">
+                    <br />
+                    <label>NOMBRE COMPLETO</label>
+                    <br />
+                    @Html.TextBoxFor(m => m.NombreCompleto, new { @class = "form-control", @readonly = "true" })
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="col-md-4">
+                    <br />
+                    <h5>Datos del Incidente</h5>
+                    <br />
+                    <label>BREVE DESCRIPCIÓN DE LA INCIDENCIA *</label>
+                </div>
+                <div class="col-md-4">
+                    <br />
+                    <label>CATEGORÍA *</label>
+                    <br />
+                    @Html.DropDownListFor(m => m.Categoria, (SelectList)ViewBag.Categoria, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                </div>
+                <div class="col-md-4" style="border-color: lightblue; background-color: aliceblue;">
+                    <br />
+                    <label>ÁREA</label>
+                    <br />
+                    @Html.TextBoxFor(m => m.Area, new { @class = "form-control", @readonly = "true" })
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="col-md-4">
+                    @Html.TextAreaFor(m => m.DescripcionIncidencia, new { @class = "form-control", style = "margin: 0px 39px 0px 10px; max-width: 75% !important; width: 859px; height: 250px;" })
+                    <br />
+                    <br />
+                    <label class="fileContainer">
+                        <label>SOPORTE DE LA INCIDENCIA</label>
+                        <i class="glyphicon glyphicon-folder-open"></i>
+                        <input id="uploadBtn" type="file" name="upload" accept="application/application" />
+                    </label>
+                    <br />
+                    @*<text style="font-weight:bold;color:black;font-size:14px;">Archivo Pasado</text><br />
+                        @Html.DisplayFor(a => a.ArchivoAdjunto)
+                        @Html.HiddenFor(a => a.ArchivoAdjunto)*@
+                </div>
+                <div class="col-md-4">
+                    <br />
+                    <label>SUBCATEGORÍA *</label>
+                    <br />
+                    @Html.DropDownListFor(m => m.SubCategoria, (SelectList)ViewBag.SubCategoria, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                    <br />
+                    <label>CENTRO *</label>
+                    <br />
+                    @Html.DropDownListFor(m => m.Centro, (SelectList)ViewBag.Centro, "SELECCIONE", new { @class = "form-control", style = "text-align:center", @onChange = "changeGP()" })
+                    <br />
+                    <label>PERSONAS A NOTIFICAR EL ESTADO DEL TICKET</label>
+                    <br />
+                    <input type="text" class="form-control" style="width:70%; display:inline-block" id="comment">
+                    <button type="button" class="btn btn-success " onclick="addNotificar();" style="display:inline-block">Agregar</button>
+                    <button type="button" class="btn btn-danger " onclick="limpiar();" style="display:inline-block">Limpiar</button>
+                    <br />
+                    <br />
+                    @Html.TextAreaFor(m => m.PersonasAddNotificar, new { @class = "form-control", style = "margin: 0px 39px 0px 2px; max-width: 95% !important; width: 859px; height: 90px;", @readonly = "true" })
+                    <br />
+                    <button type="button" class="btn btn-warning" id="btnBack" onclick="Regresar()">Regresar</button>
+                    <button type="button" class="btn btn-primary" id="btnEnviar" onclick="EnviarSolicitud()">Enviar Solicitud</button>
+                </div>
+                <div class="col-md-4" style="border-color: lightblue; background-color: aliceblue;">
+                    <h5>Atención del Incidente</h5>
+                    <br />
+                    <label>GRUPO RESOLUTOR</label>
+                    <br />
+                    @Html.TextBoxFor(m => m.GrupoResolutor, new { @class = "form-control hidden", @readonly = "true" })
+                    <input type="text" id="gpresolutor" name="fname" class="form-control" readonly>
+                    <br />
+                    <label>PRIORIDAD</label>
+                    <br />
+                    @Html.TextBoxFor(m => m.Prioridad, new { @class = "form-control", @readonly = "true" })
+                    <br />
+                    <label>ESTATUS</label>
+                    <br />
+                    @Html.TextBoxFor(m => m.Estatus, new { @class = "form-control", @readonly = "true" })
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    @*==============================MODALES==============================*@
+
+    @*Modal Confirmar datos*@
+    <div class="modal fade" tabindex="-1" role="dialog" id="modalConfirmar">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Confirmar datos del ticket</h4>
+                </div>
+                <div>
+                    <div class="col-md-12">
+                        <br />
+                        <table style="width:100%;">
+                            <tr>
+                                <td style="width:100%;"><b>Breve descripción de la incidencia</b></td>
+                            </tr>
+                            <tr>
+                                <td style="width:100%;"><label style="color:slategray" id="IncidenciaDesc"></label></td>
+                            </tr>
+                            <tr>
+                                <td style="width:100%;"><b>Soporte de la Incidencia</b></td>
+                            </tr>
+                            <tr>
+                                <td style="width:100%;"><label style="color:darkblue" id="SoporteDesc"></label></td>
+                            </tr>
+                            <tr>
+                                <td style="width:100%;"><b>Categoría</b></td>
+                            </tr>
+                            <tr>
+                                <td style="width:100%;"><label style="color:slategray" id="CategoriaDesc"></label></td>
+                            </tr>
+                            <tr>
+                                <td style="width:100%;"><b>SubCategoría</b></td>
+                            </tr>
+                            <tr>
+                                <td style="width:100%;"><label style="color:slategray" id="SubCategoriaDesc"></label></td>
+                            </tr>
+                            <tr>
+                                <td style="width:100%;"><b>Centro</b></td>
+                            </tr>
+                            <tr>
+                                <td style="width:100%;"><label style="color:slategray" id="CentroDesc"></label></td>
+                            </tr>
+                            <tr>
+                                <td style="width:100%;"><b>Personas a notificar el estado del ticket</b></td>
+                            </tr>
+                            <tr>
+                                <td style="width:100%;"><label style="color:slategray" id="NotificarDesc"></label></td>
+                            </tr>
+                            <tr>
+                                <td style="width:100%;"><b>Grupo Resolutor</b></td>
+                            </tr>
+                            <tr>
+                                <td style="width:100%;"><label style="color:slategray" id="GrupoResolutorDesc"></label></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" onclick="CancelaSolicitud()">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnAcepta" onclick="AceptaSolicitud()">Aceptar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    @*MODAL DE GUARDADO CON NUMERO DE TICKET*@
+    <div class="modal fade" tabindex="-1" role="dialog" id="modalGuardado">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div>
+                    <div class="col-md-12">
+                        <table style="width:100%;">
+                            @if (ViewBag.Id != "0")
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="modal-header">
+                                            <h4 class="modal-title"><b>Ticket enviado</b></h4>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>
+                                        <br />
+                                        <br />
+                                        <div style="color:forestgreen; top:-10px; font-style:normal;line-height:20px; margin-left:250px; font-size:xxx-large;" class="glyphicon glyphicon-ok">
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="width:100%;">
+                                        <label style="color:slategray; margin-left:150px;">¡El Ticket se ha editado correctamente!</label>
+                                        <br />
+                                        <label style="color:slategray; margin-left:250px;">Ticket ID:  @ViewBag.Id</label>
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="modal-header">
+                                            <h4 class="modal-title"><b>¡Error de Ticket!</b></h4>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <br />
+                                        <br />
+                                        <div style="color:red; top:-10px; font-style:normal;line-height:20px; margin-left:250px; font-size:xxx-large;" class="glyphicon glyphicon-ban-circle">
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="width:100%;">
+                                        <label style="color:red;  margin-left:200px;">¡Error al Generar el Ticket!</label>
+                                        <br />
+                                        <label style="color:red; margin-left:150px;">Favor de validarlo con el Administrador</label>
+                                    </td>
+                                </tr>
+
+                            }
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    @*<button type="button" class="btn btn-primary" onclick=" location.href='@Url.Action("Index", "DashBoard")'">Aceptar</button>*@
+                    <button type="button" class="btn btn-primary" onclick="Regresar()">Aceptar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @*==============================FIN DE MODALES==============================*@
+}
+

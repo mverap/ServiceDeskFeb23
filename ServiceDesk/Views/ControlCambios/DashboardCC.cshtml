@@ -1,0 +1,273 @@
+﻿@using GridMvc
+@using GridMvc.Html
+@model ServiceDesk.ViewModels.CCDashboard
+@{
+    ViewBag.Title = "Dashboard de Control de Cambios";
+}
+
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <link href="@Url.Content("~/Content/Gridmvc.css")" rel="stylesheet" />
+    <link href="@Url.Content("~/Content/bootstrap.min.css")" rel="stylesheet" />
+    <script src="@Url.Content("~/Scripts/jquery-1.9.1.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/gridmvc.min.js")"></script>
+    <title>Index</title>
+    <style>
+        .button {
+            background-color: Transparent;
+            background-repeat: no-repeat;
+            border: none;
+            cursor: pointer;
+            overflow: hidden;
+            outline: none;
+            margin-left: 14%;
+        }
+
+        .labelMenu {
+            color: white;
+            font-weight: 700;
+            margin-top: 28.95px;
+        }
+
+        .menu {
+            background-color: #384049;
+            height: 1035px;
+            width: 345px;
+        }
+
+        .labelModal {
+            font-weight: bold;
+            color: #808080;
+            font-size: 12px;
+            margin: 0px 39px 0px 10px;
+        }
+
+        .Red {
+            background-color: red;
+        }
+
+        .Yellow {
+            background-color: goldenrod;
+        }
+
+        .Green {
+            background-color: green;
+        }
+
+        .Blue {
+            background-color: blue;
+        }
+
+        .Gray {
+            background-color: slategray;
+        }
+
+        .Orange {
+            background-color: darkorange;
+        }
+
+        .Ball {
+            height: 8px;
+            width: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .modal-content {
+            width: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #fff;
+            color: #000;
+            text-align: left;
+            border-radius: 20px;
+            padding: 30px 30px;
+        }
+    </style>
+    <script type="text/javascript">
+     var folio = '@ViewBag.Id';
+    var user = '@ViewBag.user';
+    var rol = '@ViewBag.Rol';
+    var job = '@ViewBag.job';
+    var controller = '@ViewBag.Rol';
+
+    $(document).ready(function () {
+        if (job == 1) { GesImplementer(); }
+        if (job == 2) { GesInvolucrados(); }
+        if (job == 3) { GesCarC(); }
+
+        if (controller != "Supervisor") $(".createCC").hide();
+        console.log("rol de usuario: " + controller);
+        // Añadir bolas de colores según prioridad, ball colors, color balls
+        $('[data-name="Prioridad"]').each(function () {
+            var textp = $(this).html(); //console.log("texto: " + textp);
+            if (/Alt/i.test(textp)) { $(this).prepend("<div class='Ball Red'></div> "); }
+            if (/urgente/i.test(textp)) { $(this).prepend("<div class='Ball Red'></div> "); }
+            if (/Medi/i.test(textp))   { $(this).prepend("<div class='Ball Yellow'></div> "); }
+            if (/Baj/i.test(textp))    { $(this).prepend("<div class='Ball Green'></div> ");  }
+        });
+        // Añadir bolas de colores según Estatus, ball colors, color balls
+        $('[data-name="Estatus"]').each(function () {
+            var textE = $(this).html(); //console.log("texto: " + textE);
+            if (/Solicitado/i.test(textE))  { $(this).prepend("<div class='Ball Blue'></div> "); $(this).parent().addClass("Editable"); }
+            if (/Cerrado/i.test(textE))     { $(this).prepend("<div class='Ball Gray'></div> ");    }
+            if (/cancelado/i.test(textE))   { $(this).prepend("<div class='Ball Red'></div> ");     }
+            if (/rechazado/i.test(textE))   { $(this).prepend("<div class='Ball Red'></div> ");     }
+            if (/trabajando/i.test(textE))  { $(this).prepend("<div class='Ball Orange'></div> ");  }
+            if (/aprobado/i.test(textE)) {
+                if (!/no/i.test(textE))
+                    $(this).prepend("<div class='Ball Green'></div> ");
+                else
+                    $(this).prepend("<div class='Ball Red'></div> ");
+            }
+        });
+
+        $(".btnEdit").hide();
+        $(".Editable").each(function () { $(this).find(".btnEdit").show(); });
+
+        if (rol != "Supervisor" && rol != "Directivo" && rol != "Gerente") {
+            $(".deleteBtn").each(function () {
+                $(this).hide();
+            });
+        }
+
+        $(".idCCdash").each(function () { //format CC0000 for dashboard table
+            var text = this.innerHTML;
+            this.innerHTML = "CC" + text;
+        });
+
+        $(function () {
+            pageGrids.CCdashboard.onRowSelect(function (e) {
+                var textID = e.row.id;
+                var t = textID.replace('CC', '');
+                window.location = '../ControlCambios/DetalleCC?EmployeeId=' + user + "&CCid=" + t;
+                $.post(e.row, function (data) {
+                    if (data.Status <= 0) {
+                        alert(data.Message);
+                        return;
+                    }
+                    $("#order-content").html(e.row);
+                });
+            });
+        });
+
+        $("#btnCerrarModalEliminarCC").click(function () {
+            $("#modalElimCC").modal("hide");
+        });
+        $("#btnModalAceptarEliminarCC").click(function () {
+            DeleteCC2();
+        });
+        if ('@ViewBag.noeditable' != 0) {
+            $("#idCCnoEditable").html('@ViewBag.noeditable');
+            $("#modalNoEditable").modal("show");
+        }
+        $(".closeModal").click(function () {
+            $("#modalNoEditable").modal("hide");
+        });
+    });// END DOCUMENT READY
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        function ReturnDash(id) {
+            var url = '@Url.Action("Resolutor", "DashBoard")';
+            window.location.href = url + '?EmployeeId=' + id;
+        }
+        function goToControl()       { window.location = '../ControlCambios/DashboardCC?EmployeeId=' + user; }
+        function goToControlConfig() { window.location = '../ControlCambios/Gestiones?EmployeeId=' + user; }
+        function ShowEditarCC(id)    { event.stopPropagation(); window.location = '../ControlCambios/EditarControlCambios?EmployeeId=' + user + "&CCid=" + id; }
+        function DeleteCC(id) {
+            //Show modal "Are you sure?" y preparar el borrado
+            event.stopPropagation();
+            $("#modalElimCC").modal("show");
+            $("#idCCElim").html(id);
+        }
+        function DeleteCC2() {
+            //Borrar el cc
+            var id = $("#idCCElim").html();
+            window.location = '../ControlCambios/DeleteControlCambios?EmployeeId=' + user + "&CCid=" + id;
+        }
+    </script>
+</head>
+
+<body>
+    <p> <br /> <a style="color: dodgerblue" onclick="returnMenu(@ViewBag.user)">Dashboard</a> /  Control de Cambios </p>
+    <div class="ContainerALL">
+        <div class="Content-header" style="width:100%;  height: 150px; display:flex">
+            <div class="Content-header-left" style="height:100%; width:50%">
+                <br />
+                <b style="padding-left:10px;">Control de Cambios</b>
+            </div>
+            <div class="Content-header-right" style="height:100%; width:50%; display:flex;">
+                <form action="../ControlCambios/CreacionControlCambios?EmployeeId=@ViewBag.user" method="post" style="width:100%" id="formDescarga">
+                    <button type="submit" class="btn btn-success createCC" value="DetalleTickets" style="background-color: #007bff; width: 30%; height: 20%; float:right; margin-right:10px; margin-top:100px"> Nuevo Control de Cambios </button>
+                </form>
+            </div>
+        </div> <br /> <br /> <div class="Ball22"></div>
+        <div class="Content-grid" style="width:80%; margin-left:8%">
+            @if (Model.vw_CC_Dashboards != null)
+            {
+                @Html.Grid(Model.vw_CC_Dashboards).Named("CCdashboard").Columns(col =>
+                {
+                    col.Add(m => m.id).Titled("ID").Filterable(true).Encoded(false).Sanitized(false).RenderValueAs(data => "<div class='idCCdash'>" + data.id + "</div>"); ;
+                    col.Add(m => m.Titulo).Titled("Titulo").Filterable(true);
+                    col.Add(m => m.ChangeOwner).Titled("Change Owner").Filterable(true);
+                    col.Add(m => m.Categoria).Titled("Categoria").Filterable(true);
+                    col.Add(m => m.Prioridad).Titled("Prioridad").Filterable(true).Encoded(false).RenderValueAs(m => "<div class='Pball b" + m.id + "'></div>" + m.Prioridad).Css("");
+                    col.Add(m => m.TipoDeCambio).Titled("Tipo de Cambio").Filterable(true);
+                    col.Add(m => m.Estatus).Titled("Estatus").Filterable(true).Encoded(false).RenderValueAs(m => "<div class='Eball b" + m.id + "'></div>" + m.Estatus).Css("");
+                    col.Add(m => m.MotivosDelCambio).Titled("Motivo de Cambio").Filterable(true);
+                    col.Add().Encoded(false).Sanitized(false).Titled("Acciones")
+                    .RenderValueAs(data => "<div style='text-align: center'>"
+                    + "<button type='button' class='btnEdit btn btn-info glyphicon glyphicon-pencil' title='Editar' onclick='ShowEditarCC(\"" + data.id + "\");'></button>"
+                    + "<button type='button' class='btnDelt btn btn-danger glyphicon glyphicon-remove-sign deleteBtn' title='Eliminar' onclick='DeleteCC(\"" + data.id + "\");'></button>"
+                    + "</div>").Css("little");
+                }).WithPaging(5);
+            }
+            else
+            { <label>No se encontraron Caracteristicas de Cambio</label>}
+        </div>
+    </div>
+</body>
+
+
+
+@*    MODAL ELIM CC                      *@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalElimCC">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div style="font-size:2em">
+                <label>¿Está seguro que desea eliminar el CC con ID: CC<label id="idCCElim"></label>?</label>
+            </div>
+            <div class="modal-footer" style="float:right">
+                <button type="button" class="btn btn-warning" id="btnCerrarModalEliminarCC">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnModalAceptarEliminarCC">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@*    MODAL NO EDITABLE                     *@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalNoEditable">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div style="font-size:2em">
+                <label>Usted no puede editar este Control de Cambios </label>
+            </div>
+            <div>
+                <br /><br />
+                <div style="color:darkred; top:5px; font-style:normal;line-height:20px;
+                            margin-left:100px; margin-right:100px;
+                            font-size:6em;" class="glyphicon glyphicon-remove-sign">
+                </div>
+            </div>
+            <div style="font-size:1em">
+                <br /><br />
+                Solo el respectivo <b>Change Requester</b> o <b>Change Owner</b> tienen acceso a esta opción. <br /> <br />
+                Error al editar CC<label id="idCCnoEditable"></label>
+            </div>
+            <div class="modal-footer" style="float:right">
+                <button type="button" class="btn btn-warning closeModal">Cancelar</button>
+                <button type="button" class="btn btn-primary closeModal">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>

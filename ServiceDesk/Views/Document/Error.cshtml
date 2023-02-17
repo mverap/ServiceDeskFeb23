@@ -1,0 +1,31 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Error</title>
+    <style>
+        #closeSesh:hover {
+            cursor: grab/pointer;
+        }
+    </style>
+</head>
+<body>
+    <hgroup style=" margin-left:300px; margin-right:300px">
+        <h1>Error.</h1>
+        <h3>Error al procesar la solicitud. Su tiempo de sesión puede haber expirado o la información a la que está intentando acceder puede estar corrupta.</h3>
+        <h3>Es posible que volver a iniciar sesión solucione el problema.</h3>
+        <h3>Si el problema persiste comuniquese con el administrador.</h3>
+
+        <h6 style="">
+            <button>
+
+                <div class="col-md-12" style="color: dodgerblue" onclick="logOut();" id="closeSesh">
+                    @using (Html.BeginForm("CloseSession", "Home", FormMethod.Post, new { id = "formLogout" })) { }
+                    <h4><i class="glyphicon glyphicon-off"></i> Cerrar sesión</h4>
+                </div>
+            </button>
+        </h6>
+    </hgroup>
+</body>
+</html>

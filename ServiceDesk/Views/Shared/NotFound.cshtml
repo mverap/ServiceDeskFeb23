@@ -1,0 +1,29 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Error</title>
+</head>
+<body>
+    <br /><br /><br /><br /><br />
+    <div style="background-color: red; color: White; height: 20px;"> </div>
+    <div style="background-color: white; color: black; height: 170px; text-align:center;">
+        <div style=" padding:20px;">
+            <h3> Error de aplicación </h3>
+            <h4> Lo sentimos, no pudimos encontrar lo que estabas buscando. </h4>
+            @if (Request.IsAuthenticated)
+            {
+
+            }
+            else
+            {
+                <h6>@Html.ActionLink("Regresar a Login", "Index", "Home")</h6>
+            }
+            <br />
+            <br /><br /><br /><br /><br />
+        </div>
+    </div>
+    <div style="background-color: red; color: White; height: 20px;"> </div>
+</body>
+</html>

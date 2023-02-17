@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Error</title>
+    <style>
+        #closeSesh:hover {
+            cursor: grab/pointer;
+        }
+    </style>
+</head>
+<body>
+    <br /><br /><br /><br /><br />
+    <div style="background-color: red; color: White; height: 20px;"> </div>
+    <div style="background-color: white; color: black; height: 170px; text-align:center;">
+        <div style=" padding:20px;">
+            <h3> Error de aplicación: 404 </h3>
+            <h4> Lo sentimos, no pudimos encontrar lo que estabas buscando. </h4>
+            @*@if (Request.IsAuthenticated)
+        {*@
+
+            <button>
+
+                <div class="col-md-12" style="color: dodgerblue" onclick="logOut();" id="closeSesh">
+                    @using (Html.BeginForm("CloseSession", "Home", FormMethod.Post, new { id = "formLogout" })) { }
+                    <h4><i class="glyphicon glyphicon-off"></i> Cerrar sesión</h4>
+                </div>
+            </button>
+            @*}
+        else
+        {
+
+            @using (Html.BeginForm("CloseSession", "Home", FormMethod.Post, new { id = "formLogout" })) { }
+        }*@
+            <br />
+            <br /><br /><br /><br /><br />
+        </div>
+    </div>
+    <div style="background-color: red; color: White; height: 20px;"> </div>
+</body>
+</html>

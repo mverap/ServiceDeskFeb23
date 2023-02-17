@@ -1,0 +1,228 @@
+﻿@model ServiceDesk.ViewModels.LoginVm
+@{
+    ViewBag.Title = "Login";
+    Layout = "";
+}
+
+<script src="@Url.Content("~/Scripts/jquery-3.6.0.min.js")" type="text/javascript"></script>
+<script src="@Url.Content("~/Scripts/bootstrap.min.js")"></script>
+@*<script src="@Url.Content("~/Scripts/bootstrap-datepicker.js")"></script>
+    <script src="@Url.Content("~/Scripts/bootstrap-datepicker.es.min.js")"></script>*@
+
+<link href="@Url.Content("~/Content/bootstrap.min.css")" rel="stylesheet" />
+@*<link href="@Url.Content("~/Content/bootstrap-datepicker3.css")" rel="stylesheet" />*@
+
+
+<style>
+    textarea:focus, input:focus {
+        outline: none;
+    }
+</style>
+
+
+@if (!@Model.Error.IsEmpty())
+{
+    @*<script>
+        $(document).ready(function () {
+            var error = '@ViewBag.Error';
+            if (error == 1) {
+                debugger;
+                $("#incorrecta").css("display", "block");
+                setTimeout(LoginFail, 3000);
+            }
+            if (error == 2) {
+                debugger;
+                $("#incorrecta2").css("display", "block");
+                setTimeout(LoginFail2, 3000);
+            }
+        });
+
+        $(function () {
+            $("#incorrecta").css("display", "block");  setTimeout(LoginFail, 3000);
+            $("#incorrecta2").css("display", "block"); setTimeout(LoginFail2, 3000);
+        });
+
+        function LoginFail() { $("#incorrecta").css("display", "none"); }
+        function LoginFail2() { $("#incorrecta2").css("display", "none"); }
+    </script>*@
+}
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        var error = '@ViewBag.Error';
+        var SegundosMuestreoError = 8;
+        SegundosMuestreoError = SegundosMuestreoError * 1000;
+
+        if (error == 1) { $("#incorrecta").css("display", "block"); setTimeout(LoginFail, SegundosMuestreoError); } else
+        if (error == 2) { $("#incorrecta2").css("display", "block"); setTimeout(LoginFail2, SegundosMuestreoError); } else
+        if (error != "")  $("#incorrecta3").css("display", "block"); setTimeout(LoginFail3, SegundosMuestreoError);   
+
+        console.log(error);
+        $("#ShowError").text(error);
+
+        //var errorText = document.getElementById("ShowError");
+        //errorText.textContent = error;
+    });
+    function LoginFail()  { $("#incorrecta").css("display", "none"); }
+    function LoginFail2() { $("#incorrecta2").css("display", "none"); }
+    function LoginFail3() { $("#incorrecta3").css("display", "none"); }
+    function Entrar() {
+        var usuario = $("#txt_usuario").val();
+        var pasword = $("#txt_password").val();
+        var flag = true;
+        if (usuario.length == 0) { window.location.href = "../?error=1"; flag = false; }
+        if (pasword.length == 0) { window.location.href = "../?error=1"; flag = false; }
+        if (flag) { submit(); }
+    }
+    function submit() {
+        $("#formInicio").submit();
+    }
+
+</script>
+
+
+<table style="width: 22%; margin-left: 38%; margin-top: 5%;">
+    <!-- Inicio de contenido -->
+    @using (Html.BeginForm("Inicio", "Home", FormMethod.Post, new { id = "formInicio" }))
+    {
+        <tr style="text-align: center;">
+            <td>
+                <div>
+                    <img src="~/Content/Images/ptf_click.png" alt="ServiceDesk" width="325" height="225" />
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="3"></td>
+        </tr>
+        <tr>
+            <td colspan="3" style="text-align: center;">
+                <h3 style="color: black;">Inicio de sesión</h3>
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="3">
+                <table style="width: 100%; font-size: 20px;">
+                    <tr>
+                        <td style="width: 15%; text-align: left;">
+                            <i class="fa fa-child" aria-hidden="true"></i>
+                        </td>
+                        <td style="width: 70%; text-align: center;padding-left:5px;">
+                            @Html.TextBoxFor(a => a.Usuario,
+                            new
+                            {
+                                id = "txt_usuario",
+                                Style = "border: 0px;",
+                                placeholder = "Usuario"
+                            })
+                        </td>
+                        <td style="width: 15%;"></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="3">
+                <br />
+            </td>
+        </tr>
+        <tr>
+            <td colspan="3">
+                <table style="width:100%;">
+                    <tr>
+                        <td style="width:100%;background-color:#049FE5;border:2px solid #049FE5"></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="3">
+                <br />
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="3">
+                <table style="width: 100%; font-size: 20px;">
+                    <tr>
+                        <td style="width: 15%; text-align: center;">
+                            <i class="fa fa-key"></i>
+
+                        </td>
+                        <td style="width: 70%; text-align: center;padding-left:5px;">
+                            @Html.TextBoxFor(a => a.Password,
+                            new
+                            {
+                                id = "txt_password",
+                                Style = "border: 0px;",
+                                placeholder = "Contraseña",
+                                type = "password"
+                            })
+                        </td>
+                        <td style="width: 15%;"></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr><td style="background-color: white">.</td></tr>
+        <tr>
+            <td colspan="3">
+                <div style="width: 100%;">
+                    <div style="background-color: #5CB85C; width: 80%; margin-left: 10%;">
+                        <button type="button" class="btn btn-success btn-block" style="border: 0;" onclick="Entrar();">
+                            Ingresar
+
+                            <i class="fa fa-sign-out" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr><td style="background-color: white">.</td></tr>
+        <tr>
+            <td colspan="3"></td>
+        </tr>
+        <tr>
+            <td colspan="3">
+                <div id="incorrecta" style="display: none;">
+                    <table style="width: 100%;">
+                        <tr style="background-color: #D9534F;">
+                            <td style="text-align: center;">
+                                <h5 style="color: white;">Código de Error: 101 <br />Contraseña y/o Usuario incorrecto.</h5>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div id="incorrecta2" style="display: none;">
+                    <table style="width: 100%;">
+                        <tr style="background-color: #D9534F;">
+                            <td style="text-align: center;">
+                                <h5 style="color: white;">Código de Error: 102 <br />El Usuario no tiene un puesto definido en la Base de Datos, favor de contactar con el administrador.</h5>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div id="incorrecta3" style="display: none;">
+                    <table style="width: 100%;">
+                        <tr style="background-color: #D9534F;">
+                            <td style="text-align: center;">
+                                <h5 style="color: white;">Código de Error: 103.<span id="ShowError"></span> <br />Información sobre el puesto que este Usuario tiene definido en la Base de Datos está incompleta, favor de contactar con el administrador.</h5>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="3">
+                <div style="text-align:right;font-size:9px;margin-top:15px;">
+                    Pentafon 2022.
+                </div>
+            </td>
+        </tr>
+    }
+</table>
+

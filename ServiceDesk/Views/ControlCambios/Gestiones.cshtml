@@ -1,0 +1,1460 @@
+﻿@using GridMvc
+@using GridMvc.Html
+@model ServiceDesk.ViewModels.ControlCambios
+@{
+    ViewBag.Title = "Gestion de Control de Cambios";
+}
+
+<style>
+    .button {
+        background-color: Transparent;
+        background-repeat: no-repeat;
+        border: none;
+        cursor: pointer;
+        overflow: hidden;
+        outline: none;
+        margin-left: 14%;
+    }
+
+    .labelMenu {
+        color: white;
+        font-weight: 700;
+        margin-top: 28.95px;
+    }
+
+    .menu {
+        background-color: #384049;
+        height: 1035px;
+        width: 345px;
+    }
+
+    .labelModal {
+        font-weight: bold;
+        color: #808080;
+        font-size: 12px;
+        margin: 0px 39px 0px 10px;
+    }
+    .modal-content {
+        width: 500px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: #fff;
+        color: #000;
+        text-align: left;
+        border-radius: 20px;
+        padding: 30px 30px;
+    }
+</style>
+<script type="text/javascript">
+     var folio = '@ViewBag.Id';
+    var user = '@ViewBag.user';
+    var job = '@ViewBag.job';
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    $(document).ready(function () {
+        if (job == 1) { GesImplementer(); }
+        if (job == 2) { GesInvolucrados(); }
+        if (job == 3) { GesCarC(); }
+
+        $("#tbl_CC_Implementer_Nombre").append('<option value=0> SELECCIONE</option>');
+        $("#tbl_CC_Implementer_GrupoResolutor").append('<option value=0> SELECCIONE</option>');
+
+        $(".cb").each(function (index) {
+            index = this.id;
+            $(index).append('<option value=0> SELECCIONE</option>');
+            $(index).val(null);
+            var f = document.getElementById(index);
+            //console.log(index + " added Selected");
+        });
+
+        $("#tbl_CC_Implementer_GrupoResolutor option").each(function (index) {
+            //$("#tbl_CC_Involucrados_GrupoResolutor").append('<option value=' + this.val + '>' + this.text + '</option>');
+            //console.log(index + " added Selected");
+        });
+
+        @*$("#tbl_CC_Involucrados_GrupoResolutor").change(function () {
+            $("#tbl_CC_Involucrados_Nombre").empty();
+            var SelectedGroup = $("#tbl_CC_Involucrados_GrupoResolutor option:selected").text();
+            console.log("obteniendo :  " + SelectedGroup);
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetTecnicos", "ControlCambios")',
+                dataType: 'json',
+                data: { grupo: SelectedGroup },
+                success: function (result) {
+                    console.log(result);
+                    $("#tbl_CC_Involucrados_Nombre").append('<option value="0">SELECCIONE</option>');
+                    $.each(result, function (i, tecnico) {
+                        console.log("Grupo:  " + SelectedGroup + " \nTecnico.Id:  " + tecnico.EmpleadoID + " \nNombre:  " + tecnico.NombreTecnico);
+                        $("#tbl_CC_Involucrados_Nombre").append('<option value="' + tecnico.EmpleadoID + '">' + tecnico.NombreTecnico + '</option>');
+
+                    });
+                },
+                error: function () {
+                    alert("Error obteniendo tecnicos");
+                }
+            });
+        });
+
+        $("#tbl_CC_Implementer_GrupoResolutor").change(function () {
+            $("#tbl_CC_Implementer_Nombre").empty();
+            $("#tbl_CC_Implementer_CorreoElectronico").val(0);
+            var SelectedGroup = $("#tbl_CC_Implementer_GrupoResolutor option:selected").text();
+            console.log("obteniendo :  " + SelectedGroup);
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetTecnicos", "ControlCambios")',
+                dataType: 'json',
+                data: { grupo: SelectedGroup },
+                success: function (result) {
+                    console.log(result);
+                    $("#tbl_CC_Implementer_Nombre").append('<option value="0">SELECCIONE</option>');
+                    $.each(result, function (i, tecnico) {
+                        console.log("Grupo:  " + SelectedGroup + " \nTecnico.Id:  " + tecnico.EmpleadoID + " \nNombre:  " + tecnico.NombreTecnico);
+                        $("#tbl_CC_Implementer_Nombre").append('<option value="' + tecnico.EmpleadoID + '">' + tecnico.NombreTecnico + '</option>');
+
+                    });
+                }
+            });
+        });*@
+
+        $("#tbl_CC_Implementer_Nombre").change(function () {
+            var TecnicoID = $("#tbl_CC_Implementer_Nombre option:selected").val();
+            console.log("ID del Tecnico: " + TecnicoID);
+            $("#tbl_CC_Implementer_CorreoElectronico").val(TecnicoID);
+        });
+
+        $("#btnCerrarModalEliminar").click(function () { $("#modalElim").modal("hide"); });
+        $("#btnModalAceptarEliminar").click(function () {
+            DELETEfromGrid2();
+        });
+
+    });// END DOCUMENT READY
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    //FUNCIONES
+
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function Alta() {
+        $("#modAlta").modal('show');
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        function CancelaSolicitud() {
+        $("#modalAltaCaracteristicas").modal('hide');
+        $("#modalAltaInvolucrados").modal('hide');
+        $("#modalAltaSubcat").modal('hide');
+        //Usuarios
+        $("#modalGuardado").modal('hide');
+        $("#modalNotificaciones").modal('hide');
+        $("#modalAltaImplementer").modal('hide');
+            //location.reload();
+            var element = document.getElementById("tbl_CC_Implementer_CorreoElectronico");
+
+            $("#tbl_CC_Implementer_CorreoElectronico").val(0);
+            $("#tbl_CC_Implementer_Nombre").val(0);
+            $("#tbl_CC_Implementer_GrupoResolutor").val(0);
+
+            $("#tbl_CC_Implementer_Nombre").val(0);
+            $("#tbl_CC_Implementer_GrupoResolutor").val(0);
+
+            $(".cb").each(function (index) {
+                index = this.id;
+                $(index).val();
+                //console.log(index + " added Selected");
+            });
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function AceptaTicket(id) {
+        $("#modalAltaCaracteristicas").modal('hide');
+        $("#modalNotificaciones").modal('hide');
+        $("#modalAltaInvolucrados").modal('hide');
+        $("#modalAltaSubcat").modal('hide');
+        //Usuarios
+         $("#modalGuardado").modal('hide');
+        $("#modalAltaImplementer").modal('hide');
+
+         var url = '@Url.Action("Gestiones", "Supervisor")';
+        window.location.href = url + '?EmployeeId=' + id;
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function SaveUser() {
+
+        //Valida correo
+        var add = $('#user_Correo').val().toLowerCase();
+
+        var reg = /^[_a-z0-9-]+(\.[_a-z0-9-]+)*@@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$/;
+
+        if (reg.test(add)) {
+
+            $("#user_Correo").css("border-color", "#ccc");
+
+        }
+        else {
+            $("#user_Correo").css("border-color", "red");
+            $("#user_Correo").focus();
+            alert("Estructura del correo invalida!");
+            return;
+        }
+
+        //Guarda SubTicket
+        $("#form").submit();
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function ShowEditarUsuario(Id) {
+
+         $.ajax({
+                type: 'POST',
+                url: '@Url.Action("getdataUsuario", "Supervisor")',
+                dataType: 'json',
+                data: {
+                    id: Id
+                },
+             success: function (result) {
+
+                 $("#user_NombreTecnico").val(result.NombreTecnico);
+                 $("#user_EmpleadoID").val(result.EmpleadoID);
+                 $("#user_GrupoResolutor").val(result.GrupoResolutor);
+                 $("#user_Centro").val(result.Centro);
+                 $("#atc_HoraInicioATC").val(result.HoraInicioATC);
+                 $("#atc_HoraFinATC").val(result.HoraFinATC);
+                 $("#lab_HoraInicioJornada").val(result.HoraInicioJornada);
+                 $("#lab_HoraFinJornada").val(result.HoraFinJornada);
+                 $("#user_Correo").val(result.Correo);
+                 $("#user_NivelExperiencia").val(result.NivelExperiencia);
+                 //CHECKBOX ATC
+                 if (result.Lunesatc == true)
+                 {
+                 $("#atc_Lunes").prop("checked",true);
+
+                 }
+                 if (result.Martesatc == true) {
+                     $("#atc_Martes").prop("checked", true);
+
+                 }
+                 if (result.Miercolesatc == true) {
+                     $("#atc_Miercoles").prop("checked", true);
+
+                 }
+                 if (result.Juevesatc == true) {
+                     $("#atc_Jueves").prop("checked", true);
+
+                 }
+                 if (result.Viernesatc == true) {
+                     $("#atc_Viernes").prop("checked", true);
+
+                 }
+                 if (result.Sabadoatc == true) {
+                     $("#atc_Sabado").prop("checked", true);
+
+                 }
+                 if (result.Domingoatc == true) {
+                     $("#atc_Domingo").prop("checked", true);
+
+                 }
+                 //CHECKBOX JORNADA
+                 if (result.Luneslab == true) {
+                     $("#lab_Lunes").prop("checked", true);
+
+                 }
+                 if (result.Marteslab == true) {
+                     $("#lab_Martes").prop("checked", true);
+
+                 }
+                 if (result.Miercoleslab == true) {
+                     $("#lab_Miercoles").prop("checked", true);
+
+                 }
+                 if (result.Jueveslab == true) {
+                     $("#lab_Jueves").prop("checked", true);
+
+                 }
+                 if (result.Vierneslab == true) {
+                     $("#lab_Viernes").prop("checked", true);
+
+                 }
+                 if (result.Sabadolab == true) {
+                     $("#lab_Sabado").prop("checked", true);
+
+                 }
+                 if (result.Domingolab == true) {
+                     $("#lab_Domingo").prop("checked", true);
+
+                 }
+
+                 $("#modAlta").modal('show');
+
+                },
+                error: function () {
+                    alert("Error");
+             }
+
+        });
+
+
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function DeleteUsuario(Id) {
+        if (window.confirm('Deseas eliminar el usuario seleccionado?')) {
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("getDeleteUsuario", "Supervisor")',
+                dataType: 'json',
+                data: {
+                    id: Id
+                },
+                success: function (result) {
+
+                    if (result == "Correcto") {
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblSuccess").css('display', 'block');
+                        $("#tituloBajaUser").css('display', 'block');
+                        $("#LeyendaBajaUser").css('display', 'block');
+
+                    }
+                    else {
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblError").css('display', 'block');
+
+                    }
+
+                },
+                error: function () {
+                    alert("Error");
+                }
+
+            });
+        }
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function ShowEditarNivel(Id) {
+
+         $.ajax({
+                type: 'POST',
+                url: '@Url.Action("ShowEditarNivel", "Supervisor")',
+                dataType: 'json',
+                data: {
+                    id: Id,
+                    Nivel: $("#txtNivelAdd").val()
+                },
+             success: function (result) {
+
+                 $("#txtNivelAdd").val(result.Nivel);
+                 $("#modalAltaImplementer").modal('show');
+
+                 $("#idAddNivelExp").css('display','none');
+                 $("#idEditNivelExp").css('display','block');
+                 $("#IdNivel").val(result.Id);
+
+                },
+                error: function () {
+                    alert("Error");
+             }
+
+        });
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function EditNivelExp()
+    {
+
+        $.ajax({
+                type: 'POST',
+                url: '@Url.Action("getEditNivel", "Supervisor")',
+                dataType: 'json',
+            data: {
+                id: $("#IdNivel").val(),
+                Nivel: $("#txtNivelAdd").val()
+            },
+             success: function (result) {
+
+                 if (result == "Correcto") {
+                     $("#modalNotificaciones").modal('show');
+                     $("#modalAltaImplementer").modal('hide');
+                     $("#tblSuccess").css('display', 'block');
+                     $("#tituloAddNivel").css('display', 'block');
+                     $("#LeyendaAddNivel").css('display', 'block');
+
+                 }
+                 else
+                 {
+                     $("#modalNotificaciones").modal('show');
+                     $("#modalAltaImplementer").modal('hide');
+                     $("#tblError").css('display', 'block');
+
+                 }
+
+                },
+                error: function () {
+                    alert("Error");
+             }
+
+        });
+
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function DeleteNivel(Id) {
+        if (window.confirm('Deseas eliminar el Nivel seleccionado?')) {
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("getDeleteNivel", "Supervisor")',
+                dataType: 'json',
+                data: {
+                    id: Id
+                },
+                success: function (result) {
+
+                    if (result == "Correcto") {
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblSuccess").css('display', 'block');
+                        $("#tituloBajaNivel").css('display', 'block');
+                        $("#LeyendaBajaNivel").css('display', 'block');
+
+                    }
+                    else {
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblError").css('display', 'block');
+
+                    }
+
+                },
+                error: function () {
+                    alert("Error");
+                }
+
+            });
+        }
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function ShowEditarDX(id) {
+
+         $.ajax({
+                type: 'POST',
+                url: '@Url.Action("EditarDiagnostico", "Supervisor")',
+                dataType: 'json',
+                data: {
+                    id: id
+                },
+             success: function (result) {
+
+                 $("#DDCategoria option:selected").text(result.Categoria);
+                 $("#DDSubcategoria option:selected").text(result.SubCategoria);
+                 $("#txtDiagnostico").val(result.Diagnostico);
+                 $("#IdDX").val(result.Id);
+                 $("#modalAltaCaracteristicas").modal('show');
+
+                 $("#idAddDX").css('display', 'none');
+                 $("#idEditDX ").css('display', 'block');
+
+             },
+             error: function () {
+                 alert("Error");
+             }
+
+        });
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function EditDX() {
+
+        $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetEditarDX", "Supervisor")',
+                dataType: 'json',
+            data: {
+                id: $("#IdDX").val(),
+                cat: $("#DDCategoria").val(),
+                Subcat: $("#DDSubcategoria").val(),
+                Diag: $("#txtDiagnostico").val()
+            },
+            success: function (result) {
+
+                if (result == "Correcto") {
+                    $("#modalAltaCaracteristicas").modal('hide');
+                    $("#modalNotificaciones").modal('show');
+                    $("#tblSuccess").css('display', 'block');
+                    $("#tituloAddDX").css('display', 'block');
+                    $("#LeyendaAddDX").css('display', 'block');
+
+                }
+                else {
+                    $("#modalNotificaciones").modal('show');
+                    $("#modalAltaCaracteristicas").modal('hide');
+                    $("#tblError").css('display', 'block');
+
+                }
+
+            },
+            error: function ()
+            {
+                alert("Error");
+            }
+
+        });
+
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function DeleteDX(id) {
+
+        if (window.confirm('Deseas eliminar el diagnostico seleccionado?')) {
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetDeleteDX", "Supervisor")',
+                dataType: 'json',
+                data: {
+                    IdDX: id
+                },
+                success: function (result) {
+
+                    if (result == "Correcto") {
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblSuccess").css('display', 'block');
+                        $("#tituloBajaDX").css('display', 'block');
+                        $("#LeyendaBajaDX").css('display', 'block');
+
+                    }
+                    else {
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblError").css('display', 'block');
+
+                    }
+
+                },
+                error: function () {
+                    alert("Error");
+                }
+
+            });
+        }
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function ShowEditarCat(id) {
+
+         $.ajax({
+                type: 'POST',
+                url: '@Url.Action("ShowEditCategoria", "Supervisor")',
+                dataType: 'json',
+                data: {
+                    id: id
+                },
+             success: function (result) {
+
+                 $("#txtCategoria").val(result.Categoria);
+                 $("#DDGrupoResolutor option:selected").text(result.Grupo);
+                 $("#IdCat").val(result.Id);
+                 $("#modalAltaInvolucrados").modal('show');
+
+                 $("#idAddCat").css('display', 'none');
+                 $("#idEditCat").css('display', 'block');
+
+             },
+             error: function () {
+                 alert("Error");
+             }
+
+        });
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function EditCat() {
+
+        $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetEditarCategoria", "Supervisor")',
+                dataType: 'json',
+            data: {
+                id: $("#IdCat").val(),
+                cat: $("#txtCategoria").val(),
+                grupo: $("#DDGrupoResolutor").val()
+                },
+             success: function (result) {
+
+                 if (result == "Correcto") {
+
+                     $("#modalAltaInvolucrados").modal('hide');
+                     $("#modalNotificaciones").modal('show');
+                     $("#tblSuccess").css('display', 'block');
+                     $("#tituloAddCAT").css('display', 'block');
+                     $("#LeyendaAddCAT").css('display', 'block');
+
+                 }
+                 else
+                 {
+                     $("#modalNotificaciones").modal('show');
+                     $("#tblError").css('display', 'block');
+
+                 }
+
+                },
+                error: function () {
+                    alert("Error");
+             }
+
+        });
+
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function DeleteCat(id) {
+        if (window.confirm('Deseas eliminar la cátegoria seleccionada?')) {
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetDeleteCategoria", "Supervisor")',
+                dataType: 'json',
+                data: {
+                    id: id
+                },
+                success: function (result) {
+
+                    if (result == "Correcto") {
+
+                        $("#modalAltaInvolucrados").modal('hide');
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblSuccess").css('display', 'block');
+                        $("#tituloBajaCAT").css('display', 'block');
+                        $("#LeyendaBajaCAT").css('display', 'block');
+
+                    }
+                    else {
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblError").css('display', 'block');
+
+                    }
+
+                },
+                error: function () {
+                    alert("Error");
+                }
+
+            });
+        }
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function AltaSubcat() {
+
+        $("#modalAltaSubcat").modal('show');
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function AddSubCat() {
+
+        $.ajax({
+                type: 'POST',
+                url: '@Url.Action("AgregarSubCategoria", "Supervisor")',
+                dataType: 'json',
+            data: {
+                subcat: $("#txtNombreSubcategoria").val(),
+                cat: $("#DDCategoriaB").val(),
+                tipo: $("#DDTipo").val(),
+                prioridad: $("#DDPrioridad").val(),
+                sla: $("#txtSLA").val(),
+                nivel: $("#DDNivelExperiencia").val(),
+                periodo: $("#txtPeriodoGarantia").val()
+                },
+             success: function (result) {
+
+                 if (result == "Correcto") {
+
+                     $("#modalAltaSubcat").modal('hide');
+                     $("#modalNotificaciones").modal('show');
+                     $("#tblSuccess").css('display', 'block');
+                     $("#tituloAddSUBCAT").css('display', 'block');
+                     $("#LeyendaAddSUBCAT").css('display', 'block');
+
+                 }
+                 else
+                 {
+                     $("#modalNotificaciones").modal('show');
+                     $("#tblError").css('display', 'block');
+
+                 }
+
+                },
+                error: function () {
+                    alert("Error");
+             }
+
+        });
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function ShowEditarSubcat(id) {
+        $.ajax({
+                type: 'POST',
+                url: '@Url.Action("ShowEditSubcategoria", "Supervisor")',
+                dataType: 'json',
+                data: {
+                    id: id
+                },
+             success: function (result) {
+
+                 $("#txtNombreSubcategoria").val(result.SubCategoria);
+                 $("#DDTipo").val(result.Tipo);
+                 $("#DDPrioridad").val(result.Prioridad);
+                 $("#txtSLA").val(result.SLA);
+                 $("#DDNivelExperiencia option:selected").text(result.Nivel);
+                 $("#txtPeriodoGarantia").val(result.Periodo);
+                 $("#DDCategoriaB option:selected").text(result.Categoria);
+
+                 //
+                 $("#IdSubCat").val(result.Id);
+                 $("#modalAltaSubcat").modal('show');
+                 $("#idAddSubCat").css('display', 'none');
+                 $("#idEditSubCat").css('display', 'block');
+
+             },
+             error: function () {
+                 alert("Error");
+             }
+
+        });
+
+
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function EditSubCat() {
+
+        $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetEditSubCategoria", "Supervisor")',
+                dataType: 'json',
+            data: {
+                id: $("#IdSubCat").val(),
+                subcat: $("#txtNombreSubcategoria").val(),
+                cat: $("#DDCategoriaB").val(),
+                tipo: $("#DDTipo").val(),
+                prioridad: $("#DDPrioridad").val(),
+                sla: $("#txtSLA").val(),
+                nivel: $("#DDNivelExperiencia").val(),
+                periodo: $("#txtPeriodoGarantia").val()
+                },
+             success: function (result) {
+
+                 if (result == "Correcto") {
+
+                     $("#modalAltaSubcat").modal('hide');
+                     $("#modalNotificaciones").modal('show');
+                     $("#tblSuccess").css('display', 'block');
+                     $("#tituloAddSUBCAT").css('display', 'block');
+                     $("#LeyendaAddSUBCAT").css('display', 'block');
+
+                 }
+                 else
+                 {
+                     $("#modalNotificaciones").modal('show');
+                     $("#tblError").css('display', 'block');
+
+                 }
+
+                },
+                error: function () {
+                    alert("Error");
+             }
+
+        });
+
+    }
+
+    // Show tabs and hide others
+    function GesImplementer() {
+        $("#idGesTecn").css('display', 'block'); $("#idGesTecn").find("b").click();
+        $("#GridNiveles").css('display', 'block');
+        $("#idGesTecnicos").css('display', 'block');
+        $("#GridTecnicos").css('display', 'block');
+        //
+        $("#idGesInvo").css('display', 'none');
+        $("#GridGescat").css('display', 'none');
+        $("#idGesSubCate").css('display', 'none');
+        $("#GridGesSubcat").css('display', 'none');
+        $("#idGesCarC").css('display', 'none');
+        $("#GridGesCarC").css('display', 'none');
+    }
+    function GesInvolucrados() {
+
+        $("#idGesInvo").css('display', 'block'); $("#idGesInvo").find("b").click();
+        $("#idGesSubCate").css('display','block');
+        $("#GridGescat").css('display','block');
+        $("#GridGesSubcat").css('display','block');
+        $("#idGesCarC").css('display', 'none');
+        $("#GridGesCarC").css('display', 'none');
+        //
+        $("#idGesTecn").css('display', 'none');
+        $("#idGesTecnicos").css('display', 'none');
+        $("#GridNiveles").css('display', 'none');
+        $("#GridTecnicos").css('display', 'none');
+
+    }
+    function GesCarC() {
+
+        $("#idGesCarC").css('display', 'block'); $("#idGesCarC").find("b").click();
+        $("#GridGesCarC").css('display', 'block');
+        $("#idGesInvo").css('display', 'none');
+        $("#idGesSubCate").css('display', 'none');
+        $("#GridGescat").css('display', 'none');
+        $("#GridGesSubcat").css('display', 'none');
+        //
+        $("#idGesTecn").css('display', 'none');
+        $("#idGesTecnicos").css('display', 'none');
+        $("#GridNiveles").css('display', 'none');
+        $("#GridTecnicos").css('display', 'none');
+
+    }
+
+    //-- Redirects
+    function goToControl() { window.location = '../ControlCambios/DashboardCC?EmployeeId=' + user; }
+    function goToControlConfig() { window.location = '../ControlCambios/Gestiones?EmployeeId=' + user; }
+    function goToTareas() { window.location = '../Supervisor/GridTickets?EmployeeId=' + user; }
+    function ReturnDash(id) {
+        var url = '@Url.Action("DashboardCC", "ControlCambios")';
+        window.location.href = url + '?EmployeeId=' + id;
+    }
+
+    //-- Delete, Add, Edit, Validate
+    function DELETEfromGrid(int1, int2){
+        //window.location = '../ControlCambios/DeleteFromGrid?EmployeeId=' + user + "&type=" + int1 + "&id=" + int2;
+        // 1 = caracteristicas, 2 = involucrado, 3 = implementer
+        var tipo = "";
+        if (int1 == 1) { tipo = "caracteristica"; }
+        if (int1 == 2) { tipo = "involucrado"; }
+        if (int1 == 3) { tipo = "implementer"; }
+        $("#objElim").html(tipo);
+        $("#objElimType").html(int1);
+        $("#idElim").html(int2);
+        $("#modalElim").modal("show");
+    }
+    function DELETEfromGrid2() {
+        var int1 = $("#objElimType").html();
+        var int2 = $("#idElim").html();
+        window.location = '../ControlCambios/DeleteFromGrid?EmployeeId=' + user + "&type=" + int1 + "&id=" + int2;
+        // 1 = caracteristicas, 2 = involucrado, 3 = implementer
+    }
+    //-- Fill combobox Tecnicos after chosing a gruporeslutor
+    function fillTenicos(grupor, idtec) {
+        //Obtener tecnicos al presionar editar
+        var SelectedGroup = $("#tbl_CC_Implementer_GrupoResolutor option:selected").text();
+        console.log("Obteniendo Tecnicos: " + SelectedGroup + " - " + grupor);
+        $.ajax({
+            type: 'POST',
+            url: '@Url.Action("GetTecnicos", "ControlCambios")',
+            dataType: 'json',
+            data: { grupo: SelectedGroup },
+            success: function (result) {
+                $("#tbl_CC_Implementer_Nombre").append('<option value="0">SELECCIONE</option>');
+                $.each(result, function (i, tecnico) {
+                    //console.log("Grupo:  " + SelectedGroup + " \nTecnico.Id:  " + tecnico.EmpleadoID + " \nNombre:  " + tecnico.NombreTecnico);
+                    $("#tbl_CC_Implementer_Nombre").append('<option value="' + tecnico.EmpleadoID + '">' + tecnico.NombreTecnico + '</option>');
+                    $("#tbl_CC_Implementer_Nombre").val(idtec);
+                    $("#tbl_CC_Implementer_CorreoElectronico").val(idtec);
+                });
+            }
+        });
+    }
+    function fillTecnicos2(grupor, idtec) {
+        //Obtener tecnicos al presionar editar
+        var SelectedGroup = $("#tbl_CC_Involucrados_Grupo option:selected").val();
+        $.ajax({
+            type: 'POST',
+            url: '@Url.Action("GetTecnicos", "ControlCambios")',
+            dataType: 'json',
+            data: { grupo: grupor },
+            success: function (result) {
+                console.log("Obteniendo Tecnicos: " + idtec + " - " + grupor);
+                console.log(result);
+                //$("#tbl_CC_Involucrados_Nombre").append('<option value="0">SELECCIONE</option>');
+                $.each(result, function (i, tecnico) {
+                    //console.log("Grupo:  " + SelectedGroup + " \nTecnico.Id:  " + tecnico.EmpleadoID + " \nNombre:  " + tecnico.NombreTecnico);
+                    $("#tbl_CC_Involucrados_Nombre").append('<option value="' + tecnico.EmpleadoID + '">' + tecnico.NombreTecnico + '</option>');
+                });
+                $("#tbl_CC_Involucrados_Nombre").val(idtec);
+                $("#tbl_CC_Involucrados_CorreoElectronico").val(idtec);
+            }
+        });
+    }
+    //-- Edit
+    function ShowEditarInv(int) {
+        var tecnico = ""; var correo = ""; var grupor = 0; var idtec = 0;
+        $('#formInvolucrado').attr('action', '../ControlCambios/EditarInvolucrado?EmployeeId=@ViewBag.user&InvId=' + int);
+        $("#titleInv").html("Editar Involucrado");
+        console.log("Editando Involucrado: " + int + " -------------------------------------------------");
+        $("#tbl_CC_Implementer_Nombre").empty();
+
+        //var SelectedGrouptxt = $("#tbl_CC_Implementer_GrupoResolutor option:selected").text();
+        //var tecnico = ""; var correo = ""; var grupor = 0; var idtec = 0;
+
+        var SelectedGroup = $("#tbl_CC_Involucrados_GrupoResolutor option:selected").text();
+
+        // Obtener grupo resolutor
+        $.ajax({
+            type: 'POST',
+            url: '@Url.Action("GetInvForEdit", "ControlCambios")',
+            dataType: 'json',
+            data: {
+                id: int,
+            },
+            success: function (result) {
+                //console.log(result);
+                $("#modalAltaInvolucrados").modal("show");
+                console.log("grupo: " + result.GrupoResolutor);
+                $("#tbl_CC_Involucrados_GrupoResolutor").val(result.GrupoResolutor);
+                $("#tbl_CC_Involucrados_Perfil").val(result.Perfil);
+                grupor = result.GrupoResolutor;
+                SelectedGroup = $("#tbl_CC_Involucrados_GrupoResolutor option:selected").text();
+                tecnico = result.Nombre;
+                correo = result.CorreoElectronico;
+                idtec = result.EmployeeId;
+                fillTecnicos2(grupor, idtec);
+/*                console.log("idtec: " + idtec + " - " + grupor);*/
+                //console.log("tecnico: " + tecnico);
+                //console.log("idtec: " + idtec);
+            },
+            error: function ()
+            {
+                alert("Error obteniendo el grupo resolutor del tecnico");
+            }
+        });
+        $("#modalAltaInvolucrados").modal('show');
+        /*$("#tbl_CC_Implementer_GrupoResolutor").val(grupor);*/
+    }
+    function ShowEditarImp(int) {
+        $('#formImplementer').attr('action', '../ControlCambios/EditarImplementer?EmployeeId=@ViewBag.user&ImpId=' + int);
+        $("#titleImp").html("Editar Implementer");
+        console.log("Editando implementer: " + int + " ----------------------------------------------------");
+        //$("#tbl_CC_Implementer_Nombre").empty();
+        //$("#tbl_CC_Implementer_CorreoElectronico").val(0);
+        var SelectedGrouptxt = $("#tbl_CC_Implementer_GrupoResolutor option:selected").text();
+        var tecnico = ""; var correo = ""; var grupor = ""; var idtec = 0;
+
+        var SelectedGroup = $("#tbl_CC_Implementer_GrupoResolutor option:selected").text();
+
+        // Obtener grupo resolutor
+        $.ajax({
+            type: 'POST',
+            url: '@Url.Action("GetImpForEdit", "ControlCambios")',
+            dataType: 'json',
+            data: {
+                id: int,
+            },
+            success: function (result) {
+                $("#modalAltaImplementer").modal("show");
+                $("#tbl_CC_Implementer_GrupoResolutor").val(result.GrupoResolutor);
+                $("#tbl_CC_Implementer_Nombre").val(result.EmployeeId);
+                $("#tbl_CC_Implementer_CorreoElectronico").val(result.EmployeeId);
+                grupor = result.GrupoResolutor;
+                SelectedGroup = $("#tbl_CC_Implementer_GrupoResolutor option:selected").text();
+                console.log("Grupo: " + SelectedGroup + " - " + grupor);
+                console.log("Tecni: " + result.EmployeeId );
+                tecnico = result.Nombre;
+                correo = result.CorreoElectronico;
+                idtec = result.EmployeeId;
+                //fillTenicos(grupor, idtec);
+                //console.log("tecnico: " + tecnico);
+                //console.log("idtec: " + idtec);
+            },
+            error: function ()
+            {
+                alert("Error obteniendo el grupo resolutor del tecnico");
+            }
+        });
+        $("#tbl_CC_Implementer_GrupoResolutor").val(grupor);
+        $("#tbl_CC_Implementer_Nombre").val(idtec);
+    }
+    function ShowEditarCar(int)
+    {
+        //formCaracteristica
+        $('#formCaracteristica').attr('action', '../ControlCambios/EditarCaracteristica?EmployeeId=@ViewBag.user&CarId=' + int);
+        $("#titleCar").html("Editar Caracteristica");
+        $("#modalAltaCaracteristicas").modal('show');
+        console.log("Id: " + int);
+
+        // Obtener grupo resolutor
+        $.ajax({
+            type: 'POST',
+            url: '@Url.Action("GetCarForEdit", "ControlCambios")',
+            dataType: 'json',
+            data: {
+                TareaId: int,
+            },
+            success: function (result) {
+                console.log("Resultado");
+                $("#modalAltaCaracteristicas").modal("show");
+                var tipo = result.Tipo; var detalle = result.Detalle;
+                $("#tbl_CC_Caracteristicas_Tipo").val(tipo);
+                $("#tbl_CC_Caracteristicas_Detalle").val(detalle);
+                console.log("Tipo:    " + tipo + ". \nDetalle: " + detalle);
+            },
+            error: function ()
+            {
+                alert("Error obteniendo Caracteristicas");
+            }
+        });
+    }
+
+    //-- Show Modals of alta
+    function ShowAltaInvolucradosModal(){
+        $('#formInvolucrado').attr('action', '../ControlCambios/AñadirInvolucrado?EmployeeId=@ViewBag.user');
+        $("#titleInv").html("Añadir Involucrado");
+        $("#modalAltaInvolucrados").modal('show');
+    }
+    function ShowAltaImplementerModal() {
+        $('#formImplementer').attr('action', '../ControlCambios/AñadirImplementer?EmployeeId=@ViewBag.user');
+        $("#titleImp").html("Agregar Implementer");
+        $("#modalAltaImplementer").modal('show');
+    }
+    function ShowAltaCaracteristicaModal()
+    {
+        $('#formCaracteristica').attr('action', '../ControlCambios/AñadirCaracteristica?EmployeeId=@ViewBag.user');
+        $("#titleCar").html("Agregar Caracteristica");
+        $("#modalAltaCaracteristicas").modal('show');
+    }
+
+    //-- Submits from Modals
+    function AltaInvolucrado() {
+        alert("Estos son los datos del nuevo Involucrado: \r\n Perfil: " + $("#InvPerfil").val() + " \r\n Nombre: " + $("#InvNombre").val() + " \r\n Correo: " + $("#InvCorreoElectronico").val());
+        @*$.ajax({
+                type: 'POST',
+                url: '@Url.Action("AddInvolucrado", "ControlCambios")',
+                dataType: 'json',
+            data: {
+                Perfil: $("#InvPerfil").val(),
+                Nombre: $("#InvNombre").val(),
+                CorreoElectronico: $("#InvCorreoElectronico").val()
+                },
+                success: function (result) {
+                    if (result == "Correcto") {
+                        $("#modalAltaInvolucrados").modal('hide');
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblSuccess").css('display', 'block');
+                        $("#tituloAddCAT").css('display', 'block');
+                        $("#LeyendaAddCAT").css('display', 'block');
+                    } else {
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblError").css('display', 'block');
+                    }
+                },
+                error: function () {
+                    alert("Error");
+                }
+        });*@
+    }
+    function AddImplementer() {
+        var nombre = $("#tbl_CC_Implementer_Nombre").val();
+        if (nombre != 0) {
+            $("#formImplementer").submit();
+        }
+    }
+    function AltaCaracteristica() {
+        alert("Estos son los datos del nuevo Involucrado: \r\n Tipo: " + $("#CarTipo").val() + " \r\n Detalle: " + $("#CarDetalle").val() );
+        @*$.ajax({
+                type: 'POST',
+                url: '@Url.Action("AddCaracteristica", "ControlCambios")',
+                dataType: 'json',
+            data: {
+                cat: $("#DDCategoria").val(),
+                    Tipo: $("#CarTipo").val(),
+                    Detalle: $("#CarDetalle").val()
+                },
+                success: function (result) {
+                    if (result == "Correcto") {
+                        $("#modalAltaCaracteristicas").modal('hide');
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblSuccess").css('display', 'block');
+                        $("#tituloAddDX").css('display', 'block');
+                        $("#LeyendaAddDX").css('display', 'block');
+                    } else {
+                        $("#modalNotificaciones").modal('show');
+                        $("#tblError").css('display', 'block');
+                    }
+                },
+                error: function () {
+                    alert("Error");
+                }
+        });*@
+    }
+
+    function verifyImplementer(ele) { }
+    function verifyInvolucrado(ele) { var element = ele; $("#tbl_CC_Involucrados_CorreoElectronico").val(element.value); }
+
+</script>
+
+
+@*    MODAL ELIM CC                      *@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalElim">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div style="font-size:1em">
+                <label>¿Está seguro que desea eliminar <label id="objElim"></label> con ID: <label id="idElim"></label>?</label>
+                <label id="objElimType" hidden></label>
+            </div>
+            <div class="modal-footer" style="float:right">
+                <button type="button" class="btn btn-warning" id="btnCerrarModalEliminar">Cancelar</button> 
+                <button type="button" class="btn btn-primary" id="btnModalAceptarEliminar">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@*BARRA DE MENÚ*@
+@*<nav class="navbar navbar-default navbar-fixed-top pophide" style="background:red; color: dodgerblue!important;">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            </div>
+            <div id="navbar" class="navbar-collapse collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li class="dropdown" style="background-color:red;">
+                        <a style="color: white !important" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> <span class="glyphicon glyphicon-bell"></span></a>
+
+                    </li>
+                    <li class="dropdown" style="background-color:red;">
+                        <a style="color: white !important" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> <span class="fa fa-bars"></span></a>
+                        <ul class="dropdown-menu">
+
+                            @if (ViewBag.rol == "Directivo") { }
+                            else
+                            {
+                                <a> <li style="margin-left:5%" class="fa fa-clock-o" onclick="goToTareas(@ViewBag.user);">&nbsp;Tareas Programadas</li> </a>
+                                <a> <li style="margin-left:5%" class="fa fa-share-alt" onclick="goToControl(@ViewBag.user);">&nbsp;Control de Cambios</li> </a>
+                                <a> <li style="margin-left:5%" class="fa fa-cog" onclick="goToControlConfig(@ViewBag.user);">&nbsp;Gestiones de Control de Cambios</li> </a>
+                            }
+                            <a style="color: dodgerblue" onclick="returnMenu()">
+                            <li style="margin-left:5%" class="fa  fa-pie-chart">&nbsp;Reportes</li>
+                            </a>
+                            <a>
+                            <li style="margin-left:5%" class="fa fa-toggle-on">&nbsp;Cerrar sesión</li>
+                            </a>
+                        </ul>
+                    </li>
+                    @if (Request.IsAuthenticated)
+                    {
+                        <li style="font-size: 12px;">
+                            <a href="#" style="color: white">
+                                @User.Identity.Name
+                            </a>
+                        </li>
+                        <li style="font-size: 12px; color: white">
+                            @using (Html.BeginForm("CloseSession", "Home", FormMethod.Post, new { id = "formLogout" }))
+                            {
+
+                            }
+                            <a style="color: white !important" href="#"
+                               class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" onclick="logOut();"
+                               aria-expanded="false">
+                                Salir
+                                <span class="glyphicon glyphicon-off"></span>
+                            </a>
+
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </nav>*@
+@*FIN DE BARRA DE MENÚ*@
+
+<div class="row" style="margin-top: 2px; margin-left:-50px;">
+    <div class="col-md-12">
+        <div class="col-md-4">
+            <div class="menu">
+                <br />
+                <button style="margin-left:65%;" class="btn btn-danger" onclick="ReturnDash(@Model.EmployeeIdBO);"><span class="glyphicon glyphicon-arrow-left"></span> Regresar</button>
+                <button class="button" onclick="GesImplementer();"> <label class="labelMenu"><i class="glyphicon glyphicon-wrench"> </i> Gestión Implementer</label></button> <hr />
+                <button class="button" onclick="GesInvolucrados();"><label class="labelMenu"><i class="glyphicon glyphicon-user">   </i> Gestión Involucrados</label></button> <hr />
+                <button class="button" onclick="GesCarC();">        <label class="labelMenu"><i class="glyphicon glyphicon-list">   </i> Gestión Características Cambios</label></button>
+            </div>
+        </div>
+        <div class="col-md-6">
+            @*                  Tab List                   *@
+            <ul class="nav nav-tabs navbar-left" id="myTab" role="tablist">
+                <li class="nav-item" id="idGesCarC" style="display:none">
+                    <a class="nav-link" id="Caracteristicas-tab" data-toggle="tab" href="#GesCaracteristicas" role="tab" aria-controls="GesCaracteristicas" aria-selected="false">
+                        <h4> <span class="glyphicon glyphicon-list" style="color:black"></span> <b style="color:black">Gestionar Características de Cambios</b> </h4>
+                    </a>
+                </li>
+                <li class="nav-item" id="idGesInvo" style="display:none">
+                    <a class="nav-link" id="Involucrados-tab" data-toggle="tab" href="#GesInvolucrados" role="tab" aria-controls="GesInvolucrados" aria-selected="false">
+                        <h4><span class="glyphicon glyphicon-user" style="color:black"></span> <b style="color:black">Gestionar Involucrados</b></h4>
+                    </a>
+                </li>
+                <li class="nav-item" id="idGesTecn" style="display:none;">
+                    <a class="nav-link" id="GesTecnicos-tab" data-toggle="tab" href="#GesTecnicos" role="tab" aria-controls="GesTecnicos" aria-selected="false">
+                        <h4> <span class="glyphicon glyphicon-wrench" style="color:black"></span> <b style="color:black">Gestionar Implementers</b> </h4>
+                    </a>
+                </li>
+            </ul>
+            <div class="tab-content" id="myTabContent">
+                @*GESTION Caracteristicas*@
+                <div class="tab-pane " id="GesCaracteristicas" role="tabpanel" aria-labelledby="Caracteristicas-tab">
+                    <br />
+                    <div class="container-fluid" id="GridGesCarC" style="display:none">
+                        <div class="modal-footer" style="text-align:right">
+                            <button type="button" class="btn btn-primary" style="width: 25%;" onclick="ShowAltaCaracteristicaModal();"><i class="glyphicon glyphicon-list"></i>+ Agregar <br /> Caracteristicas</button>
+                        </div>
+                        <div class="row">
+                            <div style="max-width: 100%; max-height: 600px; overflow-y: scroll; overflow-x: scroll; font-size: 15px;">
+
+                                @if (Model.list_tbl_CC_Caracteristicas != null)
+                                {
+                                    @Html.Grid(Model.list_tbl_CC_Caracteristicas).Columns(col =>
+                                       {
+                                           col.Add(m => m.Detalle).Titled("Detalle").Filterable(true).Sortable(true);
+                                           col.Add(m => m.Tipo).Titled("Tipo").Filterable(true).Sortable(true);
+                                           col.Add().Encoded(false).Sanitized(false)
+                                           .RenderValueAs(data => "<div style='text-align: center'>"
+                                           + "<button type='button' class='btn btn-info glyphicon glyphicon-pencil' title='Editar' onclick='ShowEditarCar(\"" + data.id + "\");'></button>"
+                                           + "<button type='button' class='btn btn-danger glyphicon glyphicon-remove-sign' title='Eliminar' onclick='DELETEfromGrid(1, \"" + data.id + "\");'></button>"
+                                           + "</div>").Css("little");
+                                       }
+                                    )
+                                }
+                                else
+                                { <label>No se encontraron Caracteristicas de Cambio</label>}
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @*GESTION Involucrados*@
+                <div class="tab-pane " id="GesInvolucrados" role="tabpanel" aria-labelledby="Involucrados-tab">
+                    <br />
+                    <div class="container-fluid" id="GridGescat" style="display:none">
+                        <div class="modal-footer" style="text-align:right">
+                            <button type="button" class="btn btn-primary" style="width: 25%;" onclick="ShowAltaInvolucradosModal();"><i class="glyphicon glyphicon-user"></i>+ Agregar <br /> Involucrados</button>
+                        </div>
+                        <div class="row">
+                            <div style="max-width: 100%; max-height: 600px; overflow-y: scroll; overflow-x: scroll; font-size: 15px;">
+                                @if (Model.list_tbl_CC_Involucrados != null)
+                                {
+                                    @Html.Grid(Model.list_tbl_CC_Involucrados).Columns(col =>
+                                       {
+                                           col.Add(m => m.Perfil).Titled("Perfil").Filterable(true);
+                                           col.Add(m => m.Nombre).Titled("Nombre").Filterable(true);
+                                           col.Add(m => m.CorreoElectronico).Titled("Correo Electronico").Filterable(true);
+                                           col.Add().Encoded(false).Sanitized(false)
+                                           .RenderValueAs(data => "<div style='text-align: center'>"
+                                           + "<button type='button' class='btn btn-info glyphicon glyphicon-pencil' title='Editar' onclick='ShowEditarInv(\"" + data.id + "\");'></button>"
+                                           + "<button type='button' class='btn btn-danger glyphicon glyphicon-remove-sign' title='Eliminar' onclick='DELETEfromGrid(2, \"" + data.id + "\");'></button>"
+                                           + "</div>").Css("little");
+                                       }
+                                    )
+                                }
+                                else
+                                { <label>No se encontraron Involucrados</label>}
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @*GESTION Implementer*@
+                <div class="tab-pane " id="GesTecnicos" role="tabpanel" aria-labelledby="GesTecnicos-tab">
+                    <br />
+                    <div class="container-fluid" id="GridNiveles" style="display:none">
+                        <div class="modal-footer" style="text-align:right">
+                            <button type="button" class="btn btn-primary" style="width: 25%;" onclick="ShowAltaImplementerModal();"><i class="glyphicon glyphicon-wrench"></i>+ Agregar <br /> Implementer</button>
+                        </div>
+                        <div class="row">
+                            <div style="max-width: 100%; max-height: 600px; overflow-y: scroll; overflow-x: scroll; font-size: 15px;">
+                                @if (Model.list_vw_CC_Implementer != null)
+                                {
+                                    @Html.Grid(Model.list_vw_CC_Implementer).Columns(col =>
+                                       {
+                                           col.Add(m => m.Grupo).Titled("Grupo Resolutor").Filterable(true);
+                                           col.Add(m => m.Nombre).Titled("Nombre").Filterable(true);
+                                           col.Add(m => m.CorreoElectronico).Titled("Correo Electrónico").Filterable(true);
+                                           col.Add().Encoded(false).Sanitized(false)
+                                           .RenderValueAs(data => "<div style='text-align: center'>"
+                                           + "<button type='button' class='btn btn-info glyphicon glyphicon-pencil' title='Editar' onclick='ShowEditarImp(\"" + data.id + "\");'></button>"
+                                           + "<button type='button' class='btn btn-danger glyphicon glyphicon-remove-sign' title='Eliminar' onclick='DELETEfromGrid(3, \"" + data.id + "\");'></button>"
+                                           + "</div>").Css("little");
+                                       }
+                                    )
+                                }
+                                else
+                                { <label>No se encontraron Implementers</label>}
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@*==============================MODALES==============================*@
+@* <form action="../Supervisor/EditTareaProgramada?EmployeeId=@ViewBag.user&TareaId=@Model.tareas.Id" enctype="multipart/form-data" id="formFinal" method="post">*@
+
+@*    MODAL ALTA IMPLEMENTER      *@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalAltaImplementer">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form action="" enctype="multipart/form-data" id="formImplementer" method="post">
+                <div class="col-md-12">
+                    <table style="width:100%;">
+                        <tr> <td> <div class="modal-header"> <h4 class="modal-title"><b id="titleImp">Agregar Implementer</b></h4> </div> </td> </tr>
+                        <tr>
+                            <td style="padding-left:25%;">
+                                <text class="labelModal">
+                                    GRUPO RESOLUTOR <br />    @Html.DropDownListFor(c => c.tbl_CC_Implementer.GrupoResolutor, (SelectList)ViewBag.Grupo, new { @class = "form-control cb" }) <br />     @*, @disabled = "disabled"*@
+                                    <text class="labelModal">
+                                        NOMBRE <br />             @Html.DropDownListFor(c => c.tbl_CC_Implementer.Nombre, (SelectList)ViewBag.TecnicoDummy, new { @class = "form-control cb", @onChange = "verifyImplementer(this)" }) <br />
+                                        <text class="labelModal"> CORREO ELECTRONICO <br /> @Html.DropDownListFor(c => c.tbl_CC_Implementer.CorreoElectronico, (SelectList)ViewBag.Correo, new { @class = "form-control cb", @disabled = "disabled" }) <br /> <br />
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <div class="col-md-4"></div>
+                    <div class="col-md-4">                                          <button type="button" class="btn btn-warning" onclick="CancelaSolicitud()">Cancelar</button>    </div>
+                    <div class="col-md-4" style="display:flex" id="idAddNivelExp">  <button type="button" class="btn btn-primary" onclick="AddImplementer()">Aceptar</button>       </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@*    MODAL ALTA CARACTERISTICA   *@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalAltaCaracteristicas">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="../ControlCambios/AñadirCaracteristica?EmployeeId=@ViewBag.user" enctype="multipart/form-data" id="formCaracteristica" method="post">
+                <div class="col-md-12">
+                    <table style="width:100%;">
+                        <tr> <td> <div class="modal-header"> <h4 class="modal-title"><b id="titleCar">Agregar Caracteristica</b></h4> </div> </td> </tr>
+                        <tr>
+                            <td style="padding-left:25%;">
+                                <text class="labelModal">
+                                    TIPO <br />    @Html.DropDownListFor(c => c.tbl_CC_Caracteristicas.Tipo, (SelectList)ViewBag.Tipo, new { @class = "form-control cb" }) <br />
+                                    <text class="labelModal"> DETALLE <br /> @Html.TextBoxFor(c => c.tbl_CC_Caracteristicas.Detalle, new { @class = "form-control cb" }) <br />
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <div class="col-md-8">                                      <button type="button" class="btn btn-warning" onclick="CancelaSolicitud()">Cancelar</button> </div>
+                    <div class="col-md-4" style="display:block" id="idAddDX">   <button type="submit" class="btn btn-primary" @*onclick="AltaCaracteristica()"*@>Aceptar</button> </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@*    MODAL ALTA INVOLUCRADOS      *@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalAltaInvolucrados">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="../ControlCambios/AñadirInvolucrado?EmployeeId=@ViewBag.user" enctype="multipart/form-data" id="formInvolucrado" method="post">
+                <div class="col-md-12">
+                    <table style="width:100%;">
+                        <tr> <td> <div class="modal-header"> <h4 class="modal-title"><b id="titleInv"> ___ </b></h4> </div> </td> </tr>
+                        <tr>
+                            <td style="padding-left:25%;">
+                                <text class="labelModal">
+                                    PERFIL <br />             @Html.DropDownListFor(c => c.tbl_CC_Involucrados.Perfil, (SelectList)ViewBag.Perfil, new { @class = "form-control cb" }) <br />
+                                    @*<text class="labelModal"> GRUPO <br />              @Html.DropDownListFor(c => c.tbl_CC_Involucrados.GrupoResolutor, (SelectList)ViewBag.Grupo2, new { @class = "form-control cb"}) <br />*@
+                                    <text class="labelModal">
+                                        NOMBRE <br />             @Html.DropDownListFor(c => c.tbl_CC_Involucrados.Nombre, (SelectList)ViewBag.NombreTecnico, new { @class = "form-control cb", @onChange = "verifyInvolucrado(this)" }) <br />
+                                        <text class="labelModal">
+                                            CORREO ELECTRONICO <br /> @Html.DropDownListFor(c => c.tbl_CC_Involucrados.CorreoElectronico, (SelectList)ViewBag.Correo, "SELECCIONE", new { @class = "form-control cb", @disabled = "disabled" }) <br /> <br />
+                                            @*@Html.TextBoxFor(m => m.tbl_CC_Implementer, new { @class = "form-control", @readonly = "true" })*@
+                            </td>
+                        </tr>
+                        <tr style="display:none;"> <td> @Html.TextBox("id", "", new { @class = "form-control" }) </td></tr>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <div class="col-md-8">                                      <button type="button" class="btn btn-warning" onclick="CancelaSolicitud()">Cancelar</button> </div>
+                    <div class="col-md-4" style="display:block" id="idAddCat">  <button type="submit" class="btn btn-primary" @*onclick="AltaInvolucrado()"*@>Aceptar</button> </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@*//Modal de notificaciones*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalNotificaciones">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div>
+                <div class="col-md-12">
+                    <table style="width:100%; display:none;" id="tblSuccess">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title" id="tituloBajaDX" style="display:none;"><b>Eliminar diagnóstico</b></h4>
+                                    <h4 class="modal-title" id="tituloBajaCAT" style="display:none;"><b>Eliminar Cátegoria</b></h4>
+                                    <h4 class="modal-title" id="tituloBajaSUBCAT" style="display:none;"><b>Eliminar Cátegoria</b></h4>
+                                    <h4 class="modal-title" id="tituloAddDX" style="display:none;"><b>Agregar diagnóstico</b></h4>
+                                    <h4 class="modal-title" id="tituloAddCAT" style="display:none;"><b>Agregar cátegoria</b></h4>
+                                    <h4 class="modal-title" id="tituloAddSUBCAT" style="display:none;"><b>Agregar Subcategoria</b></h4>
+                                    <h4 class="modal-title" id="tituloBajaUser" style="display:none;"><b>Eliminar técnico</b></h4>
+                                    <h4 class="modal-title" id="tituloBajaNivel" style="display:none;"><b>Eliminar Nivel</b></h4>
+                                    <h4 class="modal-title" id="tituloAddNivel" style="display:none;"><b>Agregar Implementer</b></h4>
+                                    <h4 class="modal-title" id="tituloAddUser" style="display:none;"><b>Agregar técnico</b></h4>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <br />
+                                <br />
+                                <div style="color:forestgreen; top:-10px; font-style:normal;line-height:20px; margin-left:250px; font-size:xxx-large;" class="glyphicon glyphicon-ok">
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;">
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaBajaDX">El diagnóstico se dió de baja correctamente</label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaBajaCAT">La cátegoria se dió de baja correctamente</label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaBajaSUBCAT">La subcategoria se dió de baja correctamente</label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaAddDX">El diagnóstico se agregó correctamente</label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaAddCAT">La cátegoria se agregó correctamente</label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaAddSUBCAT">La subcategoria se agregó correctamente</label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaBajaUser">El técnico se dió de baja correctamente</label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaBajaNivel">El nivel se dió de baja correctamente</label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaAddNivel">El nivel de experincia se agregó <br /> correctamente</label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaAddUser">Se creó el técnico correctamente</label>
+                                <br />
+                            </td>
+                        </tr>
+                    </table>
+                    <table style="width:100%; display:none;" id="tblError">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title"><b>¡Error!</b></h4>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <br />
+                                <br />
+                                <div style="color:red; top:-10px; font-style:normal;line-height:20px; margin-left:250px; font-size:xxx-large;" class="glyphicon glyphicon-ban-circle">
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;">
+                                <label style="color:red;  margin-left:200px;">¡Error!</label>
+                                <br />
+                                <label style="color:red; margin-left:150px;">Favor de validarlo con el Administrador</label>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="AceptaTicket(@Model.EmployeeIdBO)">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>

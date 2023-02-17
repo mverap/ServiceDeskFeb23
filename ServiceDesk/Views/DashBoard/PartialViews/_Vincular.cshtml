@@ -1,0 +1,90 @@
+﻿@model ServiceDesk.ViewModels.vmDashbordResolutor
+<table class="table" style="color:black;" id="totVinculados">
+    <tr>
+        <th>
+            Selecciona el ticket principal al que deseas vincular los tickets.
+        </th>
+    </tr>
+    <tr>
+
+        <th>
+            <h5>Tickets vinculados (@Model.totTicketsVinculados)</h5>
+        </th>
+    </tr>
+
+
+
+</table>
+<table class="table" style="color:black;width:100%" id="bandejaVincular">
+    @foreach (var item in Model.lstResumenResolutor)
+    {
+        <tr >
+            <td>
+                <input type="radio" style="position:relative;margin-left:50% !important;background-color:#898f97;" name="TicketPadre" id="TicketPadre_@item.tickedID" />
+            </td>
+            <td style="background-color: #f9f9fa;">
+                <b>Ticket ID:&nbsp; @item.tickedID</b>  <br /><br />
+                Tiempo transcurrido: <br /><br />
+                @if (item.estatus == "Cancelado")
+                {
+                    //OvalCancelado
+                    <i class="fa fa-circle OvalCancelado"></i><span><b>Cancelado</b></span>
+                }
+                @if (item.estatus == "Abierto")
+                {
+
+                    <i class="fa fa-circle Oval"></i><span><b>Abierto</b></span>
+                }
+                @if (item.estatus == "Asignado")
+                {
+
+                    <i class="fa fa-circle OvalAsignado"></i><span><b>Asignado</b></span>
+                }
+                @if (@item.estatus == "Trabajando")
+                {
+
+                    <i class="fa fa-circle OvalTrabajando"></i><span><b>Trabajando</b></span>
+                }
+                @if (item.estatus == "En Espera")
+                {
+
+                    <i class="fa fa-circle OvalEnEspera"></i><span><b>En Espera</b></span>
+                }
+                @if (item.estatus == "Cerrado")
+                {
+
+                    <i class="fa fa-circle OvalCerrado"></i><span><b>Cerrado</b></span>
+                }
+                @if (item.estatus == "En Garantía")
+                {
+
+                    <i class="fa fa-circle OvalEnGarantia"></i><span><b>En Garantía</b></span>
+                }
+                @if (item.estatus == "Resuelto")
+                {
+                    <i class="fa fa-circle OvalResuelto"></i><span><b>Resuelto</b></span>
+                }
+            </td>
+        </tr>
+    }
+   
+</table>
+<table class="table" style="color:black;width:100%"  >
+    <tr>
+        <td>
+            <div style="display:none;" class="OKVincular">
+                <br />
+                <br />
+                <div style="color:forestgreen; top:-10px; font-style:normal;line-height:20px; margin-left:250px; font-size:xxx-large;" class="glyphicon glyphicon-ok">
+                </div>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td style="max-width:100%;min-width:100%;text-align:center;">
+            <div style="display:none;" class="OKVincular">
+                <label style="color:slategray;max-width:100%;min-width:100%;text-align:center; ">  Los tickets se vincularon correctamente.</label>
+            </div>
+        </td>
+    </tr>
+</table>

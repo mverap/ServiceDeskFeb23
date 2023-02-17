@@ -1,0 +1,210 @@
+﻿@using GridMvc
+@using GridMvc.Html
+@model ServiceDesk.ViewModels.DetalleSelectedTicketVm
+@{
+    ViewBag.Title = "Detalle de Tickets";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<meta name="viewport" content="width=device-width" />
+<link href="@Url.Content("~/Content/Gridmvc.css")" rel="stylesheet" />
+<link href="@Url.Content("~/Content/bootstrap.min.css")" rel="stylesheet" />
+<script src="@Url.Content("~/Scripts/jquery-1.9.1.min.js")"></script>
+<script src="@Url.Content("~/Scripts/gridmvc.min.js")"></script>
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+</head>
+<body>
+    <script type="text/javascript">
+        //Conexiones
+        var user             = @ViewBag.user;
+        var rol_del_usuario  = '@ViewBag.Rol';
+        var dateFinal;
+        var dateInicial;
+        var downloadLink = "../Reportes/Descargar_Excel_Reportes?EmployeeId=@ViewBag.user";
+        var controller = '@ViewBag.Rol';
+        function returnMenu() {
+            var urlMenu = "";
+            if (controller == "Directivo" || controller == "ServiceDesk")   urlMenu = '../' + controller + '/Dashboard?EmployeeId=' + user;
+            if (controller == "Tecnico")                                    urlMenu = '../Dashboard/Tecnico?EmployeeId=' + user;
+            if (controller == "Tecnico")                                    urlMenu = '../Dashboard/Resolutor?EmployeeId=' + user; // DUDA: tecnico va usar el dashboard de técnico o el de resolutor?
+            if (controller == "Resolutor" || controller == "Supervisor")    urlMenu = '../Dashboard/Resolutor?EmployeeId=' + user;
+            window.location = urlMenu;
+        }
+        function goToReportes()         { window.location = '../Reportes/Graficos?EmployeeId='              + user; }
+        function goToGridTickets()      { window.location = '../Reportes/gridTickets?EmployeeId='           + user; }
+        function descargarExcel()       { window.location = '../Reportes/gridTickets?EmployeeId='  + user;}
+
+        $(function () {
+            $('#exportButton').click(function () {
+                location.href = MVCGrid.getExportUrl('ExportGrid');
+            });
+        });
+
+        $(function () {
+            pageGrids.ast.onRowSelect(function (e) {
+                window.open('../'+'@ViewBag.Rol'+'/DetalleTicket?IdTicket=' + e.row.Id + '&EmployeeId=' + @ViewBag.user, 'popUpWindow', 'height=900,width=1200,left=300,top=100,resizable=no,scrollbars=yes,toolbar=no,menubar=no,location=no,directories=no, status=yes');
+                $.post(e.row, function (data) {
+                    if (data.Status <= 0) {
+                        alert(data.Message);
+                        return;
+                    }
+                    $("#order-content").html(e.row);
+                });
+            });
+        });
+
+        $("#btndld").click(function () {
+            console.log("Downloading: " + link);
+        });
+
+        function fechaFinalCambiada() {
+
+            //obtener fecha_final
+            var datepicker = document.getElementById("datePickerFinal");
+            dateFinal = datepicker.value;
+            //obtener fecha_inicial
+            datepicker = document.getElementById("datePickerInicial");
+            dateInicial = datepicker.value;
+
+            //linea de descarga
+            //var lineSalida = "&fechaInicial=" + dateInicial + "&fechaFinal=" + dateFinal;
+            var link = downloadLink + "&fechaInicial=" + dateInicial + "&fechaFinal=" + dateFinal;
+
+            console.log("fechaInicial: " + dateInicial);
+            console.log("fechaFinal:   " + dateFinal);
+            console.log("link: " + link);
+            $("#formDescarga").attr('action', link)
+            //$("#formDescarga").action(link);   //.attr('action', "/test1")
+            //$("#gggg").attr('text', 'Save');
+        }
+
+        function boton() {
+            var urldocument = "";
+            @*try {
+                //obtener fecha_final
+                var datepícker = document.getElementById("datePickerFinal");
+                dateFinal = datepícker.value;
+                //obtener fecha_inicial
+                datepícker = document.getElementById("datePickerInicial");
+                dateInicial = datepícker.value;
+                //linea de salida para nuevos pies
+                lineSalida = "EmployeeID=" + @ViewBag.user + "&fechaInicial=" + dateInicial + "&fechaFinal=" + dateFinal;
+                Console.log("uploading date: " + lineSalida);
+            } catch {
+                //window.location = '../Reportes/Descargar_Excel_Reportes?EmployeeId=' + user;
+                //../Reportes/Descargar_Excel_Reportes?EmployeeId=@ViewBag.user
+            }*@
+        }
+    </script>
+    <hr />
+    @*<nav class="navbar navbar-default navbar-fixed-top" style="background:red; color: dodgerblue!important;">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                </div>
+                <div id="navbar" class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="dropdown" style="background-color:red;">
+                            <a style="color: white !important" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> <span class="glyphicon glyphicon-bell"></span></a>
+
+                        </li>
+                        <li class="dropdown" style="background-color:red;">
+                            <a style="color: white !important" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> <span class="fa fa-bars"></span></a>
+                            <ul class="dropdown-menu">
+                                @if (ViewBag.rol == "Directivo") { }
+                                else
+                                {
+                                    <a style="color: dodgerblue" href="@Url.Action("Gestiones", "Supervisor")">
+                                    <li style="margin-left:5%;" class="fa fa-toggle-on">&nbsp;Configuración</li>
+                                    <p> @ViewBag.rol </p>
+                                    </a>
+                                }
+
+                                <button type="button" class="fa fa-toggle-on" onclick="goToReportes();"
+                                        style="background-color: white; border: white; color: dodgerblue; ">
+                                    Reportes
+                                </button>
+                                </a>
+                                <a>
+                                <li style="margin-left:5%" class="fa fa-toggle-on">&nbsp;Cerrar sesión</li>
+                                </a>
+                            </ul>
+                        </li>
+                        @if (Request.IsAuthenticated)
+                        {
+                            <li style="font-size: 12px;">
+                                <a href="#" style="color: white">
+                                    @User.Identity.Name
+                                </a>
+                            </li>
+                            <li style="font-size: 12px; color: white">
+                                @using (Html.BeginForm("CloseSession", "Home", FormMethod.Post, new { id = "formLogout" }))
+                                {
+
+                                }
+                                <a style="color: white !important" href="#"
+                                   class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" onclick="logOut();"
+                                   aria-expanded="false">
+                                    Salir
+                                    <span class="glyphicon glyphicon-off"></span>
+                                </a>
+
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>*@
+
+    <p>
+        <br />
+        <a style="color: dodgerblue" onclick="returnMenu()">Dashboard</a> / <a style="color: dodgerblue" onclick="goToReportes();"> Reportes </a>/ <a style="color: dodgerblue"> Detalle de Ticket </a>
+    </p>
+
+    <div class="ContainerALL">
+        <div class="Content-header" style="width:100%;  height: 150px; display:flex">
+            <div class="Content-header-left" style="height:100%; width:50%">
+
+            </div>
+            <div class="Content-header-right" style="height:100%; width:50%; display: flex">
+                <div class="sub-header1" style="height:100%; width: 75%; display:flex">
+                    <div class="Fecha1" style="height:50%; width: 50%; text-align:center" onchange="fechaFinalCambiada()"> Fecha Inicio <input type="date" id="datePickerInicial" /> </div>
+                    <div class="Fecha2" style="height:50%; width: 50%; text-align:center" onchange="fechaFinalCambiada()"> Fecha Final  <input type="date" id="datePickerFinal" />   </div>
+                </div>
+                <div class="sub-header1" style="height:100%; width:25%;">
+
+                    <div class="sub-2" style="width: 100%; height:100%; text-align: center;">
+                        <form action="../Reportes/Descargar_Excel_Reportes?EmployeeId=@ViewBag.user" method="post" style="width:80%" id="formDescarga">
+                            <button type="submit" class="btn btn-success" value="DetalleTickets" style="background-color: #007bff; width: 90%; height: 54%;">
+                                Descargar Reporte
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="Content-grid" style="width:100%;">
+            @Html.Grid(Model.ViewDetalleTickets).Named("ast").Columns(column =>
+            {
+                column.Add(data => data.Id).Titled("Ticket ID").Filterable(true).Sortable(true);
+                column.Add(data => data.TecnicoAsignado).Titled("Técnico").Filterable(true).Sortable(true);
+                column.Add(data => data.FechaRegistro).Titled("Fecha").Format("{0:d}").Filterable(true).Sortable(true).Format("{0:d/MM/yyyy}");
+                column.Add(data => data.Estatus).Titled("Estatus").Filterable(false).Sortable(true);
+                column.Add(data => data.GrupoResolutor).Titled("Grupo Resolutor").Filterable(false).Sortable(true);
+                column.Add(data => data.Centro).Titled("Centro").Filterable(false).Sortable(true);
+                column.Add(data => data.Categoria).Titled("Categoria").Filterable(false).Sortable(true);
+                column.Add(data => data.Prioridad).Titled("Prioridad").Filterable(true).Sortable(true);
+                column.Add(data => data.EstatusTicket).Titled("SLA").Filterable(false).Sortable(true).Format("{00:00:00}");
+            }).WithPaging(5).Sortable(true)
+        </div>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,97 @@
+﻿
+
+@model ServiceDesk.Models.EncuestaDetalle
+@{
+    ViewBag.Title = "EncuestaSatisfaccion";
+}
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+
+    });//END DOCUMENT READY
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    //FUNCIONES
+    function SetEncuesta() {
+
+        //alert("Guarda ayayayayayaay")
+
+        //Guarda Encuesta
+        $("#formEncuesta").submit();
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+</script>
+
+
+@using (Html.BeginForm("SetEncuesta", "DashBoard", null, FormMethod.Post, new { enctype = "multipart/form-data", id = "formEncuesta" }))
+{
+    <div class="row">
+        <div class="col-md-12">
+            <div>
+                @Html.HiddenFor(m => m.EmpleadoId)
+                @Html.HiddenFor(m => m.IdTicket)
+            </div>
+            <div class="col-md-12">
+                <br />
+                <h4><b>Encuesta de Satisfacción</b></h4>
+            </div>
+
+            <div class="col-md-12">
+                <br />
+                En una escala del 1 al 5 ¿Que tan satisfecho estas con nuestro servicio?
+                <br />
+            </div>
+
+            <div class="col-md-2">
+                <br />
+                <img src="~/Content/Images/Muy Insatisfecho.png.jpg" width="40" height="40" />
+                @Html.RadioButtonFor(m => m.CalificaServicio, "Muy Insatisfecho", new { id = "prg1" })
+                <br />
+                <label>1 Muy Insatisfecho</label>
+            </div>
+
+            <div class="col-md-2">
+                <br />
+                <img src="~/Content/Images/Insatisfecho.jpg" width="40" height="40" />
+                @Html.RadioButtonFor(m => m.CalificaServicio, "Insatisfecho", new { id = "prg2" })
+                <br />
+                <label>2 Insatisfecho</label>
+            </div>
+
+            <div class="col-md-2">
+                <br />
+                <img src="~/Content/Images/Neutral.png.jpg" width="45" height="40" />
+                @Html.RadioButtonFor(m => m.CalificaServicio, "Neutral", new { id = "prg3" })
+                <br />
+                <label>3 Neutral</label>
+            </div>
+
+            <div class="col-md-2">
+                <br />
+                <img src="~/Content/Images/Satisfecho.png.jpg" width="40" height="40" />
+                @Html.RadioButtonFor(m => m.CalificaServicio, "Satisfecho", new { id = "prg4" })
+                <br />
+                <label>4 Satisfecho</label>
+            </div>
+            <div class="col-md-2">
+                <br />
+                <img src="~/Content/Images/Muy Satisfecho.png.jpg" width="40" height="40" />
+                @Html.RadioButtonFor(m => m.CalificaServicio, "Muy Satisfecho", new { id = "prg5" })
+                <br />
+                <label>5 Muy Satisfecho</label>
+            </div>
+            <div class="col-md-12">
+                <br />
+                <label>Comentarios</label>
+                <br />
+                @Html.TextAreaFor(m => m.Comentario, new { @class = "form-control", style = "margin: 0px 39px 0px 10px; max-width: 75% !important; width: 859px; height: 250px;" })
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="SetEncuesta()">Enviar</button>
+    </div>
+
+
+}

@@ -1,0 +1,522 @@
+﻿@model ServiceDesk.ViewModels.vmDashboard   
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+
+    div.scroll-horizoltal {
+        width: 95%;
+        padding: 0px;
+    }
+
+    .input {
+        width: 186px;
+        height: 25px;
+        /*font-family: Arial;*/
+        font-size: 14px;
+        font-weight: normal;
+        font-stretch: normal;
+        font-style: normal;
+        line-height: 1.79;
+        letter-spacing: -0.23px;
+    }
+
+    .Rectangle {
+        width: 400px;
+        height: 48px;
+        border-radius: 3px;
+        border: solid 1px #f9f9fa;
+        background-color: #fbfbfb;
+    }
+
+    .Rectangle-Copy {
+        width: 100%;
+        height: 64px;
+        /*margin: 64px 0 896px;*/
+        margin: 1px 0 0px;
+        padding: 10px 0px 7px 990px;
+        background-color: #3b424a;
+    }
+
+    .Label {
+        width: 169px;
+        height: 20px;
+        /*font-family: SFUIText;*/
+        font-size: 14px;
+        font-weight: normal;
+        font-stretch: normal;
+        font-style: normal;
+        line-height: 1.43;
+        letter-spacing: 0.23px;
+        text-align: center;
+        color: var(--colours-global-plain-white);
+    }
+
+    .UI-Buttons-Text-Styles-Label-White-Regular {
+        width: 234px;
+        height: 50px;
+        padding: 15px 32px 15px 33px;
+    }
+
+    label {
+        width: 123px;
+        height: 24px;
+        /*font-family: SFUIText;*/
+        font-size: 12px;
+        font-weight: bold;
+        font-stretch: normal;
+        font-style: normal;
+        line-height: normal;
+        letter-spacing: 0.2px;
+        text-align: center;
+    }
+
+    .img.TicketsBarEmpty {
+        width: 480px;
+        height: 960px;
+        margin: 64px 0 0;
+        object-fit: contain;
+    }
+
+    .inbox {
+        position: absolute;
+        margin-top: 8px;
+        margin-left: 10px;
+    }
+
+    .RectangleTicket {
+        /*width: 400px;
+        height: 133px;*/
+        width: 400%;
+        /*height: 233%;*/
+    }
+
+    .Oval {
+        width: 18px;
+        height: 18px;
+        color: #17be17;
+        margin-left: 2%;
+    }
+
+    .OvalTrabajando {
+        width: 18px;
+        height: 18px;
+        color: orange;
+        margin-left: 2%;
+    }
+
+    .OvalAsignado {
+        width: 18px;
+        height: 18px;
+        color: #007bff;
+        margin-left: 2%;
+    }
+
+    .OvalCancelado {
+        width: 18px;
+        height: 18px;
+        color: #dc3545;
+        margin-left: 2%;
+    }
+
+    .OvalEnEspera {
+        width: 18px;
+        height: 18px;
+        color: #ffcb03;
+        margin-left: 2%;
+    }
+
+
+    .OvalCerrado {
+        width: 18px;
+        height: 18px;
+        color: gray;
+        margin-left: 2%;
+    }
+
+    .OvalEnGarantia {
+        width: 18px;
+        height: 18px;
+        color: #e83e8c;
+        margin-left: 2%;
+    }
+
+    .OvalResuelto {
+        width: 18px;
+        height: 18px;
+        color: #6f42c1;
+        margin-left: 2%;
+    }
+
+    .labelS:hover {
+        /*background-color: #0060ff !important;*/
+        box-shadow: 3px 3px 5px black;
+        /*  background-color: #2a708a;
+        color: #fff !important;*/
+    }
+
+
+    .labelS:active,
+    .labelS:target {
+        color: white;
+        background-color: #0060ff !important;
+        border-color: #0060ff !important;
+    }
+
+    .labelS {
+        background-color: #868e96;
+    }
+
+    .labelSelected {
+        background-color: #007bff !important;
+    }
+
+    .looking-for:hover {
+        box-shadow: 3px 3px 5px black;
+    }
+
+    .looking-for-span:active,
+    .looking-for:active {
+        color: white !important;
+        background-color: #ced2d7 !important;
+    }
+
+    .RectangleTicket:hover {
+        box-shadow: 1px 1px 1px black;
+        background-color: #ced2d7 !important;
+    }
+
+    .RectangleTicket:active {
+        box-shadow: 1px 1px 1px black;
+        background-color: #dfebfa !important;
+    }
+
+    .blocksTickets :hover {
+        background-color: #E0ECFA;
+    }
+</style>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var type = parseInt(@Model.type);
+        if (type != 1) { $("#btnProceso").removeClass("labelSelected");}
+        switch (type) {
+            case 2:
+                $("#btnCerrado").addClass("labelSelected");
+            break;
+            case 3:
+                $("#btnCancelado").addClass("labelSelected");
+            break;
+
+        }
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        window.addEventListener("keypress", function (event) {
+            if (event.keyCode == 13) {
+                event.preventDefault();
+            }
+        }, false);
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+
+    });
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    $(document).on("click", "[name='btnTypeTicket']", function (e) {
+        debugger;
+        var type = parseInt(e.currentTarget.dataset.value);
+        $("#btnProceso").removeClass("labelSelected");
+        $("#btnCerrado").removeClass("labelSelected");
+        $("#btnCancelado").removeClass("labelSelected");
+        switch (type) {
+            case 1: $("#btnProceso").addClass("labelSelected");break;
+            case 2:$("#btnCerrado").addClass("labelSelected");break;
+            case 3:$("#btnCancelado").addClass("labelSelected");break;
+        }
+        var typeButton = $("<input id='type' name='type'>").attr("type", "hidden").val(type);
+        $('#formTicketsByType').append($(typeButton));
+        window.location.href = '@Url.Action("Index", "DashBoard")?EmployeeId=' + parseInt(@ViewBag.user) + '&type=' + type;
+    });
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    $(document).on("click", "[name='RectangleTicket']", function (e) {
+        //debugger;
+
+        $(".RectangleTicket").css("background-color", "");
+        $("#" + e.currentTarget.id).css("background-color", "#dfebfa");
+        $('#partialView').load('../DashBoard/Getdetail', { ticket: e.currentTarget.id.split('_')[1] });
+    });
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function searchTicket() {
+        //debugger;
+        var ticket = $("#searchTicket").val()
+        if (ticket == "") {
+            alert("ingresa un ticket a buscar");
+            $("#searchTicket").focus();
+            return;
+        }
+        var hideTicket = $("<input id='ticket' name='ticket'>").attr("type", "hidden").val(ticket);
+        $('#formTicketsByType').append($(hideTicket));
+        //$('#formTicketsByType').submit();
+        @*$('#partialView').load('../DashBoard/getTicketById', { ticket: ticket, user: @ViewBag.user ,type:"usuario"});*@
+        $('#partialView').load('../DashBoard/Getdetail', { ticket: ticket });
+    }
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function CreateTicket(user) {
+        //alert(user)
+        location.href = '@Url.Action("CreateTicket", "App")?Usuario=' + user;
+    }
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+     function getModal(id, _type) {
+        //debugger;
+         //console.log(id);
+
+         $("#View").remove();
+         $("#titleModal").text("");
+         var title = "";
+         switch (_type) {
+             case 1:
+                 title = "Cancelar ticket";
+
+                 $("#btnCancelTicket").css('display','block');
+             break;
+         }
+         $("#titleModal").text(title);
+        $("#modal-content-detail").append("<div id='View'></div>");
+         $('#View').load('@Url.Action("GetModal", "DashBoard")', { type: "1"}
+        @*, {
+            IdLicitacion: id, estatusLicitacion: @ViewBag.estatusLicitacion
+            , EsPerfil: "@ViewBag.EsPerfil", PerfilDireccion: "@ViewBag.PerfilDireccion"
+        }*@
+            , function () {
+            $('#ModalDetalleSolicitud').modal({
+                show: true,
+                backdrop: 'static',
+                keyboard: false,
+            });
+
+        });
+    }
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function putEstatus(_type) {
+        //debugger;
+        var motivo = $("#Motivo").val();
+        var idTicket = parseInt( $("#oIdTicket").val());
+        var type = _type;
+        switch (_type) {
+            case 1:
+                if (motivo == "") { alert("Debes ingresar el motivo de cancelacion"); return; }
+
+            break;
+        }
+            $.ajax({
+            url: '@Url.Action("putEstatus", "DashBoard")',
+            type: "POST",
+            data: {
+                Type: type,
+                IdTicket: idTicket,
+                Motivo: motivo
+            },
+                success: function (res) {
+
+                    if (res == "OK") {
+                        $("#Motivo").css("display", "none");
+                        $("#infoC").css("display", "none");
+                        $(".infoCancelar").css("display", "none");
+                        $("#btnCancelTicket").css("display", "none");
+                        $(".OKCancelar").css("display", "block");
+                        $("#btnAceptarCerrar").css("display", "block");
+                    } else {
+                        $(".ErrorCancelar").css("display", "block");
+                    }
+
+                //alert("¡Datos Actualizados Exitosamente!");
+
+
+                //$(function () {
+                //    $('#exampleModal').modal('toggle');
+                //});
+            },
+            error: function (err) {
+                alert(err);
+
+            }
+        });
+
+
+    }
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function CerrarModal() {
+        //$(function () {
+        $('#ModalDetalleSolicitud').modal('toggle');
+        //});
+        refresh();
+    }
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    //function refresh() {
+    //    window.setTimeout(function () {
+    //        location.reload();
+    //    }, 1200);
+    //}
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+</script>
+
+<div class="row">
+    <div class="col-md-3" style="padding-right:0px;">
+        <div class="col-md-12" style="margin-top:10px;padding-right:0px;">
+            <div class="col-md-12" style="min-height:20px;">
+                <div class="input-group" style="border:1px solid #868E96;">
+                    <input type="text" class="form-control" id="searchTicket" placeholder="Buscar ID de ticket" style="width:100%;border:0px;">
+                    <span class="input-group-addon" id="basic-addon2" onclick="searchTicket()">
+                        <i class="fa fa-search"></i>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12" style="margin-top:2%; padding-right:0px;margin-bottom:10px;">
+            <div class="col-md-12">
+                <div class="col-md-4" style="padding:0px;">
+                    <button style="color:white;border-radius: 12px;border:0px;" name='btnTypeTicket' id="btnProceso" class="labelS labelSelected" data-value="1">
+                        <b>EN PROCESO</b>
+                    </button>
+                </div>
+                <div class="col-md-4" style="padding:0px;">
+                    <button style="color:white;border-radius: 12px;border:0px;" name='btnTypeTicket' id="btnCerrado" class="labelS" data-value="2">
+                        <b>CERRADOS</b>
+                    </button>
+                </div>
+
+                <div class="col-md-4" style="padding:0px;">
+                    <button style="color:white;border-radius: 12px;border:0px;" name='btnTypeTicket' id="btnCancelado" class="labelS" data-value="3">
+                        <b>CANCELADOS</b>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+        <div class="row" style="padding-right:0px;margin-left:5px;margin-top:10px;">
+            <div class="scroll-horizoltal"
+                 style="padding-right:0px; height:800px; overflow-y: scroll;overflow-x: hidden;margin-top:10px;"
+                 id="containerTickets">
+                @if (Model.Tickets.Count > 0)
+                {
+                    foreach (var item in Model.Tickets)
+                    {
+                        <div class="blocksTickets" name="RectangleTicket" id="ticket_@item.noTicket">
+                            <div class="col-md-12" style="border-bottom:2px solid #868E96">
+                                <div class="col-md-12">
+                                    @*@if (item.subticket == false)
+                                        {
+                                            <h4 style="color:black;"><b>Subticket ID:  @item.noTicket</b></h4>
+                                        }
+                                        else
+                                        {
+                                        }*@
+                                    <h4 style="color:black;"><b>Ticket ID:  @item.noTicket</b></h4>
+                                    <h5 style="color:black;">Categoría: @item.categoria</h5>
+                                    <h5 style="color:black;">Categoría: @item.subcategoria</h5>
+                                    <h5 style="color:black;">Grupo resolutor: @item.GrupoResolutor</h5>
+                                    <h5 style="color:black;">Tiempo transcurrido: @item.hours:@Int32.Parse(item.minutes).ToString("00")</h5>
+                                    @*<h5 style="color:black;">Tiempo transcurrido: @item.tiempoTranscurrido</h5>*@
+
+                                    <i class="fa fa-circle" style="color:@item.Color"></i><span style="font-size:15px;margin-left:5px;"><b>@item.Estatus</b></span>
+                                    <br />
+                                    <br />
+                                </div>
+                            </div>
+
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="col-md-12" style="text-align:center;">
+                        <div class="col-md-8 col-md-offset-2">
+                            <h4>No hay tickets por mostrar</h4>
+                        </div>
+                        <div class="col-md-8 col-md-offset-2">
+                            <i class="fa fa-inbox inbox" style="font-size:38px;color:#868e96;"></i>
+                        </div>
+                    </div>
+
+                }
+
+            </div>
+        </div>
+
+    </div>
+    <div class="col-md-9">
+        <div class="col-md-12" style="background-color:#3B424A;min-height:60px;">
+            <div class="col-md-12" style="margin-top:10px;">
+                <div class="col-md-8">
+
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btnP" style="width: 234px;" onclick="CreateTicket('@ViewBag.user')">
+                        Nueva solicitud de ticket
+                    </button>
+                </div>
+                <div class="col-md-2" style="text-align:center;">
+                    <button type="button" class="btn btn-info border-white" onclick="goToTechSupDesk(@ViewBag.user);"
+                            style="background-color:#3b424a;border:white;color:white;">
+                        Ir a mis gestiones
+                    </button>
+                </div>
+            </div>
+        </div>
+        <br />
+        <div class="col-md-12">
+            <div id="partialView" style="max-width:100%;min-width:100%;background-color:white;margin-top: -50%;">
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+<div id="ModalDetalleSolicitud" class="modal modal-licitacion" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><b><span id="titleModal"></span></b></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body" id="ModalBody">
+                <div id="modal-content-detail"></div>
+            </div>
+            <div class="modal-footer">
+                <table width="100%">
+                    <tr>
+                        <td width="80%">
+                            <button type="button" class="btn btn-secondary" onclick="CerrarModal();">Cancelar</button>&nbsp;
+                        </td>
+                        <td>
+                            <button type="button" id="btnCancelTicket" class="btn btn-secondary btnP" style="display:none" onclick="putEstatus(1);">Aceptar</button>
+                        </td>
+                        <td>
+                            <button type="button" id="btnAprobarSolucion" class="btn btn-secondary btnP" style="display:none" onclick="putEstatus(2);">Aceptar</button>
+
+                        </td>
+                        <td>
+                            <button type="button" id="btnRechazarSolucion" class="btn btn-secondary btnP" style="display:none" onclick="putEstatus(3);">Aceptar</button>
+                        </td>
+                        <td>
+                            <button type="button" id="btnReabrirTicket" class="btn btn-secondary btnP" style="display:none" onclick="putEstatus(4);">Aceptar</button>
+                        </td>
+                        <td>
+                            <button type="button" id="btnAceptarCerrar" class="btn btn-secondary btnP" style="display:none" onclick="CerrarModal();">Aceptar</button>
+                        </td>
+                    </tr>
+                </table>
+
+            </div>
+        </div>
+    </div>
+</div>

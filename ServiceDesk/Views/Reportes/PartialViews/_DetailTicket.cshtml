@@ -1,0 +1,782 @@
+﻿@using GridMvc
+@using GridMvc.Html
+@model ServiceDesk.ViewModels.detailTicket
+
+
+<style>
+    .RectangleHis {
+        width: 400px;
+        height: 710px;
+        margin: 20px 57px 37px 36px;
+        background-color: #fbfbfb;
+    }
+
+    .RectangleDetail {
+        width: 526px;
+        height: 138px;
+        margin: 0 1px 18px 0;
+        padding: 18px 0 0;
+    }
+
+    .Archivos-adjuntos {
+        width: 100px;
+        height: 14px;
+        font-family: Arial;
+        font-size: 12px;
+        font-weight: bold;
+        font-stretch: normal;
+        font-style: normal;
+        line-height: normal;
+        letter-spacing: normal;
+        text-align: center;
+        margin-left: 115px;
+        color: #448fe1;
+    }
+
+    .RectangleFiles {
+        padding: 5px 0px 5px 0px;
+        background-color: #feebec;
+    }
+
+    .RectangleSLA {
+        text-align: center;
+        width: 125px;
+        padding: 10px 12px;
+        border-radius: 3px;
+        margin-left: 5px;
+        background-color: white;
+    }
+
+    .inactive {
+        color: gray;
+    }
+
+    .Tab:hover {
+        box-shadow: 1px 1px 2px black;
+    }
+
+    .Tab:active {
+        color: black !important;
+        background-color: #dddddd !important;
+    }
+</style>
+<script>
+    $(document).on("click", "[name='Tab']", function (e) {
+        $("#span1").removeClass("inactive");
+        $("#span2").removeClass("inactive");
+        debugger;
+        if (e.currentTarget.id == "Tab2") {
+            $("#DatosTicket").css('display', 'none');
+            $("#MisDatos").css('display', 'block');
+            $("#span1").addClass("inactive");
+            $("#span2").addClass("active");
+            $("#Tab2").css({
+                "border-top-color": "lightgray",
+                "border-bottom-color": "white",
+                "border-right-color": "white",
+                "border-width": "0.2px",
+                "border-style": "solid"
+            });
+            $("#Tab1").css({
+                "border-bottom-color": "lightgray",
+                "border-top-color": "white",
+                "border-left-color": "white",
+                "border-width": "0.2px",
+                "border-style": "solid"
+            });
+
+        } else {
+            $("#DatosTicket").css('display', 'block');
+            $("#MisDatos").css('display', 'none');
+            $("#span1").addClass("active");
+            $("#span2").addClass("inactive");
+            $("#Tab1").css({
+                "border-top-color": "lightgray",
+                "border-bottom-color": "white",
+                "border-width": "0.2px",
+                "border-style": "solid"
+            });
+            $("#Tab2").css({
+                "border-top-color": "white",
+                "border-bottom-color": "lightgray",
+                "border-width": "0.2px",
+                "border-style": "solid"
+            });
+
+
+        }
+
+
+    });
+    //FUNCIONES AYB
+    function ReabreTicket(id) {
+
+        //Validar que no tenga mas de 2 reaperturas
+            $.ajax({
+                url: '../Supervisor/ValidaReaperturas',
+                type: "POST",
+                data: {
+                    TicketId: id
+                },
+                success: function (result) {
+
+                    if (result == "Mayor") {
+
+                        alert("El ticket " + id + " ya cuenta con un límite de 2 reaperturas.");
+
+                    }
+                    else
+                    {
+                         var url = '@Url.Action("ReabrirTicket", "App", new { Id = "__id__" })';
+        window.location.href = url.replace('__id__', id);
+                    }
+
+                },
+                error: function (err) {
+                    alert(err);
+
+                }
+            });
+
+    }
+    function RechazaSolucionModal() {
+
+        $("#modalRechazaSolucion").modal('show');
+
+    }
+    //AYB
+    function RechazaSolucion(id) {
+        $("#DetalleId").val(id);
+        //Guarda SubTicket
+        $("#form").submit();
+    }
+    //AYB
+    function ApruebaSolucion(id) {
+        $.ajax({
+            url: '../Supervisor/GetAceptaSolucion',
+            type: "POST",
+            data: {
+                TicketId: id
+            },
+            success: function (result) {
+                if (result == "Correcto") {
+                    $("#modalNotificaciones").modal('show');
+                    $("#tblSuccess").css('display', 'block');
+                    $("#tituloAceptaSolucion").css('display', 'block');
+                    $("#LeyendaAceptaSolucion").css('display', 'block');
+
+                } else {
+                    $("#modalNotificaciones").modal('show');
+                    $("#tblError").css('display', 'block');
+
+                }
+
+            },
+            error: function (err) {
+                alert(err);
+
+            }
+        });
+
+    }
+    function AceptaTicket(id) {
+        $("#modalNotificaciones").modal('hide');
+        $("#modalRechazaSolucion").modal('hide');
+        location.reload();
+    }
+    function CancelaSolicitud() {
+        $("#modalDownload").modal('hide');
+        $("#modalRechazaSolucion").modal('hide');
+    }
+    function ShowAdjuntos(id) {
+        $("#modalDownload").modal('show');
+    }
+    function DownloadDocs(id) {
+        $("#IdDoc").val(id);
+        $("#formAttach").submit();
+    }
+</script>
+
+@*DESCARGA DE ARCHIVOS*@
+<div>
+    @using (Html.BeginForm("ExportArchivos", "Supervisor", FormMethod.Post, new { id = "formAttach" }))
+    {
+        @Html.Hidden("IdDoc")
+
+    }
+</div>
+
+<div style="height:630px;">
+
+    <table width="100%">
+        <tr>
+            <td>
+                <div class="-Tab-Label-Copy-6 TextTitleBlack-3" style="margin-left:37px;">
+                    <b>
+                        Ticket ID: @Model.ticket.Id
+                    </b>
+                </div>
+            </td>
+            <td style="text-align:right;">
+                <br />
+                <span style="margin-right:36px;margin-top:37px;">
+                    @if (Model.ticket.Estatus == "Cancelado")
+                    {
+                        //OvalCancelado
+                        <i class="fa fa-circle OvalCancelado"></i>
+                    }
+                    @if (Model.ticket.Estatus == "Abierto")
+                    {
+                        <i class="fa fa-circle Oval"></i>
+                    }
+                    <b>
+                        @Model.ticket.Estatus
+                    </b>
+                </span>
+            </td>
+        </tr>
+    </table>
+    <span class="-Tab-Label-Copy-10 TextSubtitleBlack-3" style="margin-left:37px;">
+        <b>
+            Historial de seguimiento
+        </b>
+    </span>
+    <input type="hidden" value="@Model.ticket.Id" id="oIdTicket" />
+
+    <table width="620px">
+        <tr>
+            <td>
+                <div class="RectangleHis" style="overflow-y: scroll;  overflow-x: hidden;border: 1px #dddddd solid;">
+                    @foreach (var item in Model.his)
+                    {
+                        <div class="RectangleDetail" style="border-bottom:black solid 1px">
+                            <span style="margin-left: 40%;">
+                                @item.fechaReg
+                            </span>
+                            <br />
+                            <span class="">
+                                <b>
+                                    @item.nombre
+                                </b>
+                            </span> <br />
+                            <span class="">
+                                @item.correo
+                            </span> <br />
+                            <span class="">
+                                @item.estatus
+                            </span>
+                            @if (item.file == true)
+                            {
+                                <div class="RectangleFiles">
+                                    <span class="Archivos-adjuntos">
+                                        Archivos adjuntos
+                                    </span>
+                                </div>
+                                <div style="height:0.5px; background-color:lightgrey; margin-top:8px;"></div>
+                            }
+                        </div>
+                    }
+                    <br />
+                    <div class="col-md-12" style="border:1px solid #ccc; text-align:center; background-color:#FFD5DD">
+                        <button type="button" id="btnShowAdjuntos" onclick="ShowAdjuntos()"><text style="font-weight:bold;color:#069CE3;font-size:14px;">Archivos Adjuntos</text></button><br />
+                    </div>
+
+                </div>
+            </td>
+            <td>
+                <div class="RectangleHis" style="border: 1px #dddddd solid;">
+                    <table>
+                        <tr>
+                            <td>
+                                <div class="RectangleSLA">
+                                    <b>
+                                        SLA objetivo
+                                        45:00
+                                    </b>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="RectangleSLA">
+                                    <b>
+                                        Tiempo actual
+                                        <span> @Model.hours : @Model.minutes</span>
+                                    </b>
+                                </div>
+                            </td>
+                            <td>
+                                @if (decimal.Parse(Model.hours) < 4)
+                                {
+                                    <div class="RectangleSLA" style="background-color:#28a745;">
+                                        <b style="color:white;">
+                                            SLA total <br />
+                                            <span> @Model.hours : @Model.minutes</span>
+                                        </b>
+                                    </div>
+                                }
+                                else if (decimal.Parse(Model.hours) > 4 && decimal.Parse(Model.hours) < 12)
+                                {
+                                    <div class="RectangleSLA" style="background-color:#ffc009;">
+
+                                        <b>
+                                            SLA total <br />
+                                            <span> @Model.hours : @Model.minutes</span>
+                                        </b>
+                                    </div>
+                                }
+                                else if (decimal.Parse(Model.hours) > 12)
+                                {
+                                    <div class="RectangleSLA" style="        background-color: #ed3a3d;">
+                                        <b style="color:white;">
+                                            SLA total <br />
+                                            <span> @Model.hours : @Model.minutes</span>
+                                        </b>
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    </table>
+                    <table style="margin-top:3px;" width="100%">
+                        <tr>
+                            <td style="text-align:center;border-top:0.2px solid lightgray;border-right:0.2px solid lightgray;" class="Tab" name="Tab" id="Tab1">
+                                <span class="active" id="span1"> Datos del ticket</span>
+                            </td>
+                            <td style="text-align:center;border-bottom:0.2px solid lightgray" class="Tab" name="Tab" id="Tab2">
+                                <span class="inactive" id="span2">
+                                    Mis datos
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                    <table width="100%" id="DatosTicket">
+                        <tr>
+                            <td>
+                                <b>
+                                    Breve descripción de la incidencia
+                                </b>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                @Model.ticket.DescripcionIncidencia
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <b>
+                                    Soporte de la incidencia
+                                </b>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                @* PlaceHolder *@
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <b>Categoría</b>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+
+                                @Model.Categoria
+
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <b>
+
+                                    Subcategoría
+                                </b>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                @Model.Subcategoria
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <b>
+
+                                    Centro
+                                </b>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                @Model.Centro
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <b>
+
+                                    Personas a notificar el estado del ticket
+                                </b>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                @Model.ticket.PersonasAddNotificar
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <b>
+                                    Grupo resolutor
+                                </b>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                @Model.ticket.GrupoResolutor
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <b>
+
+                                    <i class="fa fa-bar-chart" aria-hidden="true"></i> Prioridad
+                                </b>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                @Model.ticket.Prioridad
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <b>
+
+                                    <i class="fa fa-user" aria-hidden="true"></i>   Técnico asignado
+                                </b>
+
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <i class="fa fa-repeat" aria-hidden="true"></i>
+                                Número de reapeturas del ticket
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                0
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="text-align:center;">
+                                @if (Model.ticket.Estatus == "Abierto")
+                                {
+                                    @Html.ActionLink("Editar", "EditTicket", "App", new { Id = Model.ticket.Id }, new { id = "btnNewB", @class = "btn btnP", @type = "button", @style = "max-width:60%;min-width:60%;" })
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="text-align:center;">
+                                @if (Model.ticket.Estatus == "Abierto")
+                                {
+                                    <button type="button" class="btn btnP" style="max-width:60%;min-width:60%;margin-top:3px;" onclick="javascript:getModal(1,1);">
+                                        Cancelar
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="text-align:center;">
+                                @if (Model.ticket.Estatus == "Cerrado")
+                                {
+                                    <button type="button" class="btn btnP" style="max-width:60%;min-width:60%;margin-top:3px;" onclick="javascript:getModal(1,1);">
+                                        Encuesta de satisfacción
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="text-align:center;">
+                                @if (Model.ticket.Estatus == "Resuelto")
+                                {
+
+                                    <button type="button" class="btn btnP" style="max-width:60%;min-width:60%;margin-top:3px;" onclick="ApruebaSolucion(@Model.ticket.Id);">
+                                        Aprobar solución
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="text-align:center;">
+                                @if (Model.ticket.Estatus == "Resuelto")
+                                {
+
+                                    <button type="button" class="btn btnP" style="max-width:60%;min-width:60%;margin-top:3px;" onclick="RechazaSolucionModal();">
+                                        Rechazar solución
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="text-align:center;">
+                                @if (Model.ticket.Estatus == "En Garantía")
+                                {
+
+                                    <button type="button" class="btn btnP" style="max-width:60%;min-width:60%;margin-top:3px;" onclick="ReabreTicket(@Model.ticket.Id);">
+                                        Reabrir ticket
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    </table>
+                    <table id="MisDatos" style="display:none;">
+                        <tr>
+                            <td>
+                                <b>
+                                    ID de empleado
+                                </b>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                @Model.ticket.EmpleadoID
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <b>
+                                    Nombre completo
+                                </b>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                @Model.ticket.NombreCompleto
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <b>
+
+                                    Correo electrónico
+                                </b>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                @Model.ticket.Correo
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <b>
+                                    Área
+                                </b>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                @Model.ticket.Area
+                            </td>
+                        </tr>
+                    </table>
+
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    @using (Html.BeginForm("GetRechazaSolucion", "Supervisor", null, FormMethod.Post,
+        new { enctype = "multipart/form-data", id = "form" }))
+    {
+        @*//Modal de RECHAZO de SOLUCION*@
+        @Html.ValidationSummary()
+        <div class="modal fade" tabindex="-1" role="dialog" id="modalRechazaSolucion">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div>
+                        <div class="col-md-12">
+                            <table style="width:100%;">
+                                <tr>
+                                    <td>
+                                        <div class="modal-header">
+                                            <h4 class="modal-title"><b>Rechazar solución</b></h4>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <br />
+                                        @Html.Hidden("DetalleId")
+
+                                        <br />
+                                        <text style="font-weight:bold;color:#808080;font-size:12px;margin: 0px 39px 0px 10px;">
+                                            MOTIVO DE RECHAZO DE LA SOLUCIÓN
+                                            <br />
+                                            @Html.TextArea("ComentariosRechazo", "",
+                                           new
+                                           {
+                                               @class = "form-control",
+                                               id = "ComentariosRechazobb",
+                                               style = "margin: 0px 39px 0px 10px; max-width: 75% !important; width: 559px; height: 250px;"
+                                           })
+                                            <br />
+                                            <br />
+                                            <text style="font-weight:inherit;color:#808080;font-size:12px; margin:-1%;">SOPORTE DE LA INCIDENCIA</text><br />
+                                            <label class="fileContainer">
+                                                <label>Adjuntar archivo</label>
+                                                <i class="glyphicon glyphicon-folder-open"></i>
+                                                <input id="btnAddArchivoRechazo" type="file" name="upload" accept="application/application" />
+                                            </label>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-warning" onclick="CancelaSolicitud()">Cancelar</button>
+                        <button type="button" class="btn btn-primary" onclick="RechazaSolucion(@Model.ticket.Id)">Aceptar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+
+
+
+</div>
+
+@*==============================MODALES AYB==============================*@
+
+@*Modal de DESCARGA ARCHIVOS*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalDownload">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div>
+                <div class="col-md-12">
+                    <table style="width:100%;">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title"><b>Archivos Adjuntos</b></h4>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="row">
+                                    <div class="scroll_vertical" style="max-width: 100%; max-height: 700px;  font-size: 15px; ">
+                                        @if (Model.Docs != null)
+                                        {
+
+
+                                            @Html.Grid(Model.Docs).Columns(col =>
+                                       {
+
+                                           col.Add(data => data.Nombre).Titled("Archivo").Filterable(true);
+                                           col.Add(data => data.Extension).Titled("Tipo");
+                                           col.Add().Encoded(false).Sanitized(false)
+                                         .RenderValueAs(data => "<div style='text-align: center'>"
+                                             + "<button type='button' class='btn btn-success glyphicon glyphicon-download' title='Descargar' onclick='DownloadDocs(\"" + data.Id + "\");'></button>"
+                                             + "</div>").Css("little");
+
+                                       })
+
+                                        }
+                                        else
+                                        {
+                                            <label>¡No se encontraron Archivos Adjuntos!</label>
+                                        }
+
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" onclick="CancelaSolicitud()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@*//Modal de Notificaciones*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalNotificaciones">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div>
+                <div class="col-md-12">
+                    <table style="width:100%; display:none;" id="tblSuccess">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title" id="tituloAceptaSolucion" style="display:none;"><b>Solución aprobada</b></h4>
+                                    <h4 class="modal-title" id="tituloRechazaSolucion" style="display:none;"><b>Solicitud rechazada</b></h4>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <br />
+                                <br />
+                                <div style="color:forestgreen; top:-10px; font-style:normal;line-height:20px; margin-left:250px; font-size:xxx-large;" class="glyphicon glyphicon-ok">
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;">
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaAceptaSolucion">
+                                    Se aprobó la solución. El ticket está en un estado
+                                    <br />
+                                    de garantía
+                                </label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaRechazaSolucion">
+                                    Se rechazó la solución. El ticket está en un estado
+                                    <br />
+                                    trabajando
+                                </label>
+                                <br />
+                            </td>
+                        </tr>
+                    </table>
+                    <table style="width:100%; display:none;" id="tblError">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title"><b>¡Error!</b></h4>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <br />
+                                <br />
+                                <div style="color:red; top:-10px; font-style:normal;line-height:20px; margin-left:250px; font-size:xxx-large;" class="glyphicon glyphicon-ban-circle">
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;">
+                                <label style="color:red;  margin-left:200px;">¡Error al guardar!</label>
+                                <br />
+                                <label style="color:red; margin-left:150px;">Favor de validarlo con el Administrador</label>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="AceptaTicket(@Model.ticket.Id)">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>

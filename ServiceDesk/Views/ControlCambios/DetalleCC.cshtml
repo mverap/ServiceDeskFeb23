@@ -1,0 +1,1406 @@
+﻿@using GridMvc
+@using GridMvc.Html
+@model ServiceDesk.ViewModels.DetalleCC
+@{
+    ViewBag.Title = "DetalleTarea";
+}
+
+<link href="@Url.Content("~/Content/Gridmvc.css")" rel="stylesheet" />
+<link href="@Url.Content("~/Content/bootstrap.min.css")" rel="stylesheet" />
+<script src="@Url.Content("~/Scripts/jquery-1.9.1.min.js")"></script>
+<script src="@Url.Content("~/Scripts/gridmvc.min.js")"></script>
+<style type="text/css">
+    body {
+        background-color: white;
+        font-family: sans-serif;
+    }
+
+    .blu {
+        color: steelblue;
+    }
+
+    .wizard-progress {
+        display: table;
+        width: 100%;
+        table-layout: fixed;
+        position: relative;
+    }
+
+        .wizard-progress .step {
+            display: table-cell;
+            text-align: center;
+            vertical-align: top;
+            overflow: visible;
+            position: relative;
+            font-size: 14px;
+            color: black;
+            font-weight: bold;
+        }
+
+            .wizard-progress .step:not(:last-child):before {
+                content: '';
+                display: block;
+                position: absolute;
+                left: 50%;
+                top: 37px;
+                background-color: #878F97;
+                height: 6px;
+                width: 100%;
+            }
+
+            .wizard-progress .step .node {
+                display: inline-block;
+                border: 6px solid #878F97;
+                background-color: white;
+                border-radius: 18px;
+                height: 18px;
+                width: 18px;
+                position: absolute;
+                top: 30px;
+                left: 50%;
+                margin-left: -18px;
+            }
+
+            .wizard-progress .step.complete:before {
+                background-color: #037EFF;
+            }
+
+            .wizard-progress .step.complete .node {
+                border: 6px solid #037EFF;
+                background-color: white;
+            }
+
+                .wizard-progress .step.complete .node:before {
+                    font-family: FontAwesome;
+                    content: '';
+                }
+
+            .wizard-progress .step.in-progress2 .node {
+                border-color: #037EFF;
+            }
+
+            .wizard-progress .step.in-progress .node {
+                border-color: #24A638;
+            }
+
+    table1 {
+        border: 1em solid black;
+        border: thin;
+        background-color: papayawhip;
+    }
+
+    .Red {
+        background-color: red;
+    }
+
+    .Yellow {
+        background-color: goldenrod;
+    }
+
+    .Green {
+        background-color: green;
+    }
+
+    .Gray {
+        background-color: gray;
+    }
+
+    .Blue {
+        background-color: blue;
+    }
+
+    .Orange {
+        background-color: orange;
+    }
+
+    .Orange2 {
+        background-color: orangered;
+    }
+
+    .Ball1 {
+        height: 15px;
+        width: 15px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .Ball {
+        height: 8px;
+        width: 8px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .modal-content {
+        width: 500px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: #fff;
+        color: #000;
+        text-align: left;
+        border-radius: 20px;
+        padding: 30px 30px;
+    }
+
+    #tbl td {
+        border: 2px solid gray;
+        padding: 25px;
+    }
+
+    #tbl {
+        width: 100%;
+        table-layout: fixed;
+    }
+
+    .grid-cell {
+        height: 25px;
+    }
+</style>
+<script type="text/javascript">
+    var user = '@Model.EmployeeID';
+        //Job: recuerda la posición en la que el usuario se encontraba antes de salir de la página, incompatible uso 2 de la variable fase
+    var job = '@ViewBag.job';
+    var ccid = '@Model.CCid';
+    var fase = '@Model.CCtbl.Fase'; //Fase: nivel de progreso actual del CC,
+        // 1. - muestra dicho progreso en timeline y
+        // 2. - abre pantallas pertinentes automáticamente al entrar en url
+    if (fase == 0) fase = 1; // fase 0 representa creación, enseñar pantalla 1
+    if (fase == 6) fase--;   // fase 6: pantalla 5
+    if (fase == 7) fase--;   // fase 7: pantalla 6
+        var job = fase; //comentar/borrar esta linea apaga el funcionamiento de abrir automáticamente pantallas dependiendo del progreso actual del CC
+    var rechazos = '@ViewBag.Rechazos';
+    var tareasp = '@ViewBag.tareasP';
+    $(document).ready(function () {
+        if ('@ViewBag.apro' == 1) { $("#modalAprobacion").modal("show"); } //Modal de "CC aprobado correctamente"
+        //if ('ViewBag.Repro'== 1) { $("#modalReprogramarCC").modal("show"); } //Modal de "CC rechazado ¿Reprogramar?"
+        if (tareasp == 1) { $("#modalTareasCC").modal("show"); } // abrir el modal "problema con fechas de tarea"
+        $(".tipoTarea").each(function (index) { //Formato grid de nombres de tipo de tarea
+            var text = this.innerHTML;
+            if (text == 1) { this.innerHTML = "Tarea"; }
+            if (text == 2) { this.innerHTML = "Tarea RollBack"; }
+        }); //Cambiar texto de tipo de tarea
+        $(".evidencia").each(function (index) { //Formato grid de nombres de evidencia
+            var text = this.innerHTML;
+            if (text == 1) { this.innerHTML = "Abrir Evidencia"; }
+        }); //Crear links para mostrar evidencia
+        $('a').click(function (event) {
+            // cambiar de gridpage en una tabla cambia la gridpage en todas, esta funcion lo evita
+            event.preventDefault();
+            var oldUrl = $(this).attr("href");
+            if (oldUrl != undefined) {
+                var url = replaceUrlParam(oldUrl, "job", job);
+                //console.log("url: " + url);
+
+                const regex = /I/;
+                const result = regex.test(url);
+                if (result) {
+                    console.log("url1: " + url);
+                    window.location.href = url;
+                }
+            }
+        }); // conservar posición en la página después de cambiar grid-page
+        if (fase != 0) {
+            // Fase 1 = Detalle, aprobación por chmanager
+            // Fase 2 = Aprobado, ahora en planeación
+            // Fase 3 = planeación terminada, petición de aprobación de planeación
+            // Fase 4 = Aprobado, ahora en implementación
+            // Fase 5 = Implementación terminada, petición de aprobación de implementación
+            // Fase 6 = Implementación aprobada por line manager
+            // Fase 7 = Implementación aprobada por change reviwer
+            for (var f = 0; f < fase; f++) { $("#a" + f).addClass("complete"); }
+            var g = "#a" + fase;
+            $(g).addClass("in-progress2");
+            // console.log("in-progress class added to #a" + fase);
+
+        } // colorear linea de tiempo, timeline
+
+        // Añadir bolas de colores según estatus, ball colors, color balls
+        $('[data-name="Estatus"]').each(function () {
+            var textE = $(this).html();
+            if (/Solicitado/i.test(textE))  $(this).prepend("<div class='Ball Blue'></div> ");
+            if (/Cerrado/i.test(textE))     $(this).prepend("<div class='Ball Gray'></div> ");
+            if (/aprobado/i.test(textE))    $(this).prepend("<div class='Ball Green'></div> ");
+            if (/pendiente/i.test(textE))   $(this).prepend("<div class='Ball Orange'></div> ");
+            if (/por iniciar/i.test(textE)) $(this).prepend("<div class='Ball Orange'></div> ");
+            if (/en proceso/i.test(textE))  $(this).prepend("<div class='Ball Orange2'></div> ");
+            if (/finalizada/i.test(textE))  $(this).prepend("<div class='Ball Green'></div> ");
+            if (/no aplica/i.test(textE))   $(this).prepend("<div class='Ball Orange'></div> ");
+        });
+        // Bolas de colores según CC
+        var txt = $("#bEstatus").html();
+        if (/Solicitado/i.test(txt)) $(".Ball1").addClass("Blue");
+        if (/Cerrado/i.test(txt))    $(".Ball1").addClass("Gray");
+        if (/rechazado/i.test(txt))  $(".Ball1").addClass("Red");
+        if (/cancelado/i.test(txt))  $(".Ball1").addClass("Red");
+        if (/Aprobado/.test(txt))   $(".Ball1").addClass("Green");
+        if (/no/i.test(txt)) { $(".Ball1").addClass("Red"); $(".Ball1").removeClass("Green"); }
+        if (/pendiente/i.test(txt))  $(".Ball1").addClass("Orange");
+        if (/trabajando/i.test(txt)) $(".Ball1").addClass("Orange2");
+
+        // Abrir página en donde se quedó el usuario
+        ShowProgressInTimeline(job); // job and not fase; see above
+
+        if (job == 1)  { $("#divDetalle").show(); }
+        if (job == 2)  { $("#divPlaneacion").show(); }
+        if (job == 3)  { $("#divAprobacion").show(); }
+        if (job == 4)  { $("#divImplementacion").show(); }
+        if (job == 5)  { $("#divRevision").show(); }
+        if (job == 6)  { $("#divCierre").show(); }
+
+        // --- Click en timeline
+        $("#a1").click(function () { timelineClicks(1, "#divDetalle"); });
+        $("#a2").click(function () { timelineClicks(2, "#divPlaneacion"); });
+        $("#a3").click(function () { timelineClicks(3, "#divAprobacion"); });
+        $("#a4").click(function () { timelineClicks(4, "#divImplementacion"); });
+        $("#a5").click(function () { timelineClicks(5, "#divRevision"); });
+        $("#a6").click(function () { timelineClicks(6, "#divCierre"); }); //.show("fast", "swing"); });    // animaciones
+
+        // --- Abrir Modales
+        $("#btnPln_addtarea").click(function () {
+            $('#btnPln_addtarea').attr('action', '../ControlCambios/CrearTareaCC?EmployeeId=@Model.EmployeeID&CCid=@Model.CCtbl.id');
+            $("#labelTarea").html("Agregar Tarea");
+            $("#modalAltaTarea").modal("show");
+            $("#hora").html("");
+            $("#fecha").html("");
+        }); // Mostrar Modal de creación de tarea
+        $("#btnDet_rechazar").click(function ()  {  $("#modalRechazar").modal("show"); RechazoByMng(); });
+        $("#btnApr_RechazoCC").click(function () {
+            $("#modalRechazar").modal("show");
+            var url = "../ControlCambios/CambioEdo?CCid=@Model.CCid&EmployeeId=@Model.EmployeeID&newEdo=RechazoAPCC";
+            $('#formRechazoCC').attr('action', url);
+        }); // Modal de Rechazo de CC
+        $(".cancel").click(function () { $("#modalCancelar").modal("show"); });
+
+        // --- Cerrar Modales
+        $("#btnCerrarModalEliminarTarea").click(function () { $("#modalElimTarea").modal("hide"); });
+        $("#btnCerrarModalCrearTarea").click(function ()    { $("#modalAltaTarea").modal("hide"); });
+        $("#btnCerrarModalRechazo").click(function ()       { $("#modalRechazar").modal("hide");  });
+        $("#btnCerrarModalAprobacion").click(function ()    { $("#modalAprobacion").modal("hide"); });
+        $("#btnCerrarModalCancelado").click(function () { $("#modalCancelar").modal("hide"); });
+        $("#btnCerrarModalTareaCC").click(function () { $("#modalTareasCC").modal("hide"); });
+        //$("#btnCerrarModalReprogramarCC").click(function () { $("#modalReprogramarCC").modal("hide"); });
+
+        // --- Acciones de modales
+        $("#btnModalAceptarCrearTarea").click(function () {
+            $("#tbl_CC_Tareas_Nombre").css('border-color', "lightgray");
+            $("#tbl_CC_Tareas_Descripcion").css('border-color', "lightgray");
+            $("#tbl_CC_Tareas_Tipo").css('border-color', "lightgray");
+            $("#tbl_CC_Tareas_GrupoResolutor").css('border-color', "lightgray");
+            $("#tbl_CC_Tareas_Tecnico").css('border-color', "lightgray");
+            $("#tbl_CC_Tareas_Hora").css('border-color', "lightgray");
+            $("#tbl_CC_Tareas_Fecha").css('border-color', "lightgray");
+
+            console.log("entered... ---------------------------");
+            var nom = $("#tbl_CC_Tareas_Nombre").val();
+            var des = $("#tbl_CC_Tareas_Descripcion").val();
+
+            var tip = $("#tbl_CC_Tareas_Tipo option:selected").val();
+            var tec = $("#tbl_CC_Tareas_Tecnico option:selected").val();
+            var gru = $("#tbl_CC_Tareas_GrupoResolutor option:selected").val();
+
+            var hor = $("#tbl_CC_Tareas_Hora").val();
+            var fec = $("#tbl_CC_Tareas_Fecha").val();
+
+            var flag = 0;
+            console.log("nomb: " + nom);
+            console.log("tipo: " + tip);
+            console.log("desc: " + des);
+            console.log("tecn: " + tec);
+            console.log("hora: " + hor);
+            console.log("fech: " + fec);
+
+            if (hor.length == 0 || /^\s +$/.test(hor)) {
+                $("#tbl_CC_Tareas_Hora").focus();
+                $("#tbl_CC_Tareas_Hora").css('border-color', "red");
+                alert("Un campo obligatorio no ha sido llenado: Hora"); flag = 1;
+                return;
+            }
+            if (fec.length == 0 || /^\s +$/.test(fec)) {
+                $("#tbl_CC_Tareas_Fecha").focus();
+                $("#tbl_CC_Tareas_Fecha").css('border-color', "red");
+                alert("Un campo obligatorio no ha sido llenado: Fecha"); flag = 1;
+                return;
+            }
+            if (gru == 0) {
+                $("#tbl_CC_Tareas_GrupoResolutor").focus();
+                $("#tbl_CC_Tareas_GrupoResolutor").css('border-color', "red");
+                alert("Un campo obligatorio no ha sido llenado: Grupo Resolutor"); flag = 1;
+                return;
+            }
+            if (tec == 0) {
+                $("#tbl_CC_Tareas_Tecnico").focus();
+                $("#tbl_CC_Tareas_Tecnico").css('border-color', "red");
+                alert("Un campo obligatorio no ha sido llenado: Técnico"); flag = 1;
+                return;
+            }
+            if (des.length == 0 || /^\s +$/.test(des)) {
+                $("#tbl_CC_Tareas_Descripcion").focus();
+                $("#tbl_CC_Tareas_Descripcion").css('border-color', "red");
+                alert("Un campo obligatorio no ha sido llenado: Descripción"); flag = 1;
+                return;
+            }
+            if (tip == 0) {
+                $("#tbl_CC_Tareas_Tipo").focus();
+                $("#tbl_CC_Tareas_Tipo").css('border-color', "red");
+                alert("Un campo obligatorio no ha sido llenado: Tipo"); flag = 1;
+                return;
+            }
+            if (nom.length == 0 || /^\s +$/.test(nom)) {
+                $("#tbl_CC_Tareas_Nombre").focus();
+                $("#tbl_CC_Tareas_Nombre").css('border-color', "red");
+                alert("Un campo obligatorio no ha sido llenado: Nombre"); flag = 1;
+                return;
+            }
+            if (flag == 0) {
+                $("#formTarea").submit();
+                console.log("---: " + flag);
+            }
+        });            // Validar datos al crear Tarea
+        $("#btnModalAceptarEliminarTarea").click(function () {
+            var id = $("#idTareaElim").html();
+            console.log("Eliminando: " + id);
+            window.location.href = '../ControlCambios/DeleteTareaCC?EmployeeId=' + user + '&TareaId=' + id + '&CCid=' + @Model.CCtbl.id + "&job=2"; // ID de tarea
+        });         // Eliminar Tarea
+        $("#btnTopShelfReprogramarCC").click(function () {
+            console.log("Reprogramando: " + '@Model.CCtbl.id');
+            window.location.href = '../ControlCambios/EditarControlCambios?EmployeeId=' + user + '&CCid=' + @Model.CCtbl.id + "&repgrogramacion=1"; // ID de tarea
+        });             // Reprgramar Tarea
+        $("#btnModalAceptarReprogramarCC").click(function () {
+            var url = '../ControlCambios/DeleteTareaCC?EmployeeId=' + user + '&TareaId=' + id + '&CCid=' + @Model.CCtbl.id + "&job=2";
+            console.log("btnModalAceptarReprogramarCC: " + url);
+        });         // NOT IN USE
+        $("#btnCerrarModalReprogramarCC").click(function () {
+            var url = '../ControlCambios/DeleteTareaCC?EmployeeId=' + user + '&TareaId=' + id + '&CCid=' + @Model.CCtbl.id + "&job=2";
+            console.log("btnCerrarModalReprogramarCC: " + url);
+        });          // NOT IN USE
+        $("#btnAceptarModalCancelado").click(function () {
+            var value = $('#Roles').val();
+            $('#formCanceladoCC').attr('action', '../ControlCambios/CambioEdo?EmployeeId=@Model.EmployeeID&CCid=@Model.CCtbl.id&newEdo=Cancel&rolcc=' + value);
+            $("#formCanceladoCC").submit();
+        });
+        // --- Acciones de vista
+        $("#btnDet_aprobar").click(function ()     { CambioEdo("Aprueba"); }); // ChMng aprueba control de cambios
+        $("#btnPln_SolicitarAp").click(function () { CambioEdo("PedirAprobacionAPCC"); }); // ChMng pide aprobación de planeación
+        $("#btnApr_AprobarCC").click(function ()   { CambioEdo("AprobacionAPCC"); }); //ChApr aprueba planeación
+        $(".EvidenciaTarea").click(function () {
+            event.stopPropagation();
+            var id = this.id;
+            console.log(id);
+            window.open('../ControlCambios/DetalleTareaCC?TareaId=' + id + '&EmployeeId=' + @Model.EmployeeID + "&his=1", 'popUpWindow', 'height=775,width=750,left=300,top=100,resizable=no,scrollbars=yes,toolbar=no,menubar=no,location=no,directories=no, status=yes');
+        }); //Click en evidencias de tarea
+        $("#btnRev_Aprobar").click(function ()   { ImplementacionAceptada(true);  } );
+        $("#btnRev_Rechazar").click( function () { ImplementacionAceptada(false); } );
+
+        $("#tbl_CC_Tareas_GrupoResolutor").change(function () { FillTecnico(0); });//Fill tecnicos cbox
+        if ('@ViewBag.rolcc' == 0) BloquearBotonesPorRol(1); // combobox de roles, prerequisito
+        else {
+            var value = '@ViewBag.rolcc';
+            console.log("select:" + value);
+            document.getElementById("Roles").value = value;
+            BloquearBotonesPorRol('@ViewBag.rolcc');
+        }
+        $("#detalle_btns_own").hide();
+        $("#detalle_btns_mng").hide();
+
+        $('#Roles').click(function () {
+            var value = $(this).val();
+            BloquearBotonesPorRol(value);
+            BloquearPlaneacionSinTareas();
+        }); // combobox de roles
+        $("#btn_historial").click(function () { window.open("../ControlCambios/HistoricoCC?EmployeeId=@Model.EmployeeID&CCid=@Model.CCtbl.id", 'popUpWindow', 'height=800,width=700,left=500,top=100,resizable=no,scrollbars=yes,toolbar=no,menubar=no,location=no,directories=no, status=yes'); });
+
+        $("#tbl_CC_Dashboard_GrupoResolutor").change(function () {
+            //tbl_CC_Tareas_GrupoResolutor
+            //tbl_CC_Tareas_Tecnico
+
+            // Obtener tecnicos
+            var grupo = $("#tbl_CC_Dashboard_GrupoResolutor option:selected").text();
+            //alert("grupo seleccionado: " + grupo);
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetImps", "ControlCambios")',
+                dataType: 'json',
+                data: {
+                    grupoReslutor: grupo,
+                },
+                success: function (result) {
+                    $("#tbl_CC_Dashboard_Implementer").empty();
+                    $("#tbl_CC_Dashboard_Implementer").append('<option value="0">SELECCIONE</option>');
+                    $.each(result, function (i, tecnico) {
+                        $("#tbl_CC_Dashboard_Implementer").append('<option value="' + tecnico.EmployeeId + '">' + tecnico.Nombre + '</option>');
+                    });
+                },
+                error: function ()
+                {
+                    alert("Error obteniendo técnicos del grupo resolutor.");
+                }
+            });
+        });
+
+        BloquearPlaneacionSinTareas();
+    });//END DOCUMENT READY
+    $(function () {
+        var typeWindow = "popUpWindow";
+        var statsWindow = "height=775,width=750,left=300,top=100,resizable=no,scrollbars=yes,toolbar=no,menubar=no,location=no,directories=no, status=yes";
+        var statsWindow2 = "height=775,width=750,left=300,top=100,resizable=no,scrollbars=yes,toolbar=no,menubar=no,location=no,directories=no, status=yes";
+
+        try {
+            pageGrids.imp.onRowSelect(function (e) {
+                window.open('../ControlCambios/DetalleTareaCC?TareaId=' + e.row.Id + '&EmployeeId=' + @Model.EmployeeID, typeWindow, statsWindow);
+                $.post(e.row, function (data) { if (data.Status <= 0) { alert(data.Message); return; } $("#order-content").html(e.row); });
+            });
+        } catch (error) {
+            console.log(error);
+        }
+
+        try {
+            pageGrids.imp2.onRowSelect(function (e) {
+                window.open('../ControlCambios/DetalleTareaCC?TareaId=' + e.row.Id + '&EmployeeId=' + @Model.EmployeeID + "&Rev=1", typeWindow, statsWindow2);
+                $.post(e.row, function (data) { if (data.Status <= 0) { alert(data.Message); return; } $("#order-content").html(e.row); });
+            });
+        } catch (error) {
+            console.log(error);
+        }
+
+        try {
+            pageGrids.imp3.onRowSelect(function (e) {
+                window.open('../ControlCambios/DetalleTareaCC?TareaId=' + e.row.Id + '&EmployeeId=' + @Model.EmployeeID + "&Rev=1", typeWindow, statsWindow2);
+                $.post(e.row, function (data) { if (data.Status <= 0) { alert(data.Message); return; } $("#order-content").html(e.row); });
+            });
+        } catch (error) {
+            console.log(error);
+        }
+
+        try {
+            pageGrids.imp4.onRowSelect(function (e) {
+                window.open('../ControlCambios/DetalleTareaCC?TareaId=' + e.row.Id + '&EmployeeId=' + @Model.EmployeeID + "&Rev=1", typeWindow, statsWindow2);
+                $.post(e.row, function (data) { if (data.Status <= 0) { alert(data.Message); return; } $("#order-content").html(e.row); });
+            });
+        } catch (error) {
+            console.log(error);
+        }
+
+        try {
+            pageGrids.pla2.onRowSelect(function (e) {
+                window.open('../ControlCambios/DetalleTareaCC?TareaId=' + e.row.Id + '&EmployeeId=' + @Model.EmployeeID, typeWindow, statsWindow);
+                $.post(e.row, function (data) { if (data.Status <= 0) { alert(data.Message); return; } $("#order-content").html(e.row); });
+            });
+        } catch (error) {
+            console.log(error);
+        }
+    }); // Abrir detalleTareaCC al hacer click en grid
+    function RechazoByMng() {
+        var url = "../ControlCambios/CambioEdo?CCid=@Model.CCid&EmployeeId=@Model.EmployeeID&newEdo=NoAprueba";
+        $('#formRechazoCC').attr('action', url);
+    }
+    function ImplementacionAceptada(ImpAccepted) {
+        //aprovación de
+        var judge = $('#Roles').val();
+        var parametros = "Rejectedby" + judge;
+        if (ImpAccepted == true) parametros = "Aprovedby" + judge;
+
+        var url = "../ControlCambios/CambioEdo?CCid=@Model.CCid&EmployeeId=@Model.EmployeeID&newEdo=" + parametros;
+        console.log(url);
+
+        if (ImpAccepted == true)
+            window.location.href = url;
+        else
+        {
+            $('#formRechazoCC').attr('action', url);
+            $('#modalRechazar').modal("show");
+        }
+
+    }
+    function CambioEdo(string) {
+        window.location.href = "../ControlCambios/CambioEdo?CCid=@Model.CCid&EmployeeId=@Model.EmployeeID&newEdo=" + string;
+    }
+    function timelineClicks(spot, DivId) {
+        job = spot;
+        if (fase >= spot)
+        {
+            ShowProgressInTimeline(spot);
+            $(DivId).show();
+        }
+    } // Click en timeline, pero solo puedes navegar por los nodos ya hechos y en progreso
+    function BloquearTodo(int) {
+        // Bloquear inputs
+        // 1 = bloquear todo
+        // 2 = bloquear todo menos botón reprogramar
+        var flag = true;
+        $('#divPlaneacion :input').attr('disabled', flag);
+        $('#divAprobacion :input').attr('disabled', flag);
+        $('#divImplementacion :input').attr('disabled', flag);
+        $('#divRevision :input').attr('disabled', flag);
+        $("#detalle_btns_own").hide();
+        $("#detalle_btns_mng").hide();
+        $(".aprBtn").hide();
+        $(".plnBtn").hide();
+        $(".Btn_mng").hide();
+        if (int == 1)
+        $("#btnTopShelfReprogramarCC").hide();
+
+    }
+    function BloquearPlaneacionSinTareas() {
+        //const grid = $('[data-gridname="pla"]');
+        const gird1 = document
+            .querySelector('[data-gridname="pla"]')
+            .querySelector('.grid-table');
+        //const grid = $('[data-gridname="pla"]').getElementByClassName("grid-table")[0];
+        //console.log(gird1);
+        rowscount = gird1.rows.length;
+        console.log("Numero de tareas en planeación: " + rowscount);
+        if (rowscount == 2) {
+            const row = document
+                .querySelector('[data-gridname="pla"]')
+                .querySelector('.grid-table tbody tr td');
+
+            var string = row.innerHTML;
+            var substring = "There are no items to display";
+            //console.log(string);
+
+            if (string.indexOf(substring) != -1) {
+                console.log("bloqueando botón");
+                $("#btnPln_SolicitarAp").hide();
+            }
+        }
+    }
+    function BloquearBotonesPorRol(rol) {
+        console.log("bloqueando botones para: " + rol);
+        BloquearTodo(1);
+        var FaseAp = '@Model.CCtbl.Fase'; // 5 = implementación finalizada, 6 = line manager aprobó
+
+        // Desbloquear acorde a rol = rol del usuario actual en CC
+        // 1 = Change Owner,    2 = Change Requester, 3 = Change manager
+        // 4 = Change Approver, 5 = Implementer,      6 = Line Manager
+        // 7 = Change Reviewer
+
+        // Detalle, se puede cancelar el CC por su creador
+        if (rol == 1 || rol == 2) $("#detalle_btns_own").show();
+
+        // Planeación solo puede modificarla el change manager
+        flag = (rol == 3) ? false : true;
+        $('#divPlaneacion :input').attr('disabled', flag);
+        if (!flag) {
+            var estatus = '@Model.CCtbl.Estatus';
+            if (estatus != "Rechazado")
+                $("#detalle_btns_mng").show();
+            if (estatus == "Solicitado" || estatus == "Aprobado") {
+                $(".plnBtn").show(); //Botones aprobación en detalle
+            }
+            $(".Btn_mng").show();
+            $("#btnTopShelfReprogramarCC").show();
+        }
+
+        // Aprovación solo pueden editarla ChManager y ChAprover
+        flag = (rol == 3 || rol == 4) ? false : true;
+        console.log("flag::::::::" + flag + ": " + rol);
+        $('#divAprobacion :input').attr('disabled', flag);
+        if (!flag) { /*$(".aprBtn").show();*/ }
+        if (rol == 4) { $(".Btn_apr").show(); $(".Btn_mng").hide(); } // 41-22
+
+        // Implementación solo puede modificarla el Implementer
+        flag = (rol == 5) ? false : true;
+        $('#divImplementacion :input').attr('disabled', flag);
+
+        // Revisión solo puede modificarlo el LiManager si la implementación ha sido finalizada
+        if (rol == 6 && FaseAp == 5) {
+            $('#divRevision :input').attr('disabled', false);
+        }
+
+        // Revisión solo puede modificarlo el change reviewer si el linemanager ha aprobado ya
+        if (rol == 7 && FaseAp == 6) {
+            $('#divRevision :input').attr('disabled', false);
+        }
+
+        console.log("rol: " + rol);
+
+        if ('@Model.CCtbl.Estatus' == "Cancelado") {
+            BloquearTodo(1);
+        }
+
+        HideBtnsPreviusFases();
+    }   // Bloquear o eliminar botones por
+    function HideBtnsPreviusFases() {
+        // Si ticket no está en Rechazado: esconder obtón reprogramar
+        if ('@Model.CCtbl.Estatus' != "Rechazado") { $("#btnTopShelfReprogramarCC").hide(); }
+        else { BloquearTodo(2); }
+        if (rechazos > 2 && false) { $("#btnTopShelfReprogramarCC").hide(); } // last cambio de 1 a 2 //Reprogramación
+
+        if (fase == 1){                                                         } //Detalle
+        if (fase > 1) { $('#divDetalle :input').attr('disabled', true);         } //Planeación
+        if (fase > 2) { $('#divPlaneacion :input').attr('disabled', true);      } //Aprobación
+        if (fase > 3) { $('#divAprobacion :input').attr('disabled', true);      } //Implementación
+        if (fase > 4) { $('#divImplementacion :input').attr('disabled', true);  } //Revisión
+        if (fase > 5) { $('#divRevision :input').attr('disabled', true);        } //Cierre
+
+        if (fase == 1){                                         } //Detalle
+        if (fase > 1) { $('#divDetalle :input').hide();         } //Planeación
+        if (fase > 2) { $('#divPlaneacion :input').hide();      } //Aprobación
+        if (fase > 3) { $('#divAprobacion :input').hide();      } //Implementación
+        if (fase > 4) { $('#divImplementacion :input').hide();  } //Revisión
+        if (fase > 5) { $('#divRevision :input').hide();        } //Cierre
+
+    }
+    function EliminarTarea(id) {
+        $("#idTareaElim").html(id);
+        $("#modalElimTarea").modal("show");
+    } // Abrir modal (tarea delete)
+    function unblockAddTareaButton() {
+        console.log("unblocking");
+        document.getElementById("btnModalAceptarCrearTarea").disabled = false;
+    }
+    function replaceUrlParam(url, paramName, paramValue) {
+        var pattern = new RegExp('\\b(' + paramName + '=).*?(&|#|$)');
+        if (url.search(pattern) >= 0) {
+            return url.replace(pattern, '$1' + paramValue + '$2');
+        }
+        url = url.replace(/[?#]$/, '');
+        return url + (url.indexOf('?') > 0 ? '&' : '&') + paramName + '=' + paramValue;
+    }
+    function EditarTarea(id) {
+        //Change action form
+        //$('#btnPln_addtarea').attr('action', '../ControlCambios/EditarTareaCC?EmployeeId=Model.EmployeeID&CCid=Model.CCtbl.id');
+        $('#formTarea').attr('action', '../ControlCambios/EditarTareaCC?EmployeeId=@Model.EmployeeID&CCid=@Model.CCtbl.id&Tarea=' + id);
+
+        $("#labelTarea").html("Editar Tarea");
+
+        $.ajax({
+            type: 'POST',
+            url: '@Url.Action("GetTareaEdit", "ControlCambios")',
+            dataType: 'json',
+            data: { TareaId: id },
+            success: function (result) {
+                console.log(result);
+                $("#idTarea").html(id);
+                $("#tbl_CC_Tareas_Nombre").val(result.Nombre);
+                $("#tbl_CC_Tareas_Descripcion").val(result.Descripcion);
+                $("#tbl_CC_Tareas_Estatus").val(result.Estatus);
+                $("#tbl_CC_Tareas_Comentario").val(result.Comentario);
+                // -------------- fecha
+                var jsondate = result.Fecha;
+                var dateString = jsondate.substr(6);
+                var currentTime = new Date(parseInt(dateString));
+                var month = currentTime.getMonth() + 1;
+                var day = currentTime.getDate();
+                var year = currentTime.getFullYear();
+                var date = day + " / " + month + " / " + year;
+                $("#fecha").html(date);
+
+                jsondate = result.Hora;
+                dateString = jsondate.substr(6);
+                currentTime = new Date(parseInt(dateString));
+                var hour = currentTime.getHours(); hour = (hour % 12) || 12;
+                var minu = currentTime.getMinutes();
+                var minutos = "";
+                if (minu < 10) { minutos = "0" + minu; }
+                else { minutos = minu; }
+                $("#hora").html(hour + ":" + minutos);
+
+                $("#tbl_CC_Tareas_Tipo").val(result.Tipo);
+                $("#tbl_CC_Tareas_GrupoResolutor").val(result.GrupoResolutor);
+                FillTecnico(result.Tecnico);
+            }
+        });
+        $("#modalAltaTarea").modal("show");
+    }   // Abrir modal (tarea edit)
+    function FillTecnico(tec) {
+        $("#tbl_CC_Tareas_Tecnico").empty();
+        console.log("filling tecnico");
+        $.ajax({
+            type: 'POST',
+            url: '@Url.Action("GetImps", "ControlCambios")',
+            dataType: 'json',
+            data: { grupoReslutor: $("#tbl_CC_Tareas_GrupoResolutor").val() },
+            success: function (result)
+            {
+                $("#tbl_CC_Tareas_Tecnico").append('<option value="0">SELECCIONE</option>');
+                $.each(result, function (i, group)
+                {
+                    $("#tbl_CC_Tareas_Tecnico").append('<option value="' + group.EmployeeId + '">' + group.Nombre + '</option>');
+                });
+                $("#tbl_CC_Tareas_Tecnico").val(tec);
+            }
+        });
+        if (tec != 0) { $("#tbl_CC_Tareas_Tecnico").val(tec); }
+    }  // Fill cbox de tecnicos conforme al cbox gruporesolutor
+    function ShowProgressInTimeline(id) {
+        console.log("hide");
+        $(".cont").hide();        //$(".cont").hide("fast","swing");
+        $(".step").removeClass("in-progress");
+        // $(".step").removeClass("complete");
+        var g = "#a" + id;
+        //console.log("show " + g);
+        //for (var f = 0; f < id; f++) {
+        //    console.log(f);
+        //    //$("#a" + f).addClass("complete");
+        //}
+        $(g).addClass("in-progress");
+    }
+    function returnDash() {
+         var url = '@Url.Action("DashboardCC", "ControlCambios")';
+         window.location.href = url + '?EmployeeId=' + user;
+    }
+    function removeHuors(date) {
+        return new Date(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate()
+        );
+    }
+    function dateCheck() {
+
+        $("#tbl_CC_Tareas_Fecha").css('border-color', "lightgray");
+        $("#tbl_CC_Tareas_Hora").css('border-color', "lightgray");
+
+        $('#todayDatepicker').datepicker();
+        $('#todayDatepicker').datepicker('setDate', new Date());
+        $('#horaDatepicker').datepicker();
+        $('#horaDatepicker').datepicker('setDate', new Date());
+        var hoy = document.getElementById("horaDatepicker").value;
+
+        var SysDate = document.getElementById("todayDatepicker").value;
+        var date0 = new Date(SysDate).getTime();    // today
+        var dateFormat0 = new Date(parseInt(date0.toString()));
+        dateFormat0.setTime(dateFormat0.getTime() + dateFormat0.getTimezoneOffset() * 60 * 1000);
+        dateFormat0 = removeHuors(dateFormat0);
+
+        var UserDate1 = document.getElementById("tbl_CC_Tareas_Fecha").value;
+        var date1 = new Date(UserDate1).getTime();  // fecha
+        var dateFormat1 = new Date(parseInt(date1.toString()));
+        dateFormat1.setTime(dateFormat1.getTime() + dateFormat1.getTimezoneOffset() * 60 * 1000);
+
+        var UserDate2 = document.getElementById("tbl_CC_Tareas_Hora").value;
+        var date2 = new Date(UserDate2).getTime();  // hora
+        var dateFormat2 = new Date(parseInt(date2.toString()));
+        dateFormat2.setTime(dateFormat2.getTime() + dateFormat2.getTimezoneOffset() * 60 * 1000);
+
+        console.log("Verificando fechas: ");
+
+
+        console.log("Userdate1: " + UserDate1);
+        console.log("date1: " + date1);
+        console.log("date0: " + date0);
+        console.log("Date format 1: " + dateFormat1);
+        console.log("Date format 0: " + dateFormat0);
+        console.log("");
+        console.log("");
+        if (dateFormat1 < dateFormat0) {
+            //alert("La fecha debe ser posterior o igual a hoy");
+            document.getElementById('tbl_CC_Tareas_Fecha').value = '';
+            $("#tbl_CC_Tareas_Fecha").css('border-color', "red");
+            $("#modalTareasCC").modal("show");
+            return false;
+        }
+        var d1 = dateFormat1.toUTCString();
+        var d0 = dateFormat0.toUTCString();
+        if (d1 == d0) {
+            const hora = UserDate2.slice(0, -3);
+            const minu = UserDate2.slice(-2);
+            console.log("task time: " + hora + ":" + minu); // user hour
+
+            var UserHour = parseInt(hora) - 1;
+            const d = new Date();
+            let SysHour = d.getHours();
+            let SysMinu = d.getMinutes();
+            console.log("user time: " + SysHour + ":" + SysMinu); // sys hour
+
+            var taskTime = 1;
+            taskTime = (parseInt(hora) * 60) + parseInt(minu) - 1;
+            console.log("task time in minutes: " + taskTime);
+            var UserSystemTime = 1
+            UserSystemTime = (parseInt(SysHour) * 60) + parseInt(SysMinu);
+            console.log("user time in minutes: " + UserSystemTime);
+
+            if (UserSystemTime > taskTime) {
+                //alert("La Hora debe ser posterior a la actual");
+                document.getElementById('tbl_CC_Tareas_Hora').value = '';
+                $("#tbl_CC_Tareas_Hora").css('border-color', "red");
+                $("#modalTareasCC").modal("show");
+                return false;
+            }
+        }
+        return true;
+    }
+</script>
+
+
+
+<div >
+    @*  IMPORTANTE, NO BORRAR  *@
+    <input id="todayDatepicker" />
+    <input id="horaDatepicker">
+</div>
+
+<p class="pophide">
+    @*          Breadcrumbs          *@
+    <br /><a class="pophide blu" onclick="returnMenu(@ViewBag.user)"> Dashboard </a> /
+    <a class="pophide blu" onclick="returnDash(@ViewBag.user);"> Control de Cambios</a> /
+    Detalle de Control de Cambios (@Model.CCvw.id.ToString("CC0000"))
+    <div style="display: flex; position: relative; float: right; margin-right: 50px"> </div>
+</p>
+<p> <h1 style="font-size:20px; margin-left:30px"> CC ID: @{ @Model.CCvw.id.ToString("CC0000"); } </h1> </p>
+
+@**  -------------------------------------------------  TOP SHELF       *@
+<div>
+    <div class="col-lg-6">
+        <div class="wizard-progress">
+            <div id="a1" class="step in-progress"> <a href="#">Detalle</a> <div class="node"></div></div>
+            <div id="a2" class="step "> <a href="#">Planeación</a> <div class="node"></div> </div>
+            <div id="a3" class="step "> <a href="#">Aprobación</a> <div class="node"></div> </div>
+            <div id="a4" class="step "> <a href="#">Implementación</a><div class="node"></div> </div>
+            <div id="a5" class="step "> <a href="#">Revisión</a> <div class="node"></div> </div>
+            <div id="a6" class="step "> <a href="#">Cierre</a> <div class="node"></div> </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <a href="#" stlye="color:blue" id="btn_historial"> <span class="glyphicon glyphicon-time"></span> Historial de seguimiento</a>
+        <div style="float:right; width: 250px;">
+            <label>Roles: </label> <label id="labelRoles"> :  </label>
+            @*<select id="Rol" class="form-control">
+                    <option value="1">Change Owner</option>
+                    <option value="2">Change Requester</option>
+                    <option value="3">Change Manager</option>
+                    <option value="4">Change Approver</option>
+                    <option value="5">Implementer</option>
+                    <option value="6">Line Manger</option>
+                    <option value="7">Change Reviewer</option>
+                </select>*@
+            @Html.DropDownList("Roles", null, new { @class = "form-control cb" })
+            <div>
+                <br />
+                <button type="button" class="btn btn-primary" id="btnTopShelfReprogramarCC" style="margin-bottom:10px;">Reprogramar</button>
+            </div>
+        </div>
+        <div style="float:right"><div class="Ball1 "></div>  <b id="bEstatus" style="font-size:2em">@Model.CCtbl.Estatus</b>                        </div>
+    </div>
+    <br />
+    <br />
+    <br />
+    <br />
+</div>
+@*  --------------------------------------------------  DETALE CC       *@
+<div id="divDetalle" class="cont">
+    <div style="margin-left: auto; margin-right:auto;" class="container grid">
+        <div style="float: right;" id="detalle_btns_own">
+            <button type="button" class="btn btn-primary cancel " id="detalle_cancelar">Cancelar Control de Cambios</button>
+            <br />
+        </div>
+        <div style="float: right;" id="detalle_btns_mng">
+            <button type="button" class="btn btn-primary " id="btnDet_aprobar">Aprobar Control de Cambios</button>
+            <button type="button" class="btn btn-primary " id="btnDet_rechazar">Rechazar Control de Cambios</button>
+            <br />
+        </div><br /><br />
+        <table id="tbl" style="border: 2px solid gray; margin-left: auto; margin-right: auto; ">
+            <tr>
+                <td style="width: 40%;">
+                    <b style="font-size:1.8em">
+                        Datos del Cambio
+                    </b>
+                </td>
+                <td style="width: 40%; color:red">
+                    <b style="font-size:1.8em">
+                        @{
+                            var strng = "";
+                            if (Model.CCtbl.Ticket != 0 && Model.CCtbl.Ticket != null)
+                            {
+                                strng = "ID de ticket origen: " + Model.CCtbl.Ticket;
+                            }
+                            else
+                            {
+                                strng = "";
+                            }
+                        }
+                        @strng
+                        @*ID de ticket origen: 0000312*@
+                    </b>
+                </td>
+                <td style="width: 20%;">
+                    <b style="font-size:1.8em"> Involucrados  </b>
+                </td>
+            </tr>
+            <tr style="vertical-align:text-top">
+                <td>
+                    <b>ID del cambio:</b> <br />       @Model.CCtbl.id.ToString("CC0000")<br /><br />
+                    <b>Tipo de Cambio:</b> <br />      @Model.CCvw.TipoDeCambio <br /><br />
+                    <b>Categoría:</b> <br />           @Model.CCvw.Categoria <br /><br />
+                    <b>Subcategoria:</b> <br />        @Model.CCvw.Subcategoria <br /><br />
+                    <b>Artículo:</b> <br />            @Model.CCvw.Articulo <br /><br />
+                    <b>Flujo de trabajo:</b> <br />    @Model.CCvw.FlujoDeTrabajo <br /><br />
+                    <b>Impacto:</b> <br />             @Model.CCvw.Impacto <br /><br />
+                    <b>Descripción:</b> <br />         @Model.CCvw.Descripcion <br />
+                </td>
+                <td>
+                    <b>Urgencia:</b> <br />            @Model.CCvw.Urgencia <br /><br />
+                    <b>Prioridad:</b> <br />           @Model.CCvw.Prioridad <br /><br />
+                    <b>Riesgo:</b> <br />              @Model.CCvw.Riesgo<br /><br />
+                    <b>Artículo:</b> <br />            @Model.CCvw.Articulo <br /><br />
+                    <b>Motivo del cambio:</b> <br />   @Model.CCvw.MotivosDelCambio <br /><br />
+                    <b>Grupo Resolutor:</b> <br />     @Model.CCvw.GrupoResolutor <br /><br />
+                    <b>Titulo:</b> <br />              @Model.CCvw.Titulo <br /><br />
+                    @if (Model.vw_his_CC != null)
+                    {
+                        if (Model.vw_his_CC.Comentario != "-" && Model.vw_his_CC.Comentario != null)
+                        {
+                            <b>Motivo de cancelación: </b> <br /> @Model.vw_his_CC.Comentario
+                        }
+                    }
+                </td>
+                <td>
+                    <b>Change Owner:</b> <br />        @Model.CCvw.ChangeOwner <br /><br />
+                    <b>Change Requester:</b> <br />    @Model.CCvw.ChangeRequester <br /><br />
+                    <b>Change Manager:</b> <br />      @Model.CCvw.ChangeManager <br /><br />
+                    <b>Change Approver:</b> <br />     @Model.CCvw.ChangeApprover <br /><br />
+                    <b>Implementer:</b> <br />         @Model.CCvw.Implementer <br /><br />
+                    <b>Line Manager:</b> <br />        @Model.CCvw.LineManager <br /><br />
+                    <b>Reviewer:</b> <br />            @Model.CCvw.Reviewer<br />
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+@*  --------------------------------------------------  PLANEACION      *@
+<div id="divPlaneacion" hidden class="cont">
+    <div class="Content-grid" style="width: 80%; margin: auto; ">
+        <br />
+        <div class="" style="float: right;">
+            <button class="btn btn-primary plnBtn cancel"> Cancelar Control de Cambios </button>
+            <button id="btnPln_addtarea" class="btn btn-primary plnBtn Btn_mng"> + Agregar Tarea </button>
+        </div>
+
+        <div>
+            <h3> Planeación de Tareas </h3>
+        </div>
+
+        @if (Model.list_vw_CC_Tareas != null)
+        {
+            @Html.Grid(Model.list_vw_CC_Tareas).Named("pla").Columns(column =>
+            {
+                //column.Add(data => data.Id).Titled("Tarea ID").Filterable(true).Sortable(true);
+                column.Add(data => data.Nombre).Titled("Nombre de Tarea").Filterable(true).Sortable(true);
+                //column.Add(data => data.Estatus).Titled("Estatus").Filterable(true).Sortable(true);
+                column.Add(data => data.Tipo).Titled("Tipo").Filterable(false).Sortable(true).Encoded(false).Sanitized(false).RenderValueAs(data => "<div class='tipoTarea'>" + data.Tipo + "</div>");
+                column.Add(data => data.Descripcion).Titled("Descripcion").Filterable(false).Sortable(true);
+                column.Add(data => data.GrupoResolutor).Titled("GrupoResolutor").Filterable(false).Sortable(true);
+                column.Add(data => data.Comentario).Titled("Comentario").Filterable(false).Sortable(true);
+                column.Add(data => data.Fecha).Titled("Fecha").Filterable(false).Sortable(true).Format("{0:d/MM/yyyy}");
+                column.Add(data => data.Hora).Titled("Hora").Filterable(false).Sortable(true).Format("{0:hh:mm tt}");
+                //column.Add(data => data.Tecnico).Titled("Tecnico").Filterable(false).Sortable(true);
+                //column.Add(data => data.Correo).Titled("Correo").Filterable(false).Sortable(true);
+                column.Add().Encoded(false).Sanitized(false).SetWidth(30).RenderValueAs(o => @<button class="btn btn-default fa fa-pencil-square-o" onclick="EditarTarea(@o.Id)"></button>).Titled("Editar");
+                //column.Add().Encoded(false).Sanitized(false).SetWidth(30).RenderValueAs(o => @<button class="btn btn-info flgActivo" onclick="DesactivarTarea(@o.Id)"></button>).Titled("Activar");
+                column.Add().Encoded(false).Sanitized(false).SetWidth(30).RenderValueAs(o => @<button class="btn btn-danger fa fa-times-circle" onclick="EliminarTarea(@o.Id)"></button>).Titled("Eliminar");
+                }).WithPaging(5).Sortable(true);
+        }
+
+        <div class="" style="float: right;">
+            <button class="btn btn-primary plnBtn Btn_mng" id="btnPln_SolicitarAp"> Solicitar Aprobación </button> @*<button onclick="" class="btn btn-primary plnBtn Btn_mng"> Guardar </button>*@
+        </div>
+
+
+        @if (Model.list_vw_CC_Tareas_Rechazadas.Count() > 0)
+        {
+            <div>
+                <br /> <br />
+                <h3> Tareas Previas </h3>
+            </div>
+            @Html.Grid(Model.list_vw_CC_Tareas_Rechazadas).Named("pla2").Columns(column =>
+            {
+                column.Add(data => data.Id).Titled("Tarea ID").Filterable(true).Sortable(true);
+                column.Add(data => data.Nombre).Titled("Nombre de Tarea").Filterable(true).Sortable(true);
+                //column.Add(data => data.Estatus).Titled("Estatus").Filterable(true).Sortable(true);
+                column.Add(data => data.Tipo).Titled("Tipo").Filterable(false).Sortable(true).Encoded(false).Sanitized(false).RenderValueAs(data => "<div class='tipoTarea'>" + data.Tipo + "</div>");
+                column.Add(data => data.Descripcion).Titled("Descripcion").Filterable(false).Sortable(true);
+                column.Add(data => data.GrupoResolutor).Titled("GrupoResolutor").Filterable(false).Sortable(true);
+                column.Add(data => data.Comentario).Titled("Comentario").Filterable(false).Sortable(true);
+                column.Add(data => data.Fecha).Titled("Fecha").Filterable(false).Sortable(true).Format("{0:d/MM/yyyy}");
+                column.Add(data => data.Hora).Titled("Hora").Filterable(false).Sortable(true).Format("{0:hh:mm tt}");
+                column.Add(data => data.FechaFinal).Titled("Fecha Final").Filterable(false).Sortable(true).Format("{0:d/MM/yyyy hh:mm tt}");
+            }).WithPaging(5).Sortable(true);
+        }
+    </div>
+</div>
+@*  --------------------------------------------------  APROBACION      *@
+<div id="divAprobacion" hidden class="cont">
+    <div class="Content-grid" style="width: 60%; margin: auto; ">
+        <br />
+        <div class="" style="float: right;">
+            <button onclick="" class="btn btn-primary cancel Btn_mng"> Cancelar Control de cambios </button>
+        </div>
+        <div class="grid-mvc " data-lang="en" data-gridname="Tareas" data-selectable="true" data-multiplefilters="false">
+            <div class="grid-wrap">
+                <table class="table table-striped grid-table">
+                    <thead>
+                        <tr>
+                            <th class="grid-header"><div class="grid-header-title"><a href="?EmployeeId=19237&amp;CCid=1008&amp;job=3&amp;grid-column=Tecnico&amp;grid-dir=0">Tecnico</a></div></th>
+                            <th class="grid-header"><div class="grid-header-title"><a href="?EmployeeId=19237&amp;CCid=1008&amp;job=3&amp;grid-column=Correo&amp;grid-dir=0">Correo</a></div></th>
+                            <th class="grid-header"><div class="grid-filter" data-filterdata="[]" data-name="Estatus" data-type="System.String" data-url="?EmployeeId=19237&amp;CCid=1008&amp;job=3" data-widgetdata="null"><span class="grid-filter-btn" title="Filter this column"></span></div><div class="grid-header-title"><a href="?EmployeeId=19237&amp;CCid=1008&amp;job=3&amp;grid-column=Estatus&amp;grid-dir=0">Estatus</a></div></th>
+                            <th class="grid-header"><div class="grid-header-title"><a href="?EmployeeId=19237&amp;CCid=1008&amp;job=3&amp;grid-column=Comentario&amp;grid-dir=0">Comentario</a></div></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="grid-row ">
+                            <td class="grid-cell" data-name="Tecnico">@Model.CCvw.ChangeManager</td>
+                            <td class="grid-cell" data-name="Correo">@Model.chmgEmail</td>
+                            <td class="grid-cell" data-name="Estatus">@Model.CCvw.EstatusAp</td>
+                            <td class="grid-cell" data-name="Comentario"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div style="float:right">
+                    <button onclick="" class="btn btn-primary aprBtn Btn_apr" id="btnApr_RechazoCC">  Rechazar Control de Cambios </button>
+                    <button onclick="" class="btn btn-primary aprBtn Btn_apr" id="btnApr_AprobarCC">  Aprobar Control de Cambios </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@* ---------------------------------------------------  IMPLEMENTACIÓN  *@
+<div id="divImplementacion" hidden class="cont">
+    <div class="Content-grid" style="width: 80%; margin: auto; ">
+        <br />
+
+        @*<div class="" style="float: right;">
+                <button onclick="" class="btn btn-primary"> Cancelar CC </button>
+                <button id="btnPln_addtarea" class="btn btn-primary"> Agregar Tarea </button>
+            </div>*@
+
+        <div>
+            <h3> Implementación </h3>
+        </div>
+
+        @if (Model.list_vw_CC_Tareas != null)
+        {
+            @Html.Grid(Model.list_vw_CC_Tareas).Named("imp").Columns(column =>
+            {
+                column.Add(data => data.Id).Titled("Tarea ID").Filterable(true).Sortable(true);
+                column.Add(data => data.Nombre).Titled("Nombre").Filterable(true).Sortable(true);
+                column.Add(data => data.Tipo).Titled("Tipo").Filterable(false).Sortable(true).Encoded(false).Sanitized(false).RenderValueAs(data => "<div class='tipoTarea'>" + data.Tipo + "</div>");
+                column.Add(data => data.Tecnico).Titled("Tecnico").Filterable(false).Sortable(true);
+                column.Add(data => data.Fecha).Titled("Fecha de inicio").Filterable(false).Sortable(true).Format("{0:d/MM/yyyy}");
+                column.Add(data => data.FechaFinal).Titled("Fecha Final").Filterable(false).Sortable(true).Format("{0:d/MM/yyyy hh:mm tt}");
+                column.Add(data => data.Evidencia).Titled("Evidencia").Filterable(false).Sortable(true).Encoded(false).Sanitized(false).RenderValueAs(data => "<div class='EvidenciaTarea' id='" + data.Id + "'> <a hidden>Abrir Evidencia</a><a class='evidencia' >" + data.Evidencia + "</a> </div>");
+                //column.Add(data => data.GrupoResolutor).Titled("GrupoResolutor").Filterable(false).Sortable(true);
+                column.Add(data => data.Comentario).Titled("Comentario").Filterable(false).Sortable(true);
+                column.Add(data => data.Estatus).Titled("Estatus").Filterable(true).Sortable(true);
+                //column.Add(data => data.Hora).Titled("Hora").Filterable(false).Sortable(true).Format("{0:hh:mm tt}");
+                //column.Add(data => data.Correo).Titled("Correo").Filterable(false).Sortable(true);
+                //column.Add().Encoded(false).Sanitized(false).SetWidth(30).RenderValueAs(o => @<button class="btn btn-default fa fa-pencil-square-o" onclick="EditarTarea(@o.Id)"></button>).Titled("Editar");
+                //column.Add().Encoded(false).Sanitized(false).SetWidth(30).RenderValueAs(o => @<button class="btn btn-info flgActivo" onclick="DesactivarTarea(@o.Id)"></button>).Titled("Activar");
+                //column.Add().Encoded(false).Sanitized(false).SetWidth(30).RenderValueAs(o => @<button class="btn btn-danger fa fa-times-circle" onclick="EliminarTarea(@o.Id)"></button>).Titled("Eliminar");
+            }).WithPaging(5).Sortable(true);
+        }
+
+        @*<div class="" style="float: right;">
+                <button onclick="" class="btn btn-primary"> Solicitar Aprobación </button>
+                <button onclick="" class="btn btn-primary"> Guardar </button>
+            </div>*@
+
+        @if (Model.list_vw_CC_Tareas_Rechazadas.Count() > 0)
+        {
+            <div>
+                <br /> <br />
+                <h3> Tareas Previas </h3>
+            </div>
+            @Html.Grid(Model.list_vw_CC_Tareas_Rechazadas).Named("imp3").Columns(column =>
+            {
+                column.Add(data => data.Id).Titled("Tarea ID").Filterable(true).Sortable(true);
+                column.Add(data => data.Nombre).Titled("Nombre").Filterable(true).Sortable(true);
+                column.Add(data => data.Tipo).Titled("Tipo").Filterable(false).Sortable(true).Encoded(false).Sanitized(false).RenderValueAs(data => "<div class='tipoTarea'>" + data.Tipo + "</div>");
+                column.Add(data => data.Tecnico).Titled("Tecnico").Filterable(false).Sortable(true);
+                column.Add(data => data.Fecha).Titled("Fecha de inicio").Filterable(false).Sortable(true).Format("{0:d/MM/yyyy}");
+                column.Add(data => data.FechaFinal).Titled("Fecha Final").Filterable(false).Sortable(true).Format("{0:d/MM/yyyy hh:mm tt}");
+                column.Add(data => data.Evidencia).Titled("Evidencia").Filterable(false).Sortable(true).Encoded(false).Sanitized(false).RenderValueAs(data => "<div class='EvidenciaTarea' id='" + data.Id + "'> <a hidden>Abrir Evidencia</a><a class='evidencia' >" + data.Evidencia + "</a> </div>");
+                //column.Add(data => data.GrupoResolutor).Titled("GrupoResolutor").Filterable(false).Sortable(true);
+                column.Add(data => data.Comentario).Titled("Comentario").Filterable(false).Sortable(true);
+                column.Add(data => data.Estatus).Titled("Estatus").Filterable(true).Sortable(true);
+            }).WithPaging(5).Sortable(true);
+        }
+    </div>
+</div>
+@*  --------------------------------------------------  REVISION        *@
+<div id="divRevision" hidden class="cont">
+    <div class="Content-grid" style="width: 60%; margin: auto; ">
+        @if (Model.list_vw_CC_Tareas != null)
+        {
+            @Html.Grid(Model.list_vw_CC_Tareas).Named("imp2").Columns(column =>
+            {
+                column.Add(data => data.Id).Titled("Tarea ID").Filterable(true).Sortable(true);
+                column.Add(data => data.Nombre).Titled("Nombre").Filterable(true).Sortable(true);
+                column.Add(data => data.Correo).Titled("Correo").Filterable(false).Sortable(true);
+                column.Add(data => data.Tecnico).Titled("Tecnico").Filterable(false).Sortable(true);
+                column.Add(data => data.Estatus).Titled("Estatus").Filterable(true).Sortable(true);
+                column.Add(data => data.Comentario).Titled("Comentario").Filterable(false).Sortable(true);
+            }).WithPaging(5).Sortable(true);
+
+            <div style="float:right">
+                <br />
+                <button class="btn btn-primary" id="btnRev_Rechazar">  Rechazar Implementación</button>
+                <button class="btn btn-primary" id="btnRev_Aprobar">  Aprobar Implementación</button>
+            </div>
+        }
+
+
+
+        @if (Model.list_vw_CC_Tareas_Rechazadas.Count() > 0)
+        {
+            <div>
+                <br /><br /><br /><br />
+                <h3> Tareas Previas </h3>
+            </div>
+            @Html.Grid(Model.list_vw_CC_Tareas_Rechazadas).Named("imp4").Columns(column =>
+            {
+                column.Add(data => data.Id).Titled("Tarea ID").Filterable(true).Sortable(true);
+                column.Add(data => data.Nombre).Titled("Nombre").Filterable(true).Sortable(true);
+                column.Add(data => data.Correo).Titled("Correo").Filterable(false).Sortable(true);
+                column.Add(data => data.Tecnico).Titled("Tecnico").Filterable(false).Sortable(true);
+                column.Add(data => data.Estatus).Titled("Estatus").Filterable(true).Sortable(true);
+                column.Add(data => data.Comentario).Titled("Comentario").Filterable(false).Sortable(true);
+            }).WithPaging(5).Sortable(true);
+        }
+    </div>
+
+    <div class="Content-grid" style="width: 60%; margin: auto; " hidden>
+        <br />
+        <div class="" style="float: right;">
+            @*<button onclick="" class="btn btn-primary"> Cancelar Control de cambios </button>*@
+        </div>
+        <div class="grid-mvc " data-lang="en" data-gridname="Tareas" data-selectable="true" data-multiplefilters="false">
+            <div class="grid-wrap">
+                <table class="table table-striped grid-table">
+                    <thead>
+                        <tr>
+                            <th class="grid-header"><div class="grid-header-title"><a href="?EmployeeId=19237&amp;CCid=1008&amp;job=3&amp;grid-column=Tecnico&amp;grid-dir=0">Tecnico</a></div></th>
+                            <th class="grid-header"><div class="grid-header-title"><a href="?EmployeeId=19237&amp;CCid=1008&amp;job=3&amp;grid-column=Correo&amp;grid-dir=0">Correo</a></div></th>
+                            <th class="grid-header"><div class="grid-filter" data-filterdata="[]" data-name="Estatus" data-type="System.String" data-url="?EmployeeId=19237&amp;CCid=1008&amp;job=3" data-widgetdata="null"><span class="grid-filter-btn" title="Filter this column"></span></div><div class="grid-header-title"><a href="?EmployeeId=19237&amp;CCid=1008&amp;job=3&amp;grid-column=Estatus&amp;grid-dir=0">Estatus</a></div></th>
+                            <th class="grid-header"><div class="grid-header-title"><a href="?EmployeeId=19237&amp;CCid=1008&amp;job=3&amp;grid-column=Comentario&amp;grid-dir=0">Comentario</a></div></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="grid-row ">
+                            <td class="grid-cell" data-name="Tecnico">Alejandra Yanes Barbosa</td>
+                            <td class="grid-cell" data-name="Correo">ayanes@pentafon.com</td>
+                            <td class="grid-cell" data-name="Estatus">Solicitado</td>
+                            <td class="grid-cell" data-name="Comentario"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                @*<div style="float:right">
+                        <button onclick="" class="btn btn-primary">  Rechazar Implementación</button>
+                        <button onclick="" class="btn btn-primary">  Aprobar Implementación</button>
+                    </div>*@
+            </div>
+        </div>
+    </div>
+</div>
+@*  --------------------------------------------------  CIERRE          *@
+<div id="divCierre" hidden class="cont" style="text-align:center; ">
+    <br /><br /><br /><br /><br /><br /><br /><br /><br />
+    <i class="glyphicon glyphicon-ok-circle" style="font-size:8em; color:dimgray"> </i><br />
+    <label style="font-size:2em; color:dimgray">Control de cambio Cerrado Exitosamente</label>
+</div>
+
+@* ------------------------------------------------------------ MODALES ---------------------------------------------------------------------------------- *@
+
+@*    MODAL ALTA TAREA                      *@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalAltaTarea">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form action="../ControlCambios/CrearTareaCC?EmployeeId=@Model.EmployeeID&CCid=@Model.CCtbl.id" enctype="multipart/form-data" id="formTarea" method="post">
+                <div>
+                    <div>
+                        <label style="font-size:2.5em" id="labelTarea">AGREGAR TAREA</label> <hr />
+                        <text class="labelModal">
+                            <label id="idTarea" hidden></label>
+                            @Html.HiddenFor(c => c.tbl_CC_Tareas.Estatus)
+                            @Html.HiddenFor(c => c.tbl_CC_Tareas.Comentario)
+                            NOMBRE
+                            <br />
+                            @Html.TextBoxFor(c => c.tbl_CC_Tareas.Nombre, new { placeholder = "Nombre de Tarea", @class = "form-control cb", @onChange = "unblockAddTareaButton()" })
+                            <br />
+                            <text class="labelModal">
+                            TIPO DE TAREA
+                            <br />
+                            @Html.DropDownListFor(c => c.tbl_CC_Tareas.Tipo, (SelectList)ViewBag.Tipo, new { @class = "form-control cb", @onChange = "unblockAddTareaButton()" })
+                            <br />
+                            <text class="labelModal">
+                            DESCRIPCIÓN
+                            <br />
+                            @Html.TextAreaFor(c => c.tbl_CC_Tareas.Descripcion, new { placeholder = "Descripción de Tarea", @class = "form-control cb", @onChange = "unblockAddTareaButton()" })
+                            <br />
+                            <text class="labelModal">
+                            GRUPO DE RESOLUTOR
+                            <br />
+                            @Html.DropDownListFor(c => c.tbl_CC_Tareas.GrupoResolutor, (SelectList)ViewBag.Gruporesolutor, new { @class = "form-control cb", @onChange = "unblockAddTareaButton()" })
+                            <br />
+                            <text class="labelModal">
+                            TECNICO RESPONSABLE
+                            <br />
+                            @Html.DropDownListFor(c => c.tbl_CC_Tareas.Tecnico, (SelectList)ViewBag.Tec, new { @class = "form-control cb", @onChange = "unblockAddTareaButton()" })
+                            <br />
+                            <table>
+                            <tr>
+                            <td>
+                            <label for="tiempo">HORA:</label> <label id="hora" style=" font-weight: 100;"></label> <br />
+                            <input type="time" id="tbl_CC_Tareas_Hora" name="tbl_CC_Tareas.Hora" min="09:00" max="18:00" required class="form-control" onchange="dateCheck(); unblockAddTareaButton()">
+                            </td>
+                            <td>
+                            <label for="tiempo">FECHA:</label> <label id="fecha" style=" font-weight:100;"></label> <br />
+                            <input type="date" id="tbl_CC_Tareas_Fecha" name="tbl_CC_Tareas.Fecha" class="form-control datepicker-rtl" onchange="dateCheck(); unblockAddTareaButton()" />
+                            </td>
+                            </tr>
+                            </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="col-md-4"></div>
+                    <div class="col-md-4"><br /><button type="button" class="btn btn-warning" id="btnCerrarModalCrearTarea">Cancelar</button> </div>
+                    <div class="col-md-4"><br /><button type="button" class="btn btn-primary" id="btnModalAceptarCrearTarea" onclick="this.disabled=true;">Aceptar</button>   </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@*    MODAL ELIM TAREA                      *@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalElimTarea">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div style="font-size:2em">
+                <label>¿Está seguro que desea eliminar la tarea con ID: <label id="idTareaElim"></label>?</label>
+            </div>
+            <div class="modal-footer" style="float:right">
+                <button type="button" class="btn btn-warning" id="btnCerrarModalEliminarTarea">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnModalAceptarEliminarTarea">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@*    MODAL Motivo de Rechazo de CC         *@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalRechazar">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="" enctype="multipart/form-data" id="formRechazoCC" method="post">
+                <div class="modal-header">
+                    <h4 class="modal-title">Rechazo De Control de Cambios</h4>
+                </div>
+                <div>
+                    <div class="col-md-12">
+                        <br /> <br />
+                        <div style="color:darkred; top:5px; font-style:normal;line-height:20px;
+                            margin-left:100px; margin-right:100px;
+                            font-size:6em;" class="glyphicon glyphicon-remove-sign">
+                        </div>
+                        <br /> <br /> <br />
+                        <p> Motivo de Rechazo del Control de Cambios: </p>
+                        <h5>
+                            <textarea id="motivo" name="motivo" rows="4" cols="50" class="form-control"></textarea>
+                        </h5>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary" id="btnAceptarModalRechazo">Aceptar</button>
+                    <button type="button" class="btn btn-primary" id="btnCerrarModalRechazo">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@*    MODAL de Aprobacion de CC por ChgMng  *@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalAprobacion">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="../ControlCambios/CambioEdo?Employee=@Model.EmployeeID&CCid=@Model.CCtbl.id&newEdo=Aprueba" enctype="multipart/form-data" id="formAprobacionCC" method="post">
+                <div class="modal-header">
+                    <h4 class="modal-title">Aprobacion De Control de Cambios</h4>
+                </div>
+                <div>
+                    <div class="col-md-12">
+                        <br /> <br /> <div style="color:darkgreen; top:5px; font-style:normal;line-height:20px;
+                            margin-left:100px; margin-right:100px;
+                            font-size:6em;" class="glyphicon glyphicon-ok-circle">
+                        </div>
+                        <br /> <br /> <br />
+                        <p> El Control de Cambios de aprobó correctamente </p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="btnCerrarModalAprobacion">Entendido</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@*    MODAL Motivo de Cancelado de CC       *@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalCancelar">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="../ControlCambios/CambioEdo?EmployeeId=@Model.EmployeeID&CCid=@Model.CCtbl.id&newEdo=Cancel" enctype="multipart/form-data" id="formCanceladoCC" method="post">
+                <div class="modal-header">
+                    <h4 class="modal-title">Cancelado De Control de Cambios</h4>
+                </div>
+                <div>
+                    <div class="col-md-12">
+                        <br /> <br />
+                        <div style="color:darkred; top:19px; font-style:normal;line-height:20px;
+                            margin-left:175px; margin-right:175px;
+                            font-size:6em;" class="glyphicon glyphicon-remove-sign">
+                        </div>
+                        <br /> <br /> <br />
+                        <p> ¿Está usted seguro que desea cancelar este Control de Cambios? </p>
+                        <p style="text-align:center">Por favor ingrese el motivo:</p>
+                        <h5>
+                            <textarea id="motivo" name="motivo" rows="4" cols="60" class="form-control" style="margin-left:auto; margin-right:auto;"></textarea>
+                        </h5>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="btnAceptarModalCancelado">Aceptar</button>
+                    <button type="button" class="btn btn-primary" id="btnCerrarModalCancelado">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@*    MODAL REPROGRAMAR CC                  *@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalReprogramarCC">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div>
+                <label style="font-size:2em">¿Qué desea hacer ahora?</label>
+                <label>Usted ha rechazado este control de cambios, es necesario reprogramarlo o realizar un Rollback</label>
+            </div>
+            <div class="modal-footer" style="float:right">
+                <button type="button" class="btn btn-warning" id="btnCerrarModalReprogramarCC">Rollback</button>
+                <button type="button" class="btn btn-primary" id="btnModalAceptarReprogramarCC">Reprogramar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@*    MODAL Problema con Tareas CC                  *@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalTareasCC">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div>
+                <br />
+                <div style="color:darkred; top:5px; font-style:normal;line-height:20px;
+                            margin-left:200px; margin-right:200px; margin-bottom: 50px;
+                            font-size:6em;" class="glyphicon glyphicon-remove-sign">
+                </div> <br />
+                <label style="font-size:1.5em">Error: Verifique programación de tareas</label>
+                <label style="font-size:1em">
+                    Al parecer una o más de las tareas de este CC tienen un tiempo de inicio de ejecución en una hora pasada.
+                    <br />Porfavor edite las tareas para corregir este problema.
+                </label>
+            </div>
+            <div class="modal-footer" style="float:right">
+                <button type="button" class="btn btn-warning" id="btnCerrarModalTareaCC">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>

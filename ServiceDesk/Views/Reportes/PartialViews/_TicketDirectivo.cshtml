@@ -1,0 +1,156 @@
+﻿@model ServiceDesk.ViewModels.vmDashbordResolutor
+<style>
+
+    body {
+        font-size: 100%;
+        color: #fff;
+    }
+
+    h2, p {
+        font-size: 100%;
+        font-weight: normal;
+    }
+
+    .bodyTicket-ul, .bodyTicket-li {
+        list-style: none;
+    }
+
+    .bodyTicket-ul {
+        overflow: hidden;
+    }
+
+        .bodyTicket-ul .bodyTicket-li a {
+            text-decoration: none;
+            color: #000;
+            background: #f9f9fa;
+            display: block;
+            height: 130px;
+            width: 14em;
+            padding: 1em;
+        }
+
+        .bodyTicket-ul .bodyTicket-li {
+            margin: 1em;
+            float: left;
+        }
+
+            .bodyTicket-ul .bodyTicket-li a {
+                text-decoration: none;
+                color: #000;
+                background: #f9f9fa;
+                display: block;
+                height: 130px;
+                width: 14em;
+                /* Firefox */
+                -moz-box-shadow: 5px 5px 7px rgba(33,33,33,1);
+                /* Safari+Chrome */
+                -webkit-box-shadow: 5px 5px 7px rgba(33,33,33,.7);
+                /* Opera */
+                box-shadow: 5px 5px 7px rgba(33,33,33,.7);
+            }
+
+    .divTickets {
+        color: #000;
+        background: #f9f9fa;
+        display: block;
+        height: 130px;
+        width: 14em;
+        padding: 1em;
+        display: block;
+        height: 130px;
+        width: 14em;
+        /* Firefox */
+        -moz-box-shadow: 5px 5px 7px rgba(33,33,33,1);
+        /* Safari+Chrome */
+        -webkit-box-shadow: 5px 5px 7px rgba(33,33,33,.7);
+        /* Opera */
+        box-shadow: 5px 5px 7px rgba(33,33,33,.7);
+    }
+</style>
+<script>
+@if (Model.lstResumenResolutor.Count == 1)
+{
+    <text>
+    $(document).ready(function () {
+        debugger; 
+        $(".labelS").removeClass("labelSelected");
+
+        var temp = '#btn_' + '@Model.lstResumenResolutor[0].estatus';
+        if (temp.includes('En Garant&#237;a')) { temp = "#btn_Garantia"}
+        if (temp.includes('En Espera')) { temp = "#btn_Espera"}
+        $(temp).addClass("labelSelected")
+
+        });
+    </text>
+}
+</script>
+<div class="col-md-12" style="max-height:800px;margin-top:0px; overflow-y: scroll;">
+
+    @foreach (var item in Model.lstResumenResolutor)
+    {
+    <div class="col-sm-3 divTickets" style="margin-left:10px;margin-bottom:10px;">
+        @if (item.estatus == "Abierto" && item.isPadre == false && Model.lstResumenResolutor.Count() > 1)
+        {
+            <input type="checkbox" id="check_@item.tickedID" name="vincular" class="form-check" style="position:absolute;display:none" />
+        }
+
+        @if (item.isSubTicket)
+        {
+            <a style="text-decoration: none;" onclick="goToDetail(@item.idSubTicket)">
+                @if (item.isSubTicket == true)
+                {
+                    <h2><b>SUD-@item.idSubTicket</b></h2>
+                }
+                <p><b>Categoria: @item.categoria</b></p>
+                <h2>
+                    @if (item.prioridad == "Baja")
+                    {
+                        <i class="fa fa-circle Oval"></i>
+                    }
+                    @if (item.prioridad == "Medio")
+                    {
+                        <i class="fa fa-circle OvalTrabajando"></i>
+                    }
+                    @if (item.prioridad == "Alto")
+                    {
+                        <i class="fa fa-circle OvalCancelado"></i>
+                    }
+                    <b>Prioridad @item.prioridad</b>
+                </h2>
+                @if (item.totVinculados > 0)
+                {
+                    <span style="background-color:#d2deeb;min-width:10%;max-width:10%;position:relative;">Tickets vinculados:&nbsp; @item.totVinculados</span>
+                }
+                <span style="background-color:#007bff;min-width:10%;max-width:10%;color:white;position:relative;">Ticket principal:&nbsp; @item.idTicketPadre</span>
+
+            </a>
+        }
+        else
+        {
+            <a style="text-decoration: none;" onclick="goToDetail(@item.tickedID)">
+                <h2><b>Ticket ID: @item.tickedID</b></h2>                
+                <p><b>Categoria: @item.categoria</b></p>
+                <h2>
+                    @if (item.prioridad == "Baja")
+                    {
+                        <i class="fa fa-circle Oval"></i>
+                    }
+                    @if (item.prioridad == "Medio")
+                    {
+                        <i class="fa fa-circle OvalTrabajando"></i>
+                    }
+                    @if (item.prioridad == "Alto")
+                    {
+                        <i class="fa fa-circle OvalCancelado"></i>
+                    }
+                    <b>Prioridad @item.prioridad</b>
+                </h2>
+                @if (item.totVinculados > 0)
+                {
+                    <span style="background-color:#d2deeb;min-width:10%;max-width:10%;position:relative;">Tickets vinculados:&nbsp; @item.totVinculados</span>
+                }
+            </a>
+        }
+    </div>
+    }
+</div>

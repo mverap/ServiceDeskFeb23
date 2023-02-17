@@ -1,0 +1,68 @@
+﻿@model ServiceDesk.Models.DatosReportes
+
+
+@{
+    ViewBag.Title = "Detalle de Tickets";
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Reportes</title>
+</head>
+<body>
+    <script type="text/javascript">
+    var user =  @ViewBag.user;
+        $(document).ready(function () {
+            window.alert("PartialView " + user + (document).getElementsByName);
+
+    });
+    </script>
+
+    <div>
+        @{
+            //Variables
+            float[] porcentajes = new float[Model.Count.Length];
+            int[] valoresY = new int[Model.Count.Length];
+            float total = 0;
+
+            for (int i = 0; i < Model.Count.Length; i++) { total += Model.Count[i]; } //Conseguir total para divisiones
+            for (int i = 0; i < Model.Count.Length; i++)
+            {
+                //obtener porcentaje y evitar divisiones con 0s
+                if (Model.Count[i] != 0 && total != 0) { porcentajes[i] = (Model.Count[i] / total) * 100; }
+                else { porcentajes[i] = 0; }
+                valoresY[i] = (int)porcentajes[i];                  //convertir porcentajes a enteros
+            }
+            //LegendText=""#VALX (#PERCENT{P0})""  //Esto muestra porcentaje al lado de labels, remplazar linea en chartTheme para activar
+            string chartTheme = @"<Chart>
+                             <Series>
+                                 <Series
+                                        Name=""Prioridad""
+                                        ChartType=""Pie""
+                                        LabelFormat=""{0:0}%""
+                                        LegendText=""#VALX ""
+                                        IsValueShownAsLabel=""true""
+                                        CustomProperties=""PieLabelStyle=Enabled"">
+                                 </Series>
+                             </Series>
+                             <Legends>
+                                 <Legend _Template_=""All"" LegendStyle=""Table""  >
+                                 </Legend>
+                             </Legends>
+                         </Chart>";
+            var myChart = new Chart(width: 400, height: 250, theme: chartTheme)
+            .AddTitle("Por Prioridad").AddLegend()
+            .AddSeries(chartType: "pie",
+                name: "Prioridad",
+                xValue: Model.Column, // Nombres de Centros
+                yValues: valoresY  // % de Tickets por centro
+        ).Write();
+        }
+    </div>
+    <p>
+    </p>
+</body>
+</html>

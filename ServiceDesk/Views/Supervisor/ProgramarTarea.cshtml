@@ -1,0 +1,596 @@
+﻿@model ServiceDesk.ViewModels.TareasProgramadasEditVM
+@{
+    ViewBag.Title = "ProgramarTarea";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script type="text/javascript">
+    var folio = '@ViewBag.Id';
+    var flag = true;
+    $(document).ready(function () {
+
+        $("#tareas_Periodo").val("Semanal");
+        $("#tareas_Activado").prop("checked", true);
+        //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        if (folio != "") {
+            $("#modalGuardado").modal('show');
+        }
+
+        $('#todayDatepicker').datepicker();
+        $('#todayDatepicker').datepicker('setDate', new Date());
+
+        var hoy = document.getElementById("todayDatepicker").value;
+        console.log("today is: " + hoy);
+
+        // ------- Llenar subcategoría al seleccinoar categoría
+        $("#tareas_CategoriaID").change(function ()
+        {
+            $("#tareas_SubCategoriaID").empty();
+            //$("#GrupoResolutor").empty();
+            $("#AreaResolutor").empty();
+            //$("#Prioridad").empty();
+            console.log("filling subcategoria");
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetCategoria", "App")',
+                dataType: 'json',
+                data: { id: $("#tareas_CategoriaID").val() },
+                success: function (result)
+                {
+                    //$("#tareas_SubCategoriaID").append('<option value="">SELECCIONE</option>');
+                    $.each(result, function (i, group)
+                    {
+                        $("#tareas_SubCategoriaID").append('<option value="' + group.Id + '">' +
+                            group.SubCategoria + '</option>');
+                    });
+                }
+            });
+        });
+
+        // ------- Cuando cambie la selección del combobox GrupoResolutor
+        $("#tareas_GrupoResolutorID").change(function ()
+        {
+            $("#tareas_TecnicoID").empty();
+            console.log("filling tecnico");
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetTecnico", "Supervisor")',
+                dataType: 'json',
+                data: { id: $("#tareas_GrupoResolutorID").val() },
+                success: function (result)
+                {
+                    $("#tareas_TecnicoID").append('<option value="0">SELECCIONE</option>');
+                    $.each(result, function (i, group)
+                    {
+                        $("#tareas_TecnicoID").append('<option value="' + group.EmpleadoID + '">' +
+                            group.NombreTecnico + '</option>');
+                    });
+                }
+            });
+        });
+    }); //END DOCUMENT
+    //FUNCIONES
+    function EnviarSolicitud() {
+        var desc = $("#tareas_Descripcion").val();
+        var cat = $('#tareas_CategoriaID option:selected').text();
+        var subcat = $('#tareas_SubCategoriaID option:selected').text();
+        var cen = $('#tareas_CentroID option:selected').text();
+        var gpo = $("#tareas_GrupoResolutorID").val();
+        var sopo = $("#tareas_ArchivoAdjunto").val();
+
+        $("#IncidenciaDesc").text(desc);
+        $("#CategoriaDesc").text(cat);
+        $("#SubCategoriaDesc").text(subcat);
+        $("#CentroDesc").text(cen);
+        $("#GrupoResolutorDesc").text(gpo);
+        $("#SoporteDesc").text(sopo);
+
+        $("#modalConfirmar").modal('show');
+    } // Mostrar Modal "Confirmar Crear Tarea"
+    function CancelaSolicitud() {
+        $("#modalConfirmar").modal('hide');
+        $("#modalGuardado").modal('hide');
+    } // Esconder Modal "Confirmar Crear Tarea"
+    //function AceptaTicket() {
+    //    $("#modalGuardado").modal('hide');
+    //    //Regresar a la parte del DashBoard
+    //}
+    function asignar() {
+        $("#tareas_Estatus").val("Asignado");
+    }
+    function removeHuors(date) {
+        return new Date(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate()
+        );
+    }
+    function dateCheck() {
+        var UserDate1 = document.getElementById("tareas_FechaInicial").value;
+        var UserDate2 = document.getElementById("tareas_FechaFinal").value;
+        var SysDate = document.getElementById("todayDatepicker").value;
+        var ToDate = new Date();
+
+        var date1 = new Date(UserDate1).getTime(); //fecha inicial
+        var date2 = new Date(UserDate2).getTime(); //fecha final
+        var date0 = new Date(SysDate).getTime(); // fecha today
+
+        var dateFormat0 = new Date(parseInt(date0.toString()));
+        dateFormat0.setTime(dateFormat0.getTime() + dateFormat0.getTimezoneOffset() * 60 * 1000);
+        dateFormat0 = removeHuors(dateFormat0);
+
+        var dateFormat1 = new Date(parseInt(date1.toString()));
+        dateFormat1.setTime(dateFormat1.getTime() + dateFormat1.getTimezoneOffset() * 60 * 1000);
+
+        var dateFormat2 = new Date(parseInt(date2.toString()));
+        dateFormat2.setTime(dateFormat2.getTime() + dateFormat2.getTimezoneOffset() * 60 * 1000);
+
+        if (dateFormat1 < dateFormat0) {
+            alert("La fecha inicial debe ser posterior o igual a hoy");
+            document.getElementById('tareas_FechaInicial').value = '';
+            //$("#tareas_FechaInicial").data("DateTimePicker").date(null)
+            return false;
+        }
+
+        if (dateFormat2 < dateFormat1) {
+            alert("La fecha final debe ser posterior a fecha inicial");
+            document.getElementById('tareas_FechaFinal').value = '';
+            //$("#tareas_FechaFinal").data("DateTimePicker").date(null)
+            return false;
+        }
+
+        return true;
+    }
+    function CrearTarea() {
+        //document.getElementById("btnAcepta").disabled = true;
+        ChangeToGray();
+        //Hacer obligatorios los campos
+        var desc = $("#tareas_Descripcion").val();
+        var cat = $("#tareas_CategoriaID").val();
+        var subcat = $("#tareas_SubCategoriaID").val();
+        var cent = $("#tareas_CentroID").val();
+        var est = $("#tareas_Estatus").val();
+        var tec = $("#tareas_TecnicoID").val();
+        var f1 = $("#tareas_FechaInicial").val();
+        var f2 = $("#tareas_FechaFinal").val();
+        var hr = $("#tareas_Hora").val();
+        //if (fechaInicial < )
+
+
+        if (est != "Asignación Pendiente") {
+            if (tec.length == 0 || /^\s +$/.test(tec) || tec == "") {
+                $("#tareas_TecnicoID").focus();
+                $("#tareas_TecnicoID").css('border-color', "red");
+                alert("Es obligatorio seleccionar un Tecnico al escoger estatus asignado");
+                $("#modalConfirmar").modal('hide'); return;
+            }
+        } else {
+            if (est != null) {
+                if (est.length == 0 ||/^\s +$/.test(est)) {
+                    $("#tareas_Estatus").focus();
+                    $("#tareas_Estatus").css('border-color', "red");
+                    alert("Es obligatorio colocar: Estatus.");
+                    $("#modalConfirmar").modal('hide'); return;
+                }
+            }
+        }
+        if (desc.length == 0 || /^\s +$/.test(desc)) {
+            $("#tareas_Descripcion").focus();
+            $("#tareas_Descripcion").css('border-color', "red");
+            alert("Es obligatorio colocar: Descripción de la Incidencia.");
+            $("#modalConfirmar").modal('hide'); return;
+        }
+        if (cat.length == 0 || /^\s +$/.test(cat)) {
+            $("#tareas_CategoriaID").focus();
+            $("#tareas_CategoriaID").css('border-color', "red");
+            alert("Es obligatorio seleccionar: Categoría.");
+            $("#modalConfirmar").modal('hide'); return;
+        }
+        if (subcat.length == 0 || /^\s +$/.test(subcat)) {
+            $("#tareas_SubCategoriaID").focus();
+            $("#tareas_SubCategoriaID").css('border-color', "red");
+            alert("Es obligatorio seleccionar: SubCategoría.");
+            $("#modalConfirmar").modal('hide'); return;
+        }
+        if (cent.length == 0 || /^\s +$/.test(cent)) {
+            $("#tareas_CentroID").focus();
+            $("#tareas_CentroID").css('border-color', "red");
+            alert("Es obligatorio seleccionar: Centro.");
+            $("#modalConfirmar").modal('hide'); return;
+        }
+        if (hr.length == 0 || /^\s +$/.test(hr)) {
+            $("#tareas_Hora").focus();
+            $("#tareas_Hora").css('border-color', "red");
+            alert("Es obligatorio colocar: Hora.");
+            $("#modalConfirmar").modal('hide'); return;
+        }
+        if (f1.length == 0 || /^\s +$/.test(f1)) {
+            $("#tareas_FechaInicial").focus();
+            $("#tareas_FechaInicial").css('border-color', "red");
+            alert("Es obligatorio colocar: Fecha Inicial.");
+            $("#modalConfirmar").modal('hide'); return;
+        }
+        if (f2.length == 0 || /^\s +$/.test(f2)) {
+            $("#tareas_FechaFinal").focus();
+            $("#tareas_FechaFinal").css('border-color', "red");
+            alert("Es obligatorio colocar: Fecha Final.");
+            $("#modalConfirmar").modal('hide'); return;
+        }
+        console.log("Submiting");
+        $("#formFinal").submit(); //Guardar Tarea
+    } // Validación de datos y submit
+    // Conexiones
+    function returnMenu()       { window.location = "../DashBoard/Resolutor?EmployeeId=" + @ViewBag.user; }
+    function tareasProgramadas(){ window.location = "../Supervisor/GridTickets?EmployeeId=" + @ViewBag.user; }
+    function AgrgarTarea()      { window.location = "../Supervisor/ProgramarTarea?EmployeeId=" + @ViewBag.user; }
+    function switchHidden() {
+        var dias = document.getElementById("checkboxDias");
+        var mens = document.getElementById("diasdelmes");
+        if (flag) {
+            console.log("Hide dias, show mes");
+            dias.hidden = true;
+            mens.hidden = false;
+            flag = false;
+        } else {
+            console.log("Show dias, hide mes");
+            dias.hidden = false;
+            mens.hidden = true;
+            flag = true;
+        }
+    } // Intercambio de cbox días a mes
+    function changeClean(i) {
+        if (i == 1) {
+            $("#tareas_DiadelaSemana").val("0");
+            $("#tareas_DiaCardinal").val("0");
+            $("#radiodia").prop("checked", true);
+            console.log("vaciar semana y cardinal");
+
+        }
+        if (i == 2) {
+            $("#tareas_DiadelMes").val("0");
+            $("#radiomes").prop("checked", true);
+        }
+    } // Intercambio de cbox días a mes
+    function ChangeToGray() {
+        var color = "darkgray";
+        $("#tareas_Descripcion").css('border-color', color);
+        $("#tareas_CategoriaID").css('border-color', color);
+        $("#tareas_SubCategoriaID").css('border-color', color);
+        $("#tareas_CentroID").css('border-color', color);
+        $("#tareas_Estatus").css('border-color', color);
+        $("#tareas_TecnicoID").css('border-color', color);
+        $("#tareas_FechaInicial").css('border-color', color);
+        $("#tareas_FechaFinal").css('border-color', color);
+        $("#tareas_Hora").css('border-color', color);
+    }
+</script>
+<style>
+    input.ch1 {
+        width: 20px;
+        height: 20px;
+    }
+</style>
+
+<form action="../Supervisor/SetTareaProgramada?EmployeeId=@ViewBag.user" enctype="multipart/form-data" id="formFinal" method="post">
+    <div class="datos" style="float:right; display:flex; width:35%">
+        <div class="datos1" style="border-color: lightblue; background-color: #F9F9FA; width: 100%; height: 100%; padding-top: 150px; padding-left: 5px ">
+            <label><h3>DATOS DEL USUARIO</h3></label>
+            <br />
+            <label>NOMBRE COMPLETO</label>
+            <br />
+            @Html.TextBoxFor(m => m.nombreCompleto, new { @class = "form-control", @readonly = "true" })
+            <br />
+            <label>ÁREA</label>
+            <br />
+            @Html.TextBoxFor(m => m.area, new { @class = "form-control", @readonly = "true" })
+            <br />
+            <label>PUESTO</label>
+            <br />
+            @Html.TextBoxFor(m => m.puesto, new { @class = "form-control", @readonly = "true" })
+            <br />
+            <label>CORREO ELECTRÓNICO</label>
+            <br />
+            @Html.TextBoxFor(m => m.correo, new { @class = "form-control", @readonly = "true" })
+            <br /> <br /> <br /> <br />
+            <br /> <br /> <br /> <br />
+            <br /> <br /> <br /> <br />
+            <br /> <br /> <br /> <br />
+            <br /> <br /> <br /> <br />
+        </div>
+    </div>
+    <br />
+    @*Breadcrumbs*@
+    <p>
+        <br />
+        <a style="color: dodgerblue" onclick="returnMenu()">Dashboard</a> / <a style="color: dodgerblue" onclick="tareasProgramadas()"> Tareas Programadas </a> / <a style="color: dodgerblue"> Programar Tarea </a>
+    </p>
+    <br />
+    <br />
+    <ul class="nav nav-tabs navbar-left" id="myTab" role="tablist" style="position:absolute">
+        <li class="nav-item active" role="presentation">
+            <a class="nav-link"
+               id="datos-tab" data-toggle="tab"
+               href="#datos" role="tab"
+               aria-controls="datos" aria-selected="True">
+                <h4> <b style="color:black">Paso 1: Datos de Tarea</b> </h4>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link"
+               id="programar-tab" data-toggle="tab"
+               href="#programar" role="tab"
+               aria-controls="programar" aria-selected="false">
+                <h4> <b style="color:black">Paso 2: Programar Tarea</b></h4>
+            </a>
+        </li>
+    </ul>
+    <br />
+    <br />
+    <br />
+    <div class="container-fluid" style="position:absolute; width:100%">
+        <div class="col-md-12">
+            <div class="tab-content" style="max-width:100%; width:100%">
+                <br /><br />
+                <div class="tab-pane active" id="datos" role="tabpanel" aria-labelledby="datos-tab">
+                    <div class="col-md-8">
+                        <div class="col-md-6">
+                            <div hidden>
+                                <input id="todayDatepicker" />
+                            </div>
+                            <label>CATEGORÍA *</label>
+                            <br />
+                            @Html.DropDownListFor(m => m.tareas.CategoriaID, (SelectList)ViewBag.Categoria, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                            <br />
+                            <label>SUBCATEGORÍA *</label>
+                            <br />
+                            @Html.DropDownListFor(m => m.tareas.SubCategoriaID, (SelectList)ViewBag.SubCategoria, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                            <br />
+                            <label>CENTRO *</label>
+                            <br />
+                            @Html.DropDownListFor(m => m.tareas.CentroID, (SelectList)ViewBag.Centro, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                            <br />
+                            <label>ACTIVO </label>
+                            <br />
+                            @Html.TextBoxFor(m => m.tareas.Activo, new { @class = "form-control" })
+                            @Html.CheckBoxFor(m => m.tareas.Activado, new { @class = "form-control hidden" })
+                        </div>
+                        <div class="col-md-6">
+                            <label>Grupo Resolutor *</label>
+                            <br />
+                            @Html.DropDownListFor(m => m.tareas.GrupoResolutorID, (SelectList)ViewBag.GrupoResolutor, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                            <br />
+                            <label>Tecnico *</label>
+                            <br />
+                            @Html.DropDownListFor(m => m.tareas.TecnicoID, (SelectList)ViewBag.Tecnico, new { @class = "form-control", style = "text-align:center", onchange = "asignar()" })
+                            <br />
+                            <label>Prioridad *</label>
+                            <br />
+                            @Html.DropDownListFor(m => m.tareas.Prioridad, (SelectList)ViewBag.Prioridad, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                            <br />
+                            <label>Estatus *</label>
+                            <br />
+                            @Html.DropDownListFor(m => m.tareas.Estatus, (SelectList)ViewBag.Estatus, new { @class = "form-control", style = "text-align:center" })
+                            <br /><br />
+                        </div>
+                        <div class="col-md-12">
+                            <label>Breve descripción de la Tarea</label>
+                            @Html.TextAreaFor(m => m.tareas.Descripcion, new { @class = "form-control", style = "margin: 0px 39px 0px 10px; max-width: 100% ; width: 800px; height: 250px;" })
+                            <br />
+                            <div class="footer-crear" style="display:flex">
+                                <label class="fileContainer">
+                                    <label>SOPORTE DE LA TAREA</label>
+                                    <i class="glyphicon glyphicon-folder-open"></i>
+                                    <input name="upload" type="file" accept="application/application" class="btn btn-primary" Multiple="Multiple" />
+                                </label>
+                                <label class="btn-1" style="width:50%">
+                                    <button type="button" id="programar-tab" data-toggle="tab" href="#programar" role="tab" aria-controls="programar" aria-labelledby="programar-tab" class="btn btn-success" style="background-color: #007BFF; float: right; margin-top: 10px;">Siguiente</button>
+                                    <button type="button" class="btn btn-secondary" style="background-color: #868E96; float: right; margin-top: 10px; margin-right: 5px; color:white" onclick="tareasProgramadas()">Cancelar</button>
+
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="programar" role="tabpanel" aria-labelledby="programar-tab">
+                    <div class="col-md-8">
+                        <div class="col-md-6">
+                            <label for="Periodo">PERIODO DE TIEMPO:</label>
+                            @Html.DropDownListFor(m => m.tareas.Periodo, (SelectList)ViewBag.Periodo, "SELECCIONE", new { @class = "form-control", style = "text-align:center", onchange = "switchHidden()" })
+                            <div style="margin:20px;" id="checkboxDias">
+                                <div style="display:flex">
+                                    <div style="vertical-align:initial">
+                                        @Html.CheckBoxFor(m => m.tareas.seLunes, new { @class = "form-check-input ch1", style = "text-align:center" }) Lunes
+                                        <br />
+                                        @Html.CheckBoxFor(m => m.tareas.seMartes, new { @class = "form-check-input ch1", style = "text-align:center" }) Martes
+                                        <br />
+                                        @Html.CheckBoxFor(m => m.tareas.seMiercoles, new { @class = "form-check-input ch1", style = "text-align:center" }) Miercoles
+                                        <br />
+                                        @Html.CheckBoxFor(m => m.tareas.seJueves, new { @class = "form-check-input ch1", style = "text-align:center" }) Jueves
+
+                                    </div>
+                                    <div style="float:right; margin-left: 5px">
+                                        @Html.CheckBoxFor(m => m.tareas.seViernes, new { @class = "form-check-input ch1", style = "text-align:center" }) Viernes
+                                        <br />
+                                        @Html.CheckBoxFor(m => m.tareas.seSabado, new { @class = "form-check-input ch1", style = "text-align:center" }) Sábado
+                                        <br />
+                                        @Html.CheckBoxFor(m => m.tareas.seDomingo, new { @class = "form-check-input ch1", style = "text-align:center" })   Domingo
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="margin:20px;" id="diasdelmes" hidden>
+                                <label>SELECCIONE EL TIPO DE PROGRAMACIÓN MENSUAL:</label> <br />
+                                <input type="radio" name="radiomes" value="0" checked id="radiodia" class="ch1" /><label> CADA X DÍA DEL MES:</label>
+                                @Html.DropDownListFor(m => m.tareas.DiadelMes, (SelectList)ViewBag.DiadelMes, new { @class = "form-control", style = "text-align:center", onchange = "changeClean(1)" })
+                                <input type="radio" name="radiomes" value="1" id="radiomes" class="ch1" /><LABEL> UN DÍA DE UNA SEMANA </LABEL> <BR />
+                                <div class="col-lg-12">
+                                    <div class="col-md-6">
+                                        @Html.DropDownListFor(m => m.tareas.DiaCardinal, (SelectList)ViewBag.DiaCardinal, new { @class = "form-control", style = "text-align:center", onchange = "changeClean(2)" })
+                                    </div>
+                                    <div class="col-md-6">
+                                        @Html.DropDownListFor(m => m.tareas.DiadelaSemana, (SelectList)ViewBag.DiadelaSemana, new { @class = "form-control", style = "text-align:center", onchange = "changeClean(2)" })
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="col-md-6">
+                            <label for="tiempo">HORA:</label> <br />
+                            <input type="time" id="tareas_Hora" name="tareas.Hora" min="09:00" max="18:00" required class="form-control"><br />
+                            <div>
+                                Fecha Inicio <br />
+                                <input type="date" id="tareas_FechaInicial" name="tareas.FechaInicial" class="form-control datepicker-rtl" onChange="dateCheck()" />
+                            </div>
+                            <br />
+                            <div>
+                                Fecha Final <br />
+                                <input type="date" id="tareas_FechaFinal" name="tareas.FechaFinal" class="form-control datepicker-rtl" onChange="dateCheck()" />
+                            </div>
+                            <br /><br />
+                            <button type="button" class="btn btn-secondary" id="btnBack" style="background-color: #868E96; color:white;" onclick="AgrgarTarea()">Cancelar</button>
+                            <button type="button" class="btn btn-success" id="btnEnviar" style="background-color: #007BFF;" onclick="EnviarSolicitud()">Confirmar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</form>
+
+
+@*==============================MODALES==============================*@
+
+@*Modal Confirmar datos*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalConfirmar">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Confirmar datos del ticket</h4>
+            </div>
+            <div>
+                <div class="col-md-12">
+                    <table style="width:100%;">
+                        <tr>
+                            <td style="width:100%;"><b>Breve descripción de la incidencia</b></td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;"><label style="color:slategray" id="IncidenciaDesc"></label></td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;"><b>Soporte de la Incidencia</b></td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;"><label style="color:darkblue" id="SoporteDesc"></label></td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;"><b>Categoría</b></td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;"><label style="color:slategray" id="CategoriaDesc"></label></td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;"><b>SubCategoría</b></td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;"><label style="color:slategray" id="SubCategoriaDesc"></label></td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;"><b>Centro</b></td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;"><label style="color:slategray" id="CentroDesc"></label></td>
+                        </tr>
+                        <!-- <tr>
+                            <td style="width:100%;"><b>Personas a notificar el estado del ticket</b></td>
+                        </tr>-->
+                        <tr>
+                            <td style="width:100%;"><label style="color:slategray" id="NotificarDesc"></label></td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;"><b>Grupo Resolutor</b></td>
+                        </tr>
+                        <tr>
+                            <td style="width:100%;"><label style="color:slategray" id="GrupoResolutorDesc"></label></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" style="background-color: #868E96;" onclick="CancelaSolicitud()">Cancelar</button>
+                <button type="button" class="btn btn-primary" style="background-color: #007BFF;" id="btnAcepta" onclick="this.disabled=true;this.value='Cargando...'; CrearTarea()">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@*MODAL DE GUARDADO CON NUMERO DE TICKET*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalGuardado">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div>
+                <div class="col-md-12">
+                    <table style="width:100%;">
+                        @if (ViewBag.Id != "0")
+                        {
+                            <tr>
+                                <td>
+                                    <div class="modal-header">
+                                        <h4 class="modal-title"><b>Ticket enviado</b></h4>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <br />
+                                    <br />
+                                    <div style="color:forestgreen; top:-10px; font-style:normal;line-height:20px; margin-left:250px; font-size:xxx-large;" class="glyphicon glyphicon-ok">
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:100%;">
+                                    <label style="color:slategray; margin-left:150px;">¡Tarea programada correctamente!</label>
+                                    <br />
+                                    <label style="color:slategray; margin-left:200px;">Ticket ID:  @ViewBag.Id</label>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            <tr>
+                                <td>
+                                    <div class="modal-header">
+                                        <h4 class="modal-title"><b>¡Error de Tarea!</b></h4>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <br />
+                                    <br />
+                                    <div style="color:red; top:-10px; font-style:normal;line-height:20px; margin-left:250px; font-size:xxx-large;" class="glyphicon glyphicon-ban-circle">
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:100%;">
+                                    <label style="color:red;  margin-left:200px;">¡Error al Generar el Ticket de la Tarea!</label>
+                                    <br />
+                                    <label style="color:red; margin-left:150px;">Favor de validarlo con el Administrador</label>
+                                </td>
+                            </tr>
+
+                        }
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                @*<button type="button" class="btn btn-primary" onclick=" location.href='@Url.Action("Index", "DashBoard")'">Aceptar</button>*@
+                <button type="button" class="btn btn-primary" onclick="returnMenu()">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+@*==============================FIN DE MODALES==============================*@

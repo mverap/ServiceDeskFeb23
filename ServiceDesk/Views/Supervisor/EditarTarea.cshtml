@@ -1,0 +1,668 @@
+﻿@using GridMvc
+@using GridMvc.Html
+@model ServiceDesk.ViewModels.TareasProgramadasEditVM
+@{
+    ViewBag.Title = "ProgramarTarea";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script type="text/javascript">
+    var folio = '@ViewBag.Id';
+    var flag = true;
+    $(document).ready(function () {
+        //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        setupInfo();
+        if (folio != "") {
+            $("#modalGuardado").modal('show');
+        }
+        //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        //CATEGORIA - SUBCATEGORIA
+        $("#tareas_CategoriaID").change(function ()
+        {
+            $("#tareas_SubCategoriaID").empty();
+            $("#AreaResolutor").empty();
+            console.log("filling subcategoria");
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetCategoria", "App")',
+                dataType: 'json',
+                data: { id: $("#tareas_CategoriaID").val() },
+                success: function (result)
+                {
+                    //$("#tareas_SubCategoriaID").append('<option value="">SELECCIONE</option>');
+                    $.each(result, function (i, group)
+                    {
+                        $("#tareas_SubCategoriaID").append('<option value="' + group.Id + '">' +
+                            group.SubCategoria + '</option>');
+                    });
+                }
+            });
+        });
+        //GRUPO RES - TECNICOS
+        $("#tareas_GrupoResolutorID").change(function () //Cuando cambie la selección del combobox GrupoResolutor
+        {
+            $("#tareas_TecnicoID").empty(); //Vaciar el combobox Tecnico Asignado y
+            console.log("filling tecnico");
+            $.ajax({ //Llenarlo de nuevo
+                type: 'POST',
+                url: '@Url.Action("GetTecnico", "Supervisor")', // GetTecnico() en SupervisorController.cs
+                dataType: 'json',
+                data: { id: $("#tareas_GrupoResolutorID").val() }, // Pasar el valor del combobox Grupo Resolutor como parametro al método GetTecnico
+                success: function (result) // Si si se pudo: Agregar como opciones al combobox Tecnico asignado el contenido del JSON obtenido
+                {
+
+                    $("#tareas_TecnicoID").append('<option value="0">SELECCIONE</option>');
+                    $.each(result, function (i, group)
+                    {
+                        $("#tareas_TecnicoID").append('<option value="' + group.EmpleadoID + '">' + // este Json fue definido en GetTecnico() de SupervisorController
+                            group.NombreTecnico + '</option>');
+                    });
+                }
+            });
+        });
+
+    }); //END DOCUMENT
+    //FUNCIONES
+
+    $("#tareas_Estatus").click(function () {
+        console.log("Borrando estatus no queridos en editar");
+        //$("#tareas_Estatus option[value='Trabajando']").remove();
+        //$("#tareas_Estatus option[value='En Espera']").remove();
+    });
+    function cleanUnwantedEstatus() {
+        alert("Estatus <Trabajando> y <En Espera> solo pueden ser configurados por el Técnico asignado, si desea que la tarea vuelva a su estado previo presione Cancelar y/o regrese al Dashboard");
+        $("#tareas_Estatus option[value='Trabajando']").remove();
+        $("#tareas_Estatus option[value='En Espera']").remove();
+    }
+    function setupInfo() {
+        $("#tareas_CategoriaID").val("@Model.tareas.CategoriaID");
+        $("#tareas_SubCategoriaID").val("@Model.tareas.SubCategoriaID");
+
+        $("#tareas_GrupoResolutorID").val("@Model.tareas.GrupoResolutorID");
+        $("#tareas_TecnicoID").val("@Model.tareas.TecnicoID");
+
+        $("#DiadelaSemana").val("@Model.tareas.DiadelaSemana");
+        $("#DiadelMes").val("@Model.tareas.DiadelMes");
+        $("#DiaCardinal").val("@Model.tareas.DiaCardinal");
+
+        if ('@Model.tareas.Periodo' == "Semanal") { //if (@Model.tareas.DiadelaSemana == 0 && @Model.tareas.DiadelMes == 0 && @Model.tareas.DiaCardinal == 0) {
+            $("#tareas_Periodo").val("Semanal");
+        } else {
+            $("#tareas_Periodo").val("Mensual");
+            switchHidden();
+            if (@Model.tareas.DiadelMes != 0) {
+                $("#radiodia").prop("checked", true);
+            } else {
+                $("#radiomes").prop("checked", true);
+            }
+        }
+
+
+
+        var str = "@Model.tareas.Prioridad";
+        str = str.replace(/\s+/g, '');
+        $("#tareas_Prioridad").val(str);
+
+        var timeControl = document.querySelector('input[type="time"]');
+        timeControl.value = '@ViewBag.Hora';
+
+        $("#tareas_FechaFinal").val("@ViewBag.FechaFinal");
+        $("#tareas_FechaInicial").val("@ViewBag.FechaInicial");
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function EnviarSolicitud() {
+        var desc = $("#tareas_Descripcion").val();
+        var cat = $('#tareas_CategoriaID option:selected').text();
+        var subcat = $('#tareas_SubCategoriaID option:selected').text();
+        var cen = $('#tareas_CentroID option:selected').text();
+        //var pers = $("#PersonasAddNotificar").val();
+        var gpo = $("#tareas_GrupoResolutorID").val();
+        var sopo = $("#tareas_ArchivoAdjunto").val();
+
+        $("#IncidenciaDesc").text(desc);
+        $("#CategoriaDesc").text(cat);
+        $("#SubCategoriaDesc").text(subcat);
+        $("#CentroDesc").text(cen);
+        //$("#NotificarDesc").text(pers);
+        $("#GrupoResolutorDesc").text(gpo);
+        $("#SoporteDesc").text(sopo);
+
+        $("#modalConfirmar").modal('show');
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function CancelaSolicitud() {
+        $("#modalConfirmar").modal('hide');
+        $("#modalGuardado").modal('hide');
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function AceptaTicket() {
+        $("#modalGuardado").modal('hide');
+        //Regresar a la parte del DashBoard
+    }
+    function asignar() {
+        $("#tareas_Estatus").val("Asignado");
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function CrearTarea() {
+        //Hacer obligatorios los campos
+        var desc = $("#tareas_Descripcion").val();
+        var cat = $("#tareas_CategoriaID").val();
+        var subcat = $("#tareas_SubCategoriaID").val();
+        var cent = $("#tareas_CentroID").val();
+        var est = $("#tareas_Estatus").val();
+        var tec = $("#tareas_TecnicoID").val();
+        if (desc.length == 0 || /^\s +$/.test(desc)) //--------------------------------------------------------------- agregar validaciones para todos los campos
+        {
+            $("#datos-tab").click();
+            $("#tareas_Descripcion").focus();
+            $("#tareas_Descripcion").css('border-color', "red");
+            alert("Es obligatorio colocar: Descripción de la Incidencia.");
+            $("#modalConfirmar").modal('hide');
+            return;
+        }
+        if (cat != null) {
+            if (cat.length == 0 || /^\s +$/.test(cat)) {
+                $("#datos-tab").click();
+                $("#tareas_CategoriaID").focus();
+                $("#tareas_CategoriaID").css('border-color', "red");
+                alert("Es obligatorio seleccionar: Categoría.");
+                $("#modalConfirmar").modal('hide');
+                return;
+            }
+        } else {
+            $("#datos-tab").click();
+            $("#tareas_CategoriaID").focus();
+            $("#tareas_CategoriaID").css('border-color', "red");
+            alert("Es obligatorio seleccionar: Categoría.\nVerifique si la categoría original fue borrada");
+            $("#modalConfirmar").modal('hide');
+            return;
+        }
+        if (subcat.length == 0 || /^\s +$/.test(subcat)) {
+            $("#datos-tab").click();
+            $("#tareas_SubCategoriaID").focus();
+            $("#tareas_SubCategoriaID").css('border-color', "red");
+            alert("Es obligatorio seleccionar: SubCategoría.");
+            $("#modalConfirmar").modal('hide');
+            return;
+        }
+        if (cent.length == 0 || /^\s +$/.test(cent)) {
+            $("#datos-tab").click();
+            $("#tareas_CentroID").focus();
+            $("#tareas_CentroID").css('border-color', "red");
+            alert("Es obligatorio seleccionar: Centro.");
+            $("#modalConfirmar").modal('hide');
+            return;
+        }
+        if (est.length == 0 || /^\s +$/.test(est)) {
+            $("#datos-tab").click();
+            $("#tareas_Estatus").focus();
+            $("#tareas_Estatus").css('border-color', "red");
+            alert("Es obligatorio seleccionar: Estatus.");
+            $("#modalConfirmar").modal('hide');
+            return;
+        } else {
+            if (est == "Asignado") {
+                if (tec == null) {
+                    $("#datos-tab").click();
+                    $("#tareas_TecnicoID").focus();
+                    $("#tareas_TecnicoID").css('border-color', "red");
+                    alert("Es obligatorio seleccionar: Tecnico \nal seleccionar Estatus: Asignado");
+                    $("#modalConfirmar").modal('hide');
+                    return;
+                }
+            }
+        }
+        //Guarda Tarea
+        $("#formFinal").submit();
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function Regresar() {
+
+        @*var id = $("#EmpleadoID").val();
+
+        var url = '@Url.Action("Index", "DashBoard")';
+        window.location.href = url + '?EmployeeId=' + id;*@
+        window.location = "../DashBoard/Resolutor?EmployeeId=" + @ViewBag.user;
+
+    }
+    //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function returnMenu()        { window.location = "../DashBoard/Resolutor?EmployeeId=" + @ViewBag.user; }
+    function tareasProgramadas() { window.location = "../Supervisor/GridTickets?EmployeeId=" + @ViewBag.user; }
+    function switchHidden() {
+        var dias = document.getElementById("checkboxDias");
+        var mens = document.getElementById("diasdelmes");
+
+        if (flag) {
+            console.log("Hide dias");
+            dias.hidden = true;
+            console.log("Unhide meses");
+            mens.hidden = false;
+            flag = false;
+        } else {
+            console.log("Unhide dias");
+            dias.hidden = false;
+            console.log("Hide meses");
+            mens.hidden = true;
+            flag = true;
+        }
+    }
+    function changeClean(i) {
+        if (i == 1) {
+            $("#tareas_DiadelaSemana").val("0");
+            $("#tareas_DiaCardinal").val("0");
+            $("#radiodia").prop("checked", true);
+            console.log("vaciar semana y cardinal");
+        }
+        if (i == 2) {
+            $("#tareas_DiadelMes").val("0");
+            $("#radiomes").prop("checked", true);
+        }
+    }
+    function ShowAdjuntos() { $("#modalDownload").modal('show'); }
+    function HideAdjuntos() { $("#modalDownload").modal('hide'); }
+    function DownloadDocs(id) { $("#IdDoc").val(id); $("#formAttach").submit(); }
+</script>
+<style>
+    input.ch1 {
+        width: 20px;
+        height: 20px;
+    }
+</style>
+
+@*BARRA DE MENÚ*@
+@*<nav class="navbar navbar-default navbar-fixed-top" style="background:red; color: dodgerblue!important;">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar"> </button>
+            </div>
+            <div id="navbar" class="navbar-collapse collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li class="dropdown" style="background-color:red;">
+                        <a style="color: white !important" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> <span class="glyphicon glyphicon-bell"></span></a>
+                    </li>
+                    <li class="dropdown" style="background-color:red;">
+                        <a style="color: white !important" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> <span class="fa fa-bars"></span></a>
+                        <ul class="dropdown-menu">
+                            <a style="color: dodgerblue" href="@Url.Action("Gestiones", "Supervisor")">
+                            <li style="margin-left:5%;" class="fa fa-toggle-on">&nbsp;Configuración</li>
+                            </a>
+                            <a>
+                            <li style="margin-left:5%" class="fa fa-pie-chart" onclick="goToReportes();">&nbsp;Reportes</li>
+                            </a>
+                            @if (ViewBag.Rol == "Supervisor")
+                            {
+                                <a>
+                                <li style="margin-left:5%" class="fa fa-clock-o" onclick="goToTareas();">&nbsp;Tareas Programadas</li>
+                                </a>
+                            }
+                            <a>
+                            <li style="margin-left:5%" class="fa fa-toggle-on">&nbsp;Cerrar sesión</li>
+                            </a>
+                        </ul>
+                    </li>
+                    @if (Request.IsAuthenticated)
+                    {
+                        <li style="font-size: 12px;">
+                            <a href="#" style="color: white">
+                                @User.Identity.Name
+                            </a>
+                        </li>
+                        <li style="font-size: 12px; color: white">
+                            @using (Html.BeginForm("CloseSession", "Home", FormMethod.Post, new { id = "formLogout" }))
+                            {
+
+                            }
+                            <a style="color: white !important" href="#"
+                               class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" onclick="logOut();"
+                               aria-expanded="false">
+                                Salir
+                                <span class="glyphicon glyphicon-off"></span>
+                            </a>
+
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </nav>*@
+@*FIN DE BARRA DE MENÚ*@
+<form action="../Supervisor/EditTareaProgramada?EmployeeId=@ViewBag.user&TareaId=@Model.tareas.Id" enctype="multipart/form-data" id="formFinal" method="post">
+    <div class="datos" style="float:right; display:flex; width:35%">
+        <div class="datos1" style="border-color: lightblue; background-color: RGB(214, 231, 242 ); width: 100%; height: 100%; padding-top: 150px; padding-left: 5px">
+            <label><h3>DATOS DEL USUARIO</h3></label>
+            <br />
+            <label>NOMBRE COMPLETO</label> @Html.HiddenFor(m => m.tareas.Id);
+            <br />
+            @Html.TextBoxFor(m => m.nombreCompleto, new { @class = "form-control", @readonly = "true" })
+            <br />
+            <label>ÁREA</label>
+            <br />
+            @Html.TextBoxFor(m => m.area, new { @class = "form-control", @readonly = "true" })
+            <br />
+            <label>PUESTO</label>
+            <br />
+            @Html.TextBoxFor(m => m.puesto, new { @class = "form-control", @readonly = "true" })
+            <br />
+            <label>CORREO ELECTRÓNICO</label>
+            <br />
+            @Html.TextBoxFor(m => m.correo, new { @class = "form-control", @readonly = "true" })
+            <br /> <br /> <br /> <br />
+            <br /> <br /> <br /> <br />
+            <br /> <br /> <br /> <br />
+            <br /> <br /> <br /> <br />
+            <br /> <br /> <br /> <br />
+        </div>
+    </div>
+    <br />
+    @*Breadcrumbs*@
+    <p>
+        <br />
+        <a style="color: dodgerblue" onclick="returnMenu()">Dashboard</a> / <a style="color: dodgerblue" onclick="tareasProgramadas()"> Tareas Programadas </a> / <a style="color: dodgerblue"> Programar Tarea </a>
+    </p>
+    <br />
+    <br />
+    <ul class="nav nav-tabs navbar-left" id="myTab" role="tablist" style="position:absolute">
+        <li class="nav-item active" role="presentation">
+            <a class="nav-link"
+               id="datos-tab" data-toggle="tab"
+               href="#datos" role="tab"
+               aria-controls="datos" aria-selected="True">
+                <h4> <b style="color:black">Paso 1: Datos de Tarea</b> </h4>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link"
+               id="programar-tab" data-toggle="tab"
+               href="#programar" role="tab"
+               aria-controls="programar" aria-selected="false">
+                <h4> <b style="color:black">Paso 2: Programar Tarea</b></h4>
+            </a>
+        </li>
+    </ul>
+    <br />
+    <br />
+    <br />
+    <div class="container-fluid" style="position:absolute; width:100%">
+        <div class="col-md-12">
+            <div class="tab-content" style="max-width:100%; width:100%">
+                <br /><br />
+                <div class="tab-pane active" id="datos" role="tabpanel" aria-labelledby="datos-tab">
+                    <div class="col-md-8">
+                        <div class="col-md-6">
+                            <label>CATEGORÍA *</label>
+                            <br />
+                            @Html.DropDownListFor(m => m.tareas.CategoriaID, (SelectList)ViewBag.Categoria, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                            <br />
+                            <label>SUBCATEGORÍA *</label>
+                            <br />
+                            @Html.DropDownListFor(m => m.tareas.SubCategoriaID, (SelectList)ViewBag.SubCategoria, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                            <br />
+                            <label>CENTRO *</label>
+                            <br />
+                            @Html.DropDownListFor(m => m.tareas.CentroID, (SelectList)ViewBag.Centro, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                            <br />
+                            <label>ACTIVO *</label>
+                            <br />
+                            @Html.TextBoxFor(m => m.tareas.Activo, new { @class = "form-control" })
+                            @Html.CheckBoxFor(m => m.tareas.Activado, new { @class = "form-control hidden" })
+
+                        </div>
+                        <div class="col-md-6">
+                            <label>Grupo Resolutor *</label>
+                            <br />
+                            @Html.DropDownListFor(m => m.tareas.GrupoResolutorID, (SelectList)ViewBag.GrupoResolutor, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                            <br />
+                            <label>Tecnico *</label>
+                            <br />
+                            @Html.DropDownListFor(m => m.tareas.TecnicoID, (SelectList)ViewBag.Tecnico, "SELECCIONE", new { @class = "form-control", style = "text-align:center", onchange = "asignar()" })
+                            <br />
+                            <label>Prioridad *</label>
+                            <br />
+                            @Html.DropDownListFor(m => m.tareas.Prioridad, (SelectList)ViewBag.Prioridad, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                            <br />
+                            <label>Estatus *</label>
+                            <br />
+                            @Html.DropDownListFor(m => m.tareas.Estatus, (SelectList)ViewBag.Estatus, new { @class = "form-control", style = "text-align:center", onChange = "cleanUnwantedEstatus()" })
+                            <br /><br />
+                        </div>
+                        <div class="col-md-12">
+                            <label>Breve descripción de la Tarea</label>
+                            @Html.TextAreaFor(m => m.tareas.Descripcion, new { @class = "form-control", style = "margin: 0px 39px 0px 10px; max-width: 100% ; width: 800px; height: 250px;" })
+                            <br />
+                            <div class="footer-crear" style="display:flex">
+                                <label class="fileContainer">
+                                    <label>SOPORTE DE LA TAREA</label>
+                                    <i class="glyphicon glyphicon-folder-open"></i>
+                                    <input name="upload" type="file" accept="application/application" class="btn btn-primary" Multiple="Multiple" />
+                                </label>
+                                <label class="btn-1" style="width:50%">
+                                    <button type="button" id="programar-tab" data-toggle="tab" href="#programar" role="tab" aria-controls="programar" aria-labelledby="programar-tab" class="btn btn-success" style="background-color: #007BFF; float: right; margin-top: 10px;">Siguiente</button>
+                                    <button type="button" class="btn btn-secondary" style="background-color: #868E96; float: right; margin-top: 10px; margin-right: 5px; color:white" onclick="tareasProgramadas()">Cancelar</button>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="programar" role="tabpanel" aria-labelledby="programar-tab">
+                    <div class="col-md-8">
+                        <div class="col-md-6">
+                            <label for="Periodo">PERIODO DE TIEMPO:</label>
+                            @Html.DropDownListFor(m => m.tareas.Periodo, (SelectList)ViewBag.Periodo, "SELECCIONE", new { @class = "form-control", style = "text-align:center", onchange = "switchHidden()" })
+                            <div style="margin:20px;" id="checkboxDias">
+                                <div style="display:flex">
+                                    <div style="vertical-align:initial">
+                                        @Html.CheckBoxFor(m => m.tareas.seLunes, new { @class = "form-check-input ch1", style = "text-align:center" }) Lunes
+                                        <br />
+                                        @Html.CheckBoxFor(m => m.tareas.seMartes, new { @class = "form-check-input ch1", style = "text-align:center" }) Martes
+                                        <br />
+                                        @Html.CheckBoxFor(m => m.tareas.seMiercoles, new { @class = "form-check-input ch1", style = "text-align:center" }) Miercoles
+                                        <br />
+                                        @Html.CheckBoxFor(m => m.tareas.seJueves, new { @class = "form-check-input ch1", style = "text-align:center" }) Jueves
+
+                                    </div>
+                                    <div style="float:right; margin-left: 5px">
+                                        @Html.CheckBoxFor(m => m.tareas.seViernes, new { @class = "form-check-input ch1", style = "text-align:center" }) Viernes
+                                        <br />
+                                        @Html.CheckBoxFor(m => m.tareas.seSabado, new { @class = "form-check-input ch1", style = "text-align:center" }) Sábado
+                                        <br />
+                                        @Html.CheckBoxFor(m => m.tareas.seDomingo, new { @class = "form-check-input ch1", style = "text-align:center" })   Domingo
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <div style="margin:20px;" id="diasdelmes" hidden>
+                                <input type="radio" name="radiomes" value="0" checked id="radiodia" class="ch1" />
+                                @Html.DropDownListFor(m => m.tareas.DiadelMes, (SelectList)ViewBag.DiadelMes, "SELECCIONE", new { @class = "form-control", style = "text-align:center", onchange = "changeClean(1)" })
+                                <input type="radio" name="radiomes" value="1" id="radiomes" class="ch1" />
+                                <div class="col-lg-12">
+                                    <div class="col-md-6">
+                                        @Html.DropDownListFor(m => m.tareas.DiaCardinal, (SelectList)ViewBag.DiaCardinal, "SELECCIONE", new { @class = "form-control", style = "text-align:center", onchange = "changeClean(2)" })
+                                    </div>
+                                    <div class="col-md-6">
+                                        @Html.DropDownListFor(m => m.tareas.DiadelaSemana, (SelectList)ViewBag.DiadelaSemana, "SELECCIONE", new { @class = "form-control", style = "text-align:center", onchange = "changeClean(2)" })
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="col-md-6">
+                            <label for="tiempo">HORA:</label> <br />
+                            <input type="time" id="tareas_Hora" name="tareas.Hora" min="09:00" max="18:00" required class="form-control"><br />
+                            <div>
+                                Fecha Inicio <br />
+                                <input type="date" id="tareas_FechaInicial" name="tareas.FechaInicial" class="form-control datepicker-rtl" />
+
+                            </div>
+                            <br />
+                            <div>
+                                Fecha Final <br />
+                                <input type="date" id="tareas_FechaFinal" name="tareas.FechaFinal" class="form-control datepicker-rtl" />
+                            </div>
+                            <br /><br />
+                            <button type="button" class="btn btn-secondary" style="background-color: #868E96; color:white;" id="btnBack" onclick="tareasProgramadas()">Cancelar</button>
+                            <button type="button" class="btn btn-success" style="background-color: #007BFF;" id="btnEnviar" onclick="EnviarSolicitud()">Confirmar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</form>
+
+
+@*==============================MODALES==============================*@
+
+@*Modal Confirmar datos*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalConfirmar">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Confirmar datos del ticket</h4>
+            </div>
+            <div>
+                <div class="col-md-12">
+                    <table style="width:100%;">
+                        <tr><td style="width:100%;"><b>Breve descripción de la incidencia</b></td></tr>
+                        <tr><td style="width:100%;"><label style="color:slategray" id="IncidenciaDesc"></label></td></tr>
+                        <tr><td style="width:100%;"><b>Soporte de la Incidencia</b></td> </tr>
+                        <tr><td style="width:100%;"><label style="color:darkblue" id="SoporteDesc"></label></td></tr>
+                        <tr><td style="width:100%;"><b>Categoría</b></td> </tr>
+                        <tr><td style="width:100%;"><label style="color:slategray" id="CategoriaDesc"></label></td></tr>
+                        <tr><td style="width:100%;"><b>SubCategoría</b></td></tr>
+                        <tr><td style="width:100%;"><label style="color:slategray" id="SubCategoriaDesc"></label></td></tr>
+                        <tr><td style="width:100%;"><b>Centro</b></td></tr>
+                        <tr><td style="width:100%;"><label style="color:slategray" id="CentroDesc"></label></td></tr>
+                        @*<tr><td style="width:100%;"><label style="color:slategray" id="NotificarDesc"></label></td></tr>*@
+                        <tr><td style="width:100%;"><b>Grupo Resolutor</b></td> </tr>
+                        <tr><td style="width:100%;"><label style="color:slategray" id="GrupoResolutorDesc"></label></td> </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" style="background-color: #868E96; color:white;" onclick="CancelaSolicitud()">Cancelar</button>
+                <button type="button" class="btn btn-primary" style="background-color: #007BFF;" id="btnAcepta" onclick="CrearTarea()">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@*MODAL DE GUARDADO CON NUMERO DE TICKET*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalGuardado">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div>
+                <div class="col-md-12">
+                    <table style="width:100%;">
+                        @if (ViewBag.Id != "0")
+                        {
+                            <tr>
+                                <td>
+                                    <div class="modal-header">
+                                        <h4 class="modal-title"><b>Ticket enviado</b></h4>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <br />
+                                    <br />
+                                    <div style="color:forestgreen; top:-10px; font-style:normal;line-height:20px; margin-left:250px; font-size:xxx-large;" class="glyphicon glyphicon-ok">
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:100%;">
+                                    <label style="color:slategray; margin-left:150px;">¡Tarea programada correctamente!</label>
+                                    <br />
+                                    <label style="color:slategray; margin-left:200px;">Ticket ID:  @ViewBag.Id</label>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            <tr>
+                                <td>
+                                    <div class="modal-header">
+                                        <h4 class="modal-title"><b>¡Error de Tarea!</b></h4>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <br />
+                                    <br />
+                                    <div style="color:red; top:-10px; font-style:normal;line-height:20px; margin-left:250px; font-size:xxx-large;" class="glyphicon glyphicon-ban-circle">
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:100%;">
+                                    <label style="color:red;  margin-left:200px;">¡Error al Generar el Ticket de la Tarea!</label>
+                                    <br />
+                                    <label style="color:red; margin-left:150px;">Favor de validarlo con el Administrador</label>
+                                </td>
+                            </tr>
+
+                        }
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                @*<button type="button" class="btn btn-primary" onclick=" location.href='@Url.Action("Index", "DashBoard")'">Aceptar</button>*@
+                <button type="button" class="btn btn-primary" onclick="Regresar()">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@*Modal de DESCARGA ARCHIVOS*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalDownload">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div>
+                <div class="col-md-12">
+                    <table style="width:100%;">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title"><b>Archivos Adjuntos</b></h4>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="row">
+                                    <div class="scroll_vertical" style="max-width: 100%; max-height: 700px;  font-size: 15px; ">
+                                        @if (Model.Docs != null)
+                                        {@Html.Grid(Model.Docs).Columns(col =>
+                                          {
+                                     col.Add(data => data.Nombre).Titled("Archivo").Filterable(true);
+                                     col.Add(data => data.Extension).Titled("Tipo");
+                                     col.Add().Encoded(false).Sanitized(false)
+                                   .RenderValueAs(data => "<div style='text-align: center'>"
+                                       + "<button type='button' class='btn btn-success glyphicon glyphicon-download' title='Descargar' onclick='DownloadDocs(\"" + data.Id + "\");'></button>"
+                                       + "</div>").Css("little");
+                                          })
+                                    }
+                                    else
+                                    { <label>¡No se encontraron Archivos Adjuntos!</label>}
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" onclick="HideAdjuntos()">Cerrar</button>
+                @*<button type="button" class="btn btn-primary" onclick="AceptaTicket(@Model.detalle.Id)">Aceptar</button>*@
+            </div>
+        </div>
+    </div>
+</div>
+
+@*==============================FIN DE MODALES==============================*@

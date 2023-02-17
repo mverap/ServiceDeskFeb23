@@ -1,0 +1,199 @@
+﻿@using GridMvc
+@using GridMvc.Html
+@model ServiceDesk.ViewModels.DetalleSelectedTicketVm
+@{
+    ViewBag.Title = "TicketVinculado";
+    Layout = "~/Views/Shared/_Layout_PopUp.cshtml";
+}
+
+
+<script src="~/Scripts/jquery-1.9.1.min.js"></script>
+
+
+<style type="text/css">
+
+    .bs-iconsheader button span {
+        font-size: 22px;
+        text-decoration: none;
+        margin: 0 20px;
+        color: steelblue;
+    }
+
+        .bs-iconsheader button span:hover {
+            color: dodgerblue;
+        }
+
+    textarea {
+        resize: none;
+    }
+
+    div.scroll_vertical {
+        height: 350px;
+        width: 90%;
+        overflow: auto;
+        border: 1px solid;
+        padding: 8px;
+    }
+</style>
+
+<div class="row" style="margin-top: -35px;">
+    <div class="col-md-8">
+        <h4>
+            <b>Ticket vinculado</b>
+        </h4>
+        <br />
+        <h4>
+            <b>Ticket ID:</b>
+                <span style="font-weight:bold;color:black;font-size:19px;">
+                    @Html.DisplayFor(m => m.detalle.Id)
+                    @Html.HiddenFor(m => m.detalle.Id)
+                </span>            
+        </h4>
+    </div>
+    <div class="col-sm-2"></div>
+</div>
+
+<div class="row" style="margin-top: 5px;">
+    <div class="col-md-12">
+        <div class="col-md-8">
+            @*HISTORICO Y SUBTICKET*@
+            <ul class="nav nav-tabs navbar-left" id="myTab" role="tablist">
+                <li class="nav-item active">
+                    <a class="nav-link" id="historialID-tab" data-toggle="tab" href="#historial" role="tab" aria-controls="historial" aria-selected="false">
+                        <h4>
+                            <span class="glyphicon glyphicon-list-alt" style="color:black"></span>
+                            <b style="color:black">Historial de Seguimiento</b>
+                        </h4>
+                    </a>
+                </li>
+            </ul>
+            <div class="tab-content" id="myTabContent">
+                <div class="tab-pane active" id="historial" role="tabpanel" aria-labelledby="historialID-tab">
+                    <br />
+                    <br />
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="scroll_vertical" style="max-width: 100%; max-height: 600px;  font-size: 15px; ">
+                                @foreach (var his in Model.historico)
+                                {
+
+                                    <div class="col-md-12" style="border:1px solid #ccc;margin-bottom: 5px;padding:20px; ">
+                                        <text style="font-weight:bold;color:black;font-size:14px;">@Html.DisplayFor(m => his.NombreCompleto)</text><br />
+                                        <text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => his.FechaRegistro)</text><br />
+                                        <text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => his.Correo)</text><br />
+                                        <text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => his.Estatus)</text><br />
+
+                                    </div>
+
+                                }
+                            </div>
+                            <div class="col-md-11" style="border:1px solid #ccc; text-align:center; background-color:#FFD5DD">
+                                <button type="button" id="btnShowAdjuntos" onclick="ShowAdjuntos()"><text style="font-weight:bold;color:#069CE3;font-size:14px;">Archivos Adjuntos</text></button><br />
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            @*DETALLE TICKET Y MIS DATOS*@
+        </div>
+        <div class="col-md-4">
+            <div class="row" style="text-align:right;">
+                <div class="col-md-4 col-md-offset-7">
+                    <h4 style="font-weight:bold;"><i class="glyphicon glyphicon-adjust" style="color:@Model.detalle.Color"></i> @Model.detalle.Estatus</h4>
+                </div>
+            </div>
+            <div class="row" style="border-color: lightblue; background-color: aliceblue;">
+                <ul class="nav nav-tabs navbar-left" id="myTab" role="tablist">
+                    <li class="nav-item active">
+                        <a class="nav-link" id="datoticket-tab" data-toggle="tab" href="#datoticket" role="tab" aria-controls="datoticket" aria-selected="false">
+                            <h4><b style="color:black">Datos del Ticket</b></h4>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="misdatosID-tab" data-toggle="tab" href="#misdatos" role="tab" aria-controls="misdatos" aria-selected="false">
+                            <h4> <b style="color:black">Mis Datos</b></h4>
+                        </a>
+                    </li>
+                </ul>
+                <div class="tab-content" id="myTabContent">
+                    <div class="tab-pane active" id="datoticket" role="tabpanel" aria-labelledby="datoticket-tab">
+                        <br />
+                        <br />
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <br /><text style="font-weight:bold;color:black;font-size:14px;">
+                                    Breve descripción de la incidencia<text />
+                                    <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.DescripcionIncidencia)</text>
+                                    <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Soporte de la incidencia</text>
+                                    <br /><text style="font-weight:inherit;color:dodgerblue;font-size:12px;">@Html.DisplayFor(m => m.detalle.ArchivoAdjunto)</text>
+                                    <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Cátegoria</text>
+                                    <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.Categoria)</text>
+                                    <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Subcátegoria</text>
+                                    <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.SubCategoria)</text>
+                                    <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Centro</text>
+                                    <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.Centro)</text>
+                                    <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Personas a notificar el estado del ticket</text>
+                                    <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.PersonasAddNotificar)</text>
+                                    <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Grupo resolutor</text>
+                                    <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.GrupoResolutor)</text>
+                                    <br /><br /><text style="font-weight:bold;color:black;font-size:14px;"><i class="glyphicon glyphicon-align-right"></i> Prioridad</text>
+                                    <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.Prioridad)</text>
+                                    <br /><br /><text style="font-weight:bold;color:black;font-size:14px;"><i class="glyphicon glyphicon-user"></i> Técnico asignado</text>
+                                    <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.TecnicoAsignado)</text>
+                                    <br /><br /><text style="font-weight:bold;color:black;font-size:14px;"><i class="glyphicon glyphicon-dashboard"></i> Número de reaperturas del ticket</text>
+                                    <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">Poner nombre tercero</text>
+                                    <br /><br /><text style="font-weight:bold;color:black;font-size:14px;"><i class="glyphicon glyphicon-time"></i> Tiempo del ticket en espera</text>
+                                    <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">Poner tiempo</text>
+                            </div>                           
+                            <br />
+                            <br />
+                        </div>
+                    </div>
+                    @*MIS DATOS*@
+                    <div class="tab-pane " id="misdatos" role="tabpanel" aria-labelledby="misdatosID-tab">
+                        <br />
+                        <br />
+                        <div class="row">
+                            <div class="col-md-12">
+                                <br /><text style="font-weight:bold;color:black;font-size:14px;">
+                                    ID Empleado<text />
+                                    <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.EmpleadoID)</text>
+                                    <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Nombre completo</text>
+                                    <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.NombreCompleto)</text>
+                                    <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Correo electrónico</text>
+                                    <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.Correo)</text>
+                                    <br /><br /><text style="font-weight:bold;color:black;font-size:14px;">Área</text>
+                                    <br /><text style="font-weight:inherit;color:#808080;font-size:12px;">@Html.DisplayFor(m => m.detalle.Area)</text>
+                                    <br />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
