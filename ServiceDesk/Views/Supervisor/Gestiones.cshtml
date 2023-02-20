@@ -236,28 +236,40 @@
         if (grupo == 2) {
             $("#exclusion_pregunta").show();
             flag_exclusion_is_shown = true;
-            $.ajax({
+            // IF supervisor then hide checkbox "Permitir al tecnico trabajar varios centros al mismo tiempo
+             $.ajax({
                 type: 'POST',
-                url: '@Url.Action("checkIfExlusionCentros", "Supervisor")',
+                url: '@Url.Action("checkIfSupervisor", "Supervisor")',
                 dataType: 'json',
-                data: {
-                    id: empid
-                },
-                success: function (result) {
-                    if (result == "yes") {
-                        $('#checkbox_exclusion').prop('checked', true);
+                data: { id: empid },
+                 success: function (result) { if (result == "yes") { $("#exclusion_pregunta").hide(); flag_exclusion_is_shown = false; } },
+                 error: function () { $("#exclusion_pregunta").show(); flag_exclusion_is_shown = false; }
+             });
+
+            if (flag_exclusion_is_shown) {
+                $.ajax({
+                    type: 'POST',
+                    url: '@Url.Action("checkIfExlusionCentros", "Supervisor")',
+                    dataType: 'json',
+                    data: {
+                        id: empid
+                    },
+                    success: function (result) {
+                        if (result == "yes") {
+                            $('#checkbox_exclusion').prop('checked', true);
+                        }
+                        else {
+                            $('#checkbox_exclusion').prop('checked', false);
+                        }
+                        console.log("exclusión verificada: user", empid, result, "esta en lista de exclusiones");
+                        //if (result == "yes") { $("#add_centro_btn").show(); }
+                    },
+                    error: function () {
+                        console.log("exclusión no verificada:");
+                       // alert("Error: Imposible verificar si este usuario está en la lista de exclusiones de filtros, favor de contactar con un administrador.");
                     }
-                    else {
-                        $('#checkbox_exclusion').prop('checked', false);
-                    }
-                    console.log("exclusión verificada: user", empid, result, "esta en lista de exclusiones");
-                    //if (result == "yes") { $("#add_centro_btn").show(); }
-                },
-                error: function () {
-                    console.log("exclusión no verificada:");
-                   // alert("Error: Imposible verificar si este usuario está en la lista de exclusiones de filtros, favor de contactar con un administrador.");
-                }
-            });
+                });
+            }
         }
         else {
             $("#exclusion_pregunta").hide();

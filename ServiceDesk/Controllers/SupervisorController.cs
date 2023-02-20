@@ -1565,15 +1565,27 @@ namespace ServiceDesk.Controllers
             ViewBag.HoraFin = new SelectList(_mng.LstHoraFin(), "Value", "Text");
             ViewBag.NivelExpLst = new SelectList(_db.catNivelExperiencia.Where(x => x.Activo), "Nivel", "Nivel");
             //
-            var lstUser = new List<vwDetalleUsuario>();
-            if (empid != 19237)
-                lstUser = _db.vwDetalleUsuario.Where(a => a.Activo == true && a.GrupoResolutor == gpr).ToList();
-            else
-                lstUser = _db.vwDetalleUsuario.Where(a => a.Activo == true).ToList();
             var lstNivel = _db.catNivelExperiencia.Where(a => a.Activo == true).ToList();
-            var lstDX = _db.vwDetalleDiagnostico.Where(a => a.Activo == true).ToList();
             var lstCat = _db.vwDetalleCategoria.Where(a => a.Activo == true).ToList();
             var lstSubCat = _db.vwDetalleSubcategorias.Where(a => a.Activo == true).ToList();
+            var lstUser = new List<vwDetalleUsuario>();
+            var lstDX = new List<vwDetalleDiagnostico>();
+            //var lstDX = _db.vwDetalleDiagnostico.Where(a => a.Activo == true).ToList();
+            if (empid == 19237) // Daniel Fuentes tiene permisos especiales
+            {
+                lstDX = _db.vwDetalleDiagnostico.Where(a => a.Activo == true).ToList();
+                lstUser = _db.vwDetalleUsuario.Where(a => a.Activo == true).ToList();
+            }
+            else { 
+                //lstUser : Solo los usuarios del mismo grupo resolutor
+                lstUser = _db.vwDetalleUsuario.Where(a => a.Activo == true && a.GrupoResolutor == gpr).ToList();
+
+                //lstDx : Solo los diagnosticos pertinentes al grupo resolutor del usuario
+                int idGrupoRes = _db.catGrupoResolutor.Where(t => t.Grupo == gpr).Select(t => t.Id).FirstOrDefault();
+                var categoriasDelGrupo = _db.cat_Categoria.Where(t => t.GrupoResolutor == idGrupoRes).Select(t => t.Id).ToArray();
+                var diagsByGrp = _db.catDiagnosticos.Where(t => categoriasDelGrupo.Contains(t.IdCategoria)).Select(t => t.Id).ToArray();
+                lstDX = _db.vwDetalleDiagnostico.Where(a => a.Activo == true && diagsByGrp.Contains(a.Id)).ToList();
+            }
             //
 
             det.diagLst = lstDX;
