@@ -116,26 +116,12 @@ namespace ServiceDesk.Controllers
                     //Valida el estatus del ticket - Gestion de Botones NUEVO AYB
                     ViewBag.EdoTicket = "";
 
-                    if (AsignacionInfo.EstatusTicket == 1)
-                    {
-                        ViewBag.EdoTicket = "Abierto";
-
-                    }
-                    else if (AsignacionInfo.EstatusTicket == 2)
-                    {
-                        ViewBag.EdoTicket = "Asignado";
-                    }
-                    else if (AsignacionInfo.EstatusTicket == 3)
-                    {
-                        ViewBag.EdoTicket = "Trabajando";
-                    }
-                    else if (AsignacionInfo.EstatusTicket == 4)
-                    {
-                        ViewBag.EdoTicket = "Resuelto";
-                    }
+                    if (AsignacionInfo.EstatusTicket == 1) { ViewBag.EdoTicket = "Abierto"; }
+                    else if (AsignacionInfo.EstatusTicket == 2) { ViewBag.EdoTicket = "Asignado"; }
+                    else if (AsignacionInfo.EstatusTicket == 3) { ViewBag.EdoTicket = "Trabajando"; }
+                    else if (AsignacionInfo.EstatusTicket == 4) {ViewBag.EdoTicket = "Resuelto"; }
                     else if (AsignacionInfo.EstatusTicket == 5)//GARANTÍA
                     {
-
                         var his = _db.his_Ticket.Where(a => a.IdTicket == IdTicket && a.EstatusTicket == 5).OrderByDescending(a => a.FechaRegistro).FirstOrDefault();
 
                         var TimeNow = DateTime.Now;
@@ -162,7 +148,6 @@ namespace ServiceDesk.Controllers
 
                             //Ajustamos a que la garantia sea tiempo de resuelto mas el garantia (sin sumar hasta datetime now)
 
-
                             _db.tbl_TicketDetalle.Attach(AsignacionInfo);
                             AsignacionInfo.Estatus = "Cerrado";
                             AsignacionInfo.EstatusTicket = 6;
@@ -171,10 +156,7 @@ namespace ServiceDesk.Controllers
 
                             //Guardar historico
                             _mng.SetHistoricoCambioEstatus(AsignacionInfo.Id);
-
                         }
-
-
                     }
                     else if (AsignacionInfo.EstatusTicket == 7)//EN ESPERA
                     {
@@ -182,12 +164,9 @@ namespace ServiceDesk.Controllers
                         var TimeNow = DateTime.Now;
                         var dias = (TimeNow - AsignacionInfo.FechaRegistro).Days;
                         var diferencia = (TimeNow - AsignacionInfo.FechaRegistro).Hours;
-                        var horas = (dias * 24) + diferencia;
-
-                       
+                        var horas = (dias * 24) + diferencia;                      
 
                     }
-
 
                     var info = _db.his_Ticket.Where(a => a.IdTicket == IdTicket).OrderByDescending(a => a.FechaRegistro).ToList();
                     detalle.historico = info;
@@ -203,26 +182,15 @@ namespace ServiceDesk.Controllers
                     detalle.detalle.GrupoResolutor = info.FirstOrDefault().GrupoResolutor;
                     ViewBag.EstadoTicket = new SelectList(_db.cat_EstadoTicket.Where(x => x.Activo), "Id", "Estado");
                     switch (detalle.detalle.EstatusTicket) {
-                        case 2:
-                            ViewBag.EstadoTicket = new SelectList(_db.cat_EstadoTicket.Where(x => x.Id == 3), "Id", "Estado");
-                            break;
-                        case 3:
-                            ViewBag.EstadoTicket = new SelectList(_db.cat_EstadoTicket.Where(x => x.Id == 4 || x.Id == 7), "Id", "Estado");
-                            break;
-                        case 4:
-                            ViewBag.EstadoTicket = new SelectList(_db.cat_EstadoTicket.Where(x => x.Id == 5), "Id", "Estado");
-                            break;
-                        case 5:
-                            ViewBag.EstadoTicket = new SelectList(_db.cat_EstadoTicket.Where(x => x.Id == 6), "Id", "Estado");
-                            break;
-                        case 7:
-                            ViewBag.EstadoTicket = new SelectList(_db.cat_EstadoTicket.Where(x => x.Id == 3), "Id", "Estado");
-                            break;
+                        case 2: ViewBag.EstadoTicket = new SelectList(_db.cat_EstadoTicket.Where(x => x.Id == 3), "Id", "Estado"); break;
+                        case 3: ViewBag.EstadoTicket = new SelectList(_db.cat_EstadoTicket.Where(x => x.Id == 4 || x.Id == 7), "Id", "Estado"); break;
+                        case 4: ViewBag.EstadoTicket = new SelectList(_db.cat_EstadoTicket.Where(x => x.Id == 5), "Id", "Estado"); break;
+                        case 5: ViewBag.EstadoTicket = new SelectList(_db.cat_EstadoTicket.Where(x => x.Id == 6), "Id", "Estado"); break;
+                        case 7: ViewBag.EstadoTicket = new SelectList(_db.cat_EstadoTicket.Where(x => x.Id == 3), "Id", "Estado"); break;
                     }
 
                     // Filtrar diagnosticos acorde a grupo reoslutor ---------------- START
-                    string grupo = detalle.detalle.GrupoResolutor; 
-                        if (grupo == null) grupo = "";
+                    string grupo = detalle.detalle.GrupoResolutor; if (grupo == null) grupo = "";
                     int idGrupoRes = _db.catGrupoResolutor.Where(t => t.Grupo == grupo).Select(t => t.Id).FirstOrDefault(); 
                     var categoriasDelGrupo = _db.cat_Categoria.Where(t => t.GrupoResolutor == idGrupoRes).Select(t => t.Id).ToArray(); 
                     var diags = _db.catDiagnosticos.Where(t => categoriasDelGrupo.Contains(t.IdCategoria));
@@ -1361,8 +1329,7 @@ namespace ServiceDesk.Controllers
 
             }
 
-
-
+            Notif_Recategorizacion_de_Ticket(matrizCat.GrupoAtencion, TicketId, "supervisor");
             return Json(result, JsonRequestBehavior.AllowGet);
         }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2739,6 +2706,10 @@ namespace ServiceDesk.Controllers
         }
 
         //----------------------------------------
+        public void Notif_Recategorizacion_de_Ticket(string grupoRes, int ticketId, string origen) {
+            //notificar a supervisores y servicedesks de grupo resolutor que un ticket ha sido recategorizado hacia ellos
+            //_noti.CrearNotificacion();
+        }
         public string RoldeUsuario(int EmployeeID) //String que obtiene el Rol del usuario dado su ID 
         {
             string rol = "";

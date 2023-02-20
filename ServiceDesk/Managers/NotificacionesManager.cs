@@ -237,7 +237,7 @@ namespace ServiceDesk.Managers
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         public void SetNotiAbierto(his_Ticket his)
         {
-
+            //-------------------------------- EN DESUSO????? verificar, para recategorización parece no usarse
             //TICKET ABIERTO 
             //DEBE NOTIFICARSE A SERVICE DESK
 
@@ -572,10 +572,23 @@ namespace ServiceDesk.Managers
         public void SetNotiRecategorizacion(his_Ticket his) {
             //RECATEGORIZACION DEL TICKET
 
-            string msj = "Se ha generado un nuevo ticket con ID " + his.IdTicket +
-                " se recategorizó y se envió al grupo resolutor adecuado para resolver tu incidencia.";
-
+            //Enviar notif al creador del ticket
+            string msj = "Se ha generado un nuevo ticket con ID " + his.IdTicket 
+                + " se recategorizó y se envió al grupo resolutor adecuado para resolver tu incidencia.";
             CrearNotificacion("Ticket Recategorizado", msj, his.EmpleadoID);
+
+            //Enviar notif a supervisores del grupo resolutor
+
+            msj = "Se ha generado un nuevo ticket con ID " + his.IdTicket 
+                + " se recategorizó y se envió a tu grupo resolutor, Es importante la asignación de este ticket.";
+            //Traer todos los supervisores y servicedesk del nuevo grupo resolutor (his ya trae la info actualizada)
+            var GrupoResolutor = _sd.tbl_User.Where(t => 
+                t.GrupoResolutor == his.GrupoResolutor && 
+                (t.Rol == "Supervisor" || t.Rol == "Service Desk" || t.Rol == "ServiceDesk")
+                ).Select(t => t.EmpleadoID).ToArray();
+            ;
+            foreach (var Supervisor in GrupoResolutor) 
+            { CrearNotificacion("Ticket Recategorizado", msj, Supervisor); }
         }
 
 

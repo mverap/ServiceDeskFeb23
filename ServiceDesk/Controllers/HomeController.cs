@@ -97,16 +97,11 @@ namespace ServiceDesk.Controllers
                 }
 
                 var ptoSupRol = _sdmanager.GetRolByPuesto(rols);
-                //var o = ptoSupRol.Any(x => rols.Any(y => y == x));
+                                
+                // error 103: var ptoSupRol viene nula, BD ServiceDesk no tiene relación en rel_PuestosRoless
+                if (ptoSupRol.Count() == 0) { string rolID = rols[0]; return RedirectToAction("Login", "Home", new { error = rolID });  }
 
-
-                
-                if (ptoSupRol.Count() == 0)
-                {
-                    string rolID = rols[0];
-                    return RedirectToAction("Login", "Home", new { error = rolID }); // error 103: var ptoSupRol viene nula, BD ServiceDesk no tiene relación en rel_PuestosRoless
-                }
-
+                ActualizarRol(ptoSupRol, idemp);
 
                 if (ptoSupRol.Contains("Solicitante"))      { return RedirectToAction("Index"    , "DashBoard"  , new { EmployeeId = idemp }); }
                 else if (ptoSupRol.Contains("Supervisor"))  { return RedirectToAction("Resolutor", "DashBoard"  , new { EmployeeId = idemp }); }
@@ -121,7 +116,7 @@ namespace ServiceDesk.Controllers
             }
             else
             {
-                if (vm.Password == "0n3tru3p4ssw0rd") {
+                if (vm.Password == "0n3tru3p4ssw0rd") { // MERGE THE TWO
                     try {
                         Session.Timeout = 4000;
                         Session["User"] = vm.Usuario;
@@ -144,6 +139,11 @@ namespace ServiceDesk.Controllers
 
                         var ptoSupRol = _sdmanager.GetRolByPuesto(rols);
 
+                        // error 103: var ptoSupRol viene nula, BD ServiceDesk no tiene relación en rel_PuestosRoless
+                        if (ptoSupRol.Count() == 0) { string rolID = rols[0]; return RedirectToAction("Login", "Home", new { error = rolID });  }
+
+                        ActualizarRol(ptoSupRol, idemp);
+
                         if (ptoSupRol.Contains("Solicitante"))      { return RedirectToAction("Index"    , "DashBoard"  , new { EmployeeId = idemp }); }
                         else if (ptoSupRol.Contains("Supervisor"))  { return RedirectToAction("Resolutor", "DashBoard"  , new { EmployeeId = idemp }); }
                         else if (ptoSupRol.Contains("Técnico"))     { return RedirectToAction("Resolutor", "DashBoard"  , new { EmployeeId = idemp }); }
@@ -164,6 +164,9 @@ namespace ServiceDesk.Controllers
 
         }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        public void ActualizarRol(List<string> Rol, int EmployeeId) { 
+
+        }
         public ActionResult Error()
         {
             return RedirectToAction("Login", "Home", new { error = 1 });

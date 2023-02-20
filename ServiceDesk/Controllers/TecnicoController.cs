@@ -860,7 +860,7 @@ namespace ServiceDesk.Controllers
             }
 
 
-
+            _spr.Notif_Recategorizacion_de_Ticket(matrizCat.GrupoAtencion, TicketId, "tecnico");
             return Json(result, JsonRequestBehavior.AllowGet);
         }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        

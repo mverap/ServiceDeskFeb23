@@ -25,6 +25,7 @@ namespace ServiceDesk.Controllers
         private readonly SlaManager _sla = new SlaManager();
         private readonly NotificacionesManager _noti = new NotificacionesManager();
         private readonly DocumentController _doc = new DocumentController();
+        private readonly SupervisorController _spr = new SupervisorController();
         //============================================================================================================================================
         public ActionResult Index(int type = 0)
         {
@@ -929,7 +930,7 @@ namespace ServiceDesk.Controllers
             }
 
 
-
+            _spr.Notif_Recategorizacion_de_Ticket(matrizCat.GrupoAtencion, TicketId, "servicedesk");
             return Json(result, JsonRequestBehavior.AllowGet);
         }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        

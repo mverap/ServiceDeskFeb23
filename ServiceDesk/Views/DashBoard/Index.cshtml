@@ -210,6 +210,8 @@
             break;
 
         }
+        @*var rol = '@ViewBag.Rol';
+        console.log("rol: "+ rol);*@
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         window.addEventListener("keypress", function (event) {
             if (event.keyCode == 13) {
@@ -458,10 +460,13 @@
                     </button>
                 </div>
                 <div class="col-md-2" style="text-align:center;">
-                    <button type="button" class="btn btn-info border-white" onclick="goToTechSupDesk(@ViewBag.user);"
-                            style="background-color:#3b424a;border:white;color:white;">
-                        Ir a mis gestiones
-                    </button>
+                    @if (ViewBag.Rol == "Solicitante") { }
+                    else { 
+                        <button type="button" class="btn btn-info border-white" onclick="goToTechSupDesk(@ViewBag.user);"
+                                style="background-color:#3b424a;border:white;color:white;">
+                            Ir a mis gestiones
+                        </button>
+                    }
                 </div>
             </div>
         </div>

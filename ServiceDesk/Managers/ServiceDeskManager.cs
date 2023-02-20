@@ -153,7 +153,8 @@ namespace ServiceDesk.Managers
                 dto.Historial = true;                                           //
                 dto.Motivo = vm.subticket.DescIncidencia;                       // NEW INFO
                 //tecnicos
-                dto.TecnicoAsignado = padre.TecnicoAsignado; 
+                //dto.TecnicoAsignado = padre.TecnicoAsignado;
+                dto.TecnicoAsignado = dto.TecnicoAsignado;
                 dto.TecnicoAsignadoReag = dto.TecnicoAsignadoReag;      
                 dto.TecnicoAsignadoReag2 = dto.TecnicoAsignadoReag2;     
                 dto.NoAsignaciones= Convert.ToInt32(padre.NoReasignaciones);
