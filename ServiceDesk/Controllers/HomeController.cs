@@ -164,8 +164,8 @@ namespace ServiceDesk.Controllers
 
         }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        public void ActualizarRol(List<string> Rol, int EmployeeId) { 
-
+        public void ActualizarRol(List<string> Rol, int EmployeeId) {
+            _dash.ActualizarRol( Rol, EmployeeId);
         }
         public ActionResult Error()
         {

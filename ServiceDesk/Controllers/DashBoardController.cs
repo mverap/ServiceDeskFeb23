@@ -1382,6 +1382,23 @@ namespace ServiceDesk.Controllers
             return lista;
         }
 
+        public void ActualizarRol(List<string> rol, int employeeId) {
+            var user = _db.tbl_User.Where(t => t.EmpleadoID == employeeId).FirstOrDefault();
+            string nuevo_rol = "";
+
+            //orden inverso al de home
+            if (rol.Contains("Directivo")) { nuevo_rol = "Directivo";  }
+            else if (rol.Contains("ServiceDesk")) { nuevo_rol = "ServiceDesk"; }
+            else if (rol.Contains("Técnico")) { nuevo_rol = "Tecnico"; }
+            else if (rol.Contains("Tecnico")) { nuevo_rol = "Tecnico"; }
+            else if (rol.Contains("Supervisor")) { nuevo_rol = "Supervisor"; }
+            else if(rol.Contains("Solicitante")) { nuevo_rol = "Solicitante"; }
+
+            user.Rol = nuevo_rol;
+
+            _db.tbl_User.AddOrUpdate(user);
+            _db.SaveChanges();
+        }
         public string RoldeUsuario(int EmployeeID) //String que obtiene el Rol del usuario dado su ID 
         {
             string rol = "";

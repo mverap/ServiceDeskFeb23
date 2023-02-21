@@ -958,14 +958,14 @@ namespace ServiceDesk.Models
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     [Table("tbl_Notificaciones")] public class Notificaciones
     {
-        [Key]
-        public int Id { get; set; }
+        [Key] public int Id { get; set; }
         public string Motivo { get; set; }
         public string Mensaje { get; set; }
         public int EmpleadoId { get; set; }
         public DateTime FechaRegistro { get; set; }
         public bool Activo { get; set; }
         public bool Vista { get; set; }
+        public bool Enviada { get; set; }
     }
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     [Table("tbl_TiemposSLA")] public class TiemposSLA

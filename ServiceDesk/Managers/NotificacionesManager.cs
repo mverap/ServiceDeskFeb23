@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web;
 using ServiceDesk.Models;
 using ServiceDesk.ViewModels;
@@ -226,13 +227,16 @@ namespace ServiceDesk.Managers
                 EmpleadoId = empleadoid,
                 FechaRegistro = DateTime.Now,
                 Activo = true,
-                Vista = false
+                Vista = false, 
+                Enviada = false
             };
 
             _sd.Notificaciones.Add(noti);
             _sd.SaveChanges();
 
-            SendEmailByEmployeeId(empleadoid, mensaje);
+            // Ahora el Scheduler se encarga de mandar los correos, esto ha reducido tiempos de espera en cargas de página
+            // Scheduler en: Services / Job_SendNotificaciones.cs
+            //SendEmailByEmployeeId(empleadoid, mensaje);
         }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         public void SetNotiAbierto(his_Ticket his)

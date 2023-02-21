@@ -52,7 +52,7 @@
             Aceptar();
         });
         if (ticket != 0) {
-            var url = "../ControlCambios/AñadirCC?EmployeeId=@ViewBag.user&ticket=" + ticket;
+            var url = "../ControlCambios/AnadirCC?EmployeeId=@ViewBag.user&ticket=" + ticket;
             $('#formCC').attr('action', url);
         }
 
@@ -135,7 +135,7 @@
 </script>
 
 
-<form action="../ControlCambios/AñadirCC?EmployeeId=@ViewBag.user" enctype="multipart/form-data" id="formCC" method="post">
+<form action="../ControlCambios/AnadirCC?EmployeeId=@ViewBag.user" enctype="multipart/form-data" id="formCC" method="post">
     <div class="col-lg-12" style="padding:0px;" id="inputss">    
         <div class="col-lg-8">
             <p><br /><a style="color: dodgerblue" onclick="returnMenu()">Dashboard</a> / <a style="color: dodgerblue" onclick="goToControl()"> Control de Cambios </a> / Creación de Control de Cambios </p>

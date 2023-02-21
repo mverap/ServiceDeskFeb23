@@ -202,13 +202,8 @@
         var type = parseInt(@Model.type);
         if (type != 1) { $("#btnProceso").removeClass("labelSelected");}
         switch (type) {
-            case 2:
-                $("#btnCerrado").addClass("labelSelected");
-            break;
-            case 3:
-                $("#btnCancelado").addClass("labelSelected");
-            break;
-
+            case 2: $("#btnCerrado").addClass("labelSelected"); break;
+            case 3: $("#btnCancelado").addClass("labelSelected"); break;
         }
         @*var rol = '@ViewBag.Rol';
         console.log("rol: "+ rol);*@

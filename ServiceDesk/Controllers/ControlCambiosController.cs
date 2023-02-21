@@ -399,7 +399,7 @@ namespace ServiceDesk.Controllers
 
         // CC
         
-        public ActionResult AñadirCC(CCDashboard vm, int EmployeeId, int? ticket)
+        public ActionResult AnadirCC(CCDashboard vm, int EmployeeId, int? ticket)
         {
             vm.tbl_CC_Dashboard.Ticket = (ticket.HasValue) ? ticket : 0;
             vm.tbl_CC_Dashboard.Estatus = "Solicitado";
