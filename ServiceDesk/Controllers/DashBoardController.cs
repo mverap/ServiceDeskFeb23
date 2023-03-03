@@ -1383,6 +1383,8 @@ namespace ServiceDesk.Controllers
             var user = _db.tbl_User.Where(t => t.EmpleadoID == employeeId).FirstOrDefault();
             string nuevo_rol = "";
 
+            if (user == null) RedirectToAction("Login", "Home", new { error = employeeId });
+
             //orden inverso al de home
             if (rol.Contains("Directivo")) { nuevo_rol = "Directivo";  }
             else if (rol.Contains("ServiceDesk")) { nuevo_rol = "ServiceDesk"; }
