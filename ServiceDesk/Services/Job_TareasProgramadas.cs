@@ -15,7 +15,7 @@ namespace QuartzScheduler.Services
         private readonly ServiceDeskManager _mng = new ServiceDeskManager();
         public void Execute(IJobExecutionContext context)
         {
-            System.Diagnostics.Debug.WriteLine("Hello There!! -----------------: Inicio de contador " + DateTime.Now);
+            //System.Diagnostics.Debug.WriteLine("Hello There!! -----------------: Inicio de contador " + DateTime.Now);
             var today = DateTime.Now.Date;
 
             var listaTareas = _db.tblTareasProgramadas.Where(t => t.Activado == true).ToList();
@@ -44,7 +44,7 @@ namespace QuartzScheduler.Services
                 if (tarea.Activado_2)
                 {
                    // System.Diagnostics.Debug.WriteLine("{0} Tarea programada ha sido programada para la siguiente hora \n     técnico con ID {1} debe ser notificado", tarea.Id, tarea.TecnicoID);
-                    System.Diagnostics.Debug.WriteLine("{0} TP esta en estado activo", tarea.Id);
+                    //System.Diagnostics.Debug.WriteLine("{0} TP esta en estado activo", tarea.Id);
 
                     if (tarea.Estatus == "Cerrado") {
                         if (TareaRecienActivada)
@@ -59,10 +59,10 @@ namespace QuartzScheduler.Services
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("{0}: No entro debido a: ", tarea.Id);
-                    if (!tareaTocaHoy) { System.Diagnostics.Debug.WriteLine("      Día", tarea.Id); }
-                    if (!tareaRangoFechas) { System.Diagnostics.Debug.WriteLine("      Rango de fechas", tarea.Id); }
-                    if (!tareaHora) { System.Diagnostics.Debug.WriteLine("      fuera de hora", tarea.Id); }
+                    //System.Diagnostics.Debug.WriteLine("{0}: No entro debido a: ", tarea.Id);
+                    //if (!tareaTocaHoy) { System.Diagnostics.Debug.WriteLine("      Día", tarea.Id); }
+                    //if (!tareaRangoFechas) { System.Diagnostics.Debug.WriteLine("      Rango de fechas", tarea.Id); }
+                    //if (!tareaHora) { System.Diagnostics.Debug.WriteLine("      fuera de hora", tarea.Id); }
                 }
             }
             _db.SaveChanges();

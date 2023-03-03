@@ -139,7 +139,7 @@
         <div class="col-sm-3 divTickets" style="margin-left:10px;margin-bottom:10px;">
             @if (item.estatus == "Abierto" && item.isPadre == false && Model.lstResumenResolutor.Count() > 1)
             {
-                if (ViewBag.rol == "Supervisor") { 
+                if (ViewBag.rol == "Supervisor") {
                 <input type="checkbox" id="check_@item.tickedID" name="vincular" class="form-check" style="position:absolute;" />
                 }
             }
@@ -156,17 +156,20 @@
                 }
                 <p ><b>Categoria: @item.categoria</b></p>
                 <h2 style="margin-bottom:0px; margin-top:0px;">
-                    @if (item.prioridad == "Baja")
+                    @if (item.prioridad != null)
                     {
-                        <i class="fa fa-circle Oval"></i>
-                    }
-                    @if (item.prioridad == "Medio")
-                    {
-                        <i class="fa fa-circle OvalTrabajando"></i>
-                    }
-                    @if (item.prioridad == "Alto")
-                    {
-                        <i class="fa fa-circle OvalCancelado"></i>
+                        if (item.prioridad.Contains("Baj"))
+                        {
+                            <i class="fa fa-circle Oval"></i>
+                        }
+                        if (item.prioridad.Contains("Medi"))
+                        {
+                            <i class="fa fa-circle OvalTrabajando"></i>
+                        }
+                        if (item.prioridad.Contains("Alt"))
+                        {
+                            <i class="fa fa-circle OvalCancelado"></i>
+                        }
                     }
                     <b>Prioridad @item.prioridad</b>
                 </h2>

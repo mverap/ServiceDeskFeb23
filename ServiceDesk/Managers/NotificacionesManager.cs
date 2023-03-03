@@ -75,42 +75,37 @@ namespace ServiceDesk.Managers
             }
         }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        public void SetNotificaciones(his_Ticket his)
+        public void SetNotificaciones(his_Ticket his, int sub = 0) // sub = 1 : Notificación es para un subticket
         {
-
             if (his.EstatusTicket == 1)
             {
-
                 //TICKET ABIERTO 
                 //DEBE NOTIFICARSE A SERVICE DESK
-
-                SetNotiAbierto(his);
+                if (sub == 1)   SetNotiAbierto(his, 1);
+                else            SetNotiAbierto(his);
             }
             if (his.EstatusTicket == 2)
             {
                 //TICKET ASIGNADO
                 //DEBE REPORTARSE A USUARIO
-
-                SetNotiAsignado(his);
+                if (sub == 1)   SetNotiAsignado(his, 1);
+                else            SetNotiAsignado(his);
             }
             var cambioestatus = new List<int> { 3, 4, 5, 6, 7 };
             if (cambioestatus.Contains(his.EstatusTicket))
             {
                 //EL TICKET AH CAMBIADO DE ESTATUS
                 //NOTIFICAR CAMBIO DE ESTATUS A USUARIO
-
-                SetNotiCambioEstatus(his);
+                if (sub == 1)   SetNotiCambioEstatus(his, 1);
+                else            SetNotiCambioEstatus(his);
             }
             if (his.EstatusTicket == 8)
             {
                 //TICKET CANCELADO
                 //REPORTAR A SOLICITANTE
-
-                SetNotiCancelado(his);
+                if (sub == 1)   SetNotiCancelado(his, 1);
+                else            SetNotiCancelado(his);
             }
-
-
-
         }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         public int GetCurrentTecnicoByTicketId(int idTicket)
@@ -239,8 +234,11 @@ namespace ServiceDesk.Managers
             //SendEmailByEmployeeId(empleadoid, mensaje);
         }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        public void SetNotiAbierto(his_Ticket his)
+        //-------------------------------------------------------------------------------- SET TICKOETS
+        public void SetNotiAbierto(his_Ticket his, int sub = 0)
         {
+            string ticketId = "" + his.IdTicket.ToString();
+            if (sub == 1) ticketId = "SUB-" + his.IdTicket.ToString();
             //-------------------------------- EN DESUSO????? verificar, para recategorización parece no usarse
             //TICKET ABIERTO 
             //DEBE NOTIFICARSE A SERVICE DESK
@@ -254,17 +252,18 @@ namespace ServiceDesk.Managers
                 {
                     //RECATEGORIZACION DEL TICKET
 
-                    string msj = "Se ha generado un nuevo ticket con ID " + his.IdTicket +
+                    string msj = "Se ha generado un nuevo ticket con ID " + ticketId +
                         " se recategorizó y se envió al grupo resolutor adecuado para resolver tu incidencia.";
 
                     CrearNotificacion("Ticket Recategorizado", msj, his.EmpleadoID);
 
                     //supervisor del grupo
                     var grup = _sd.tbl_User.Where(a => a.GrupoResolutor==his.GrupoResolutor && a.Rol== "Supervisor").FirstOrDefault();
+                    // avisar a todos los supervisores????????????
 
                     if (grup !=null)
                     {
-                        string msj2 = "Se ha generado un nuevo ticket con ID " + his.IdTicket +
+                        string msj2 = "Se ha generado un nuevo ticket con ID " + ticketId +
                         " se recategorizó y se envió a tu grupo resolutor, Es importante la asignación de este ticket.";
 
                         CrearNotificacion("Ticket Recategorizado", msj2, grup.EmpleadoID);
@@ -275,7 +274,7 @@ namespace ServiceDesk.Managers
 
                     if (tec != null)
                     {
-                        string msj2 = "Se ha generado un nuevo ticket con ID " + his.IdTicket +
+                        string msj2 = "Se ha generado un nuevo ticket con ID " + ticketId +
                         " se recategorizó y se envió al grupo resolutor adecuado para resolver la incidencia.";
 
                         CrearNotificacion("Ticket Recategorizado", msj2, tec.EmpleadoID);
@@ -286,15 +285,21 @@ namespace ServiceDesk.Managers
                 else
                 {
                     //Notificamos a Supervisor de creacion de Ticket
-                    var grup = _sd.tbl_User.Where(a => a.GrupoResolutor == his.GrupoResolutor && a.Rol == "Supervisor").FirstOrDefault();
+                    //var grup = _sd.tbl_User.Where(a => a.GrupoResolutor == his.GrupoResolutor && a.Rol == "Supervisor").ToArray().Select(t => t.EmpleadoID);
+                    var grup = _sd.tbl_User.Where(t =>
+                       t.GrupoResolutor == his.GrupoResolutor &&
+                       (t.Rol == "Supervisor" || t.Rol == "Service Desk" || t.Rol == "ServiceDesk")
+                       ).Select(t => t.EmpleadoID).ToArray();
 
+                    // --------------- MANDAR A TODOS LOS SUPERVISORES??????
                     if (grup != null)
                     {
-                        string msj = "Se ha generado un nuevo ticket con ID " + his.IdTicket + " en estatus abierto. " +
+                        string msj = "Se ha generado un nuevo ticket con ID " + ticketId + " en estatus abierto. " +
                                    "Es importante la asignación de este ticket.";
-
-                        CrearNotificacion("Ticket Abierto", msj, grup.EmpleadoID);
+                        foreach (var supervisor in grup)
+                        CrearNotificacion("Ticket Abierto", msj, supervisor);
                     }
+
                 }
             }
             else
@@ -307,10 +312,13 @@ namespace ServiceDesk.Managers
 
 
 
-        }
+        } // sub = 1 :. ticket en cuestión es subticket, notif es distinta
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        public void SetNotiAsignado(his_Ticket his)
+        public void SetNotiAsignado(his_Ticket his, int sub = 0)
         {
+
+            string ticketId = "" + his.IdTicket.ToString();
+            if (sub == 1) ticketId = "SUB-" + his.IdTicket.ToString();
             //TICKET ASIGNADO
             //DEBE REPORTARSE A USUARIO
 
@@ -322,12 +330,12 @@ namespace ServiceDesk.Managers
                 {
                     //TICKET REASIGNADO
                     //NOTIFICACION SOLICITANTE
-                    string msj = "El ticket con ID " + his.IdTicket + " se reasigno a otro técnico.";
+                    string msj = "El ticket con ID " + ticketId + " se reasigno a otro técnico.";
 
                     CrearNotificacion("Ticket Reasignado", msj, his.EmpleadoID);
 
                     //NOTIFICACION TECNICO ANTERIOR
-                    msj = "El ticket con ID " + his.IdTicket + " se reasigno a otro técnico.";
+                    msj = "El ticket con ID " + ticketId + " se reasigno a otro técnico.";
                     var anttec = GetPastTecnicoByHis(his);
 
                     CrearNotificacion("Ticket Reasignado", msj, anttec);
@@ -337,7 +345,7 @@ namespace ServiceDesk.Managers
 
                     if (grup != null)
                     {
-                        var msj2 = "El ticket con ID " + his.IdTicket + " se reasigno a otro técnico.";
+                        var msj2 = "El ticket con ID " + ticketId + " se reasigno a otro técnico.";
 
                         CrearNotificacion("Ticket Reasignado", msj2, grup.EmpleadoID);
                     }
@@ -349,7 +357,7 @@ namespace ServiceDesk.Managers
 
                     if (grup != null)
                     {
-                      var  msj = "El ticket con ID " + his.IdTicket + " se reasigno a otro técnico.";
+                      var  msj = "El ticket con ID " + ticketId + " se reasigno a otro técnico.";
 
                         CrearNotificacion("Ticket Reasignado", msj, grup.EmpleadoID);
                     }
@@ -357,14 +365,14 @@ namespace ServiceDesk.Managers
             }
             else
             {
-                string msj = "El ticket con ID " + his.IdTicket +
+                string msj = "El ticket con ID " + ticketId +
                               " está en estatus asignado. Puedes ver los comentarios del técnico en el detalle del ticket.";
 
                 CrearNotificacion("Ticket Asignado", msj, his.EmpleadoID);
             }
 
             //NOTIFICACION DE TECNICO 
-            string tecmsj = "El ticket con ID " + his.IdTicket +
+            string tecmsj = "El ticket con ID " + ticketId +
                              " está en estatus asignado. Es importante tu colaboración para resolver este ticket.";
             var tecnico = GetCurrentTecnicoByHis(his);
 
@@ -372,9 +380,11 @@ namespace ServiceDesk.Managers
 
         }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        public void SetNotiCambioEstatus(his_Ticket his)
+        public void SetNotiCambioEstatus(his_Ticket his, int sub = 0)
         {
 
+            string ticketId = "" + his.IdTicket.ToString();
+            if (sub == 1) ticketId = "SUB-" + his.IdTicket.ToString();
             //EL TICKET AH CAMBIADO DE ESTATUS
             //NOTIFICAR CAMBIO DE ESTATUS A USUARIO
             string msj = "";
@@ -384,7 +394,7 @@ namespace ServiceDesk.Managers
             {
                 //TRABAJANDO
                 motivo = "Ticket Trabajando";
-                msj = "El ticket con ID " + his.IdTicket + " está en estatus trabajando.";
+                msj = "El ticket con ID " + ticketId + " está en estatus trabajando.";
                 CrearNotificacion(motivo, msj, his.EmpleadoID);
             }
             else if (his.EstatusTicket == 4)
@@ -393,7 +403,7 @@ namespace ServiceDesk.Managers
                 //NOTIFICAR A USUARIO
                 
                 motivo = "Ticket Resuelto";
-                msj = "El ticket con ID " + his.IdTicket + " está en estatus resuelto. Por favor aprueba la solución de tu ticket.";
+                msj = "El ticket con ID " + ticketId + " está en estatus resuelto. Por favor aprueba la solución de tu ticket.";
                 CrearNotificacion(motivo, msj, his.EmpleadoID);
 
             }
@@ -401,7 +411,7 @@ namespace ServiceDesk.Managers
             {
                 //EN GARANTIA
                 motivo = "Ticket en Garantía";
-                msj = "El ticket con ID " + his.IdTicket + " está en estatus en garantía. Puedes reabrir el ticket si tu problema persiste.";
+                msj = "El ticket con ID " + ticketId + " está en estatus en garantía. Puedes reabrir el ticket si tu problema persiste.";
                 CrearNotificacion(motivo, msj, his.EmpleadoID);
 
                 //NOTIFICAR A TECNICO
@@ -412,12 +422,12 @@ namespace ServiceDesk.Managers
                 //CERRADO
                 //NOTIFICADO A SOLICITANTE
                 motivo = "Ticket Cerrado";
-                msj = "El ticket con ID " + his.IdTicket + " está en estatus cerrado. Por favor contesta nuestra encuesta de satisfacción.";
+                msj = "El ticket con ID " + ticketId + " está en estatus cerrado. Por favor contesta nuestra encuesta de satisfacción.";
                 CrearNotificacion(motivo, msj, his.EmpleadoID);
 
                 //NOTIFICACION A TECNICO
                 motivo = "Ticket Cerrado";
-                msj = "El ticket con ID " + his.IdTicket + " está en estatus cerrado";
+                msj = "El ticket con ID " + ticketId + " está en estatus cerrado";
                 var tecnico = GetCurrentTecnicoByHis(his);
 
                 CrearNotificacion(motivo, msj, tecnico);
@@ -426,26 +436,27 @@ namespace ServiceDesk.Managers
             {
                 //EN ESPERA
                 motivo = "Ticket en Espera";
-                msj = "El ticket con ID " + his.IdTicket + " está en estatus en espera.";
+                msj = "El ticket con ID " + ticketId + " está en estatus en espera.";
                 CrearNotificacion(motivo, msj, his.EmpleadoID);
             }
 
         }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        public void SetNotiCancelado(his_Ticket his)
+        public void SetNotiCancelado(his_Ticket his, int sub = 0)
         {
-
+            string ticketId = "" + his.IdTicket.ToString();
+            if (sub == 1) ticketId = "SUB-" + his.IdTicket.ToString();
 
             //TICKET CANCELADO 
             //DEBE NOTIFICARSE A USUARIO
 
-            string msj = "Se ha generado un nuevo ticket con ID " + his.IdTicket + " en estatus cancelado. " +
+            string msj = "Se ha generado un nuevo ticket con ID " + ticketId + " en estatus cancelado. " +
                     "Puedes ver el motivo de cancelación en el detalle del ticket.";
 
             CrearNotificacion("Ticket Cancelado", msj, his.EmpleadoID);
 
             //DEBE NOTIFICARSE A TECNICO
-            msj = "El ticket con ID " + his.IdTicket + " está en estatus cancelado.";
+            msj = "El ticket con ID " + ticketId + " está en estatus cancelado.";
             var tecnico = GetCurrentTecnicoByHis(his);
             CrearNotificacion("Ticket Cancelado", msj, tecnico);
         }
@@ -573,17 +584,19 @@ namespace ServiceDesk.Managers
             CrearNotificacion("Exceso de soluciones rechazadas", msj, super);
         }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        public void SetNotiRecategorizacion(his_Ticket his) {
+        public void SetNotiRecategorizacion(his_Ticket his, int sub = 0) {
             //RECATEGORIZACION DEL TICKET
+            string ticketId = "" + his.IdTicket.ToString();
+            if (sub == 1) { ticketId = "SUB-" + his.IdTicket.ToString(); }
 
             //Enviar notif al creador del ticket
-            string msj = "Se ha generado un nuevo ticket con ID " + his.IdTicket 
+            string msj = "Se ha generado un nuevo ticket con ID " + ticketId
                 + " se recategorizó y se envió al grupo resolutor adecuado para resolver tu incidencia.";
             CrearNotificacion("Ticket Recategorizado", msj, his.EmpleadoID);
 
             //Enviar notif a supervisores del grupo resolutor
 
-            msj = "Se ha generado un nuevo ticket con ID " + his.IdTicket 
+            msj = "Se ha generado un nuevo ticket con ID " + ticketId
                 + " se recategorizó y se envió a tu grupo resolutor, Es importante la asignación de este ticket.";
             //Traer todos los supervisores y servicedesk del nuevo grupo resolutor (his ya trae la info actualizada)
             var GrupoResolutor = _sd.tbl_User.Where(t => 
@@ -600,10 +613,10 @@ namespace ServiceDesk.Managers
         public void SendEmailByEmployeeId(int employeeId, string message)
         {
 
-            var usuario = _sd.tbl_User.Where(a=>a.EmpleadoID==employeeId).FirstOrDefault();
+            var usuario = _sd.vw_INFO_USER_EMPLEADOS.Where(a=>a.NumeroPenta == employeeId).FirstOrDefault();
             if (usuario != null)
             {
-                var email = usuario.Correo;
+                var email = usuario.Email;
                 _msg.SendEmail("Notificacion", "", message, email, new List<string>());
             }
 

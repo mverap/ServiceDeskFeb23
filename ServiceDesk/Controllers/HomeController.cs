@@ -144,6 +144,9 @@ namespace ServiceDesk.Controllers
 
                         ActualizarRol(ptoSupRol, idemp);
 
+                        System.Diagnostics.Debug.WriteLine("Id Employee: " + idemp);
+                        foreach (string rol in ptoSupRol) { System.Diagnostics.Debug.WriteLine("Rol: " + rol); }
+
                         if (ptoSupRol.Contains("Solicitante"))      { return RedirectToAction("Index"    , "DashBoard"  , new { EmployeeId = idemp }); }
                         else if (ptoSupRol.Contains("Supervisor"))  { return RedirectToAction("Resolutor", "DashBoard"  , new { EmployeeId = idemp }); }
                         else if (ptoSupRol.Contains("Técnico"))     { return RedirectToAction("Resolutor", "DashBoard"  , new { EmployeeId = idemp }); }

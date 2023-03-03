@@ -214,7 +214,12 @@ namespace ServiceDesk.ViewModels
         public int EmployeeID { get; set; }
         public int CCid { get; set; }
     }
-
+    public class UserTimeData { 
+        public TimeSpan Inicio_Jrnd { get; set; }
+        public TimeSpan Final_Jrnd { get; set; }
+        public string[] DiasLaborales { get; set; }
+        public int debug { get; set; }
+    }
     public class DetalleTareaCC
     {
         public tbl_CC_Tareas tbl_CC_Tareas { get; set; }

@@ -112,7 +112,8 @@ namespace ServiceDesk.Managers
             _db.SaveChanges();
 
             //ENVIO DE GUARDADO DE TICKET
-            _noti.SetNotificaciones(dto);
+            if (vm.IdTicketPrincipal != null)  _noti.SetNotificaciones(dto, 1);  // ,1 sets the notification for SUB ticket
+            else _noti.SetNotificaciones(dto);
         }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         public void SaveHistoricoSubticket(DetalleSelectedTicketVm vm, int Id)
@@ -161,6 +162,8 @@ namespace ServiceDesk.Managers
 
                 _db.his_Ticket.Add(dto);
                 _db.SaveChanges();
+
+                _noti.SetNotificaciones(dto, 1);
             }
 
 
@@ -399,6 +402,9 @@ namespace ServiceDesk.Managers
             _db.SaveChanges();
 
 
+            if (vm.IdTicketPrincipal != null)
+                _noti.SetNotificaciones(dto, 1);  // ,1 sets the notification for SUB ticket
+            else 
             _noti.SetNotificaciones(dto);
 
 
@@ -539,7 +545,11 @@ namespace ServiceDesk.Managers
                 _db.SaveChanges();
 
                 //NOTIFICACIONES DE CAMBIO DE ESTATUS DE TICKET
-                _noti.SetNotificaciones(dto);
+
+                if (data.IdTicketPrincipal != null)
+                    _noti.SetNotificaciones(dto, 1);  // ,1 sets the notification for SUB ticket
+                else
+                    _noti.SetNotificaciones(dto);
 
             }
         }
@@ -804,7 +814,11 @@ namespace ServiceDesk.Managers
                 _db.his_Ticket.Add(dto);
                 _db.SaveChanges();
 
-                _noti.SetNotificaciones(dto);
+
+                if (data.IdTicketPrincipal != null)
+                    _noti.SetNotificaciones(dto, 1);  // ,1 sets the notification for SUB ticket
+                else
+                    _noti.SetNotificaciones(dto);
 
 
             }

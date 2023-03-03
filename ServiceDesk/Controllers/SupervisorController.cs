@@ -33,10 +33,12 @@ namespace ServiceDesk.Controllers
             return View();
         }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
-        public ActionResult DetalleTicket(int? IdTicket, string folio, string EmployeeId, int isChild = 0)
+        public ActionResult DetalleTicket(int? IdTicket, string folio, string EmployeeId, string Respuesta, int isChild = 0)
         {
             // copiar y pegar en cualquier actionresult que requiere mandar usuario por un tubo si se intenta pasar de listo
             var userSession = Session["EmpleadoNo"].ToString(); if (userSession != EmployeeId) { return RedirectToAction("Error", "Document"); }
+
+            if (Respuesta == "Error") { ViewBag.Mensaje = "SI"; }
 
             ViewBag.idChild = 0;
             var hisCCount = _db.his_Ticket.Where(t => t.IdTicket == IdTicket && t.Motivo.Contains("Ticket pasó a Control de Cambios")).Count();
@@ -170,7 +172,7 @@ namespace ServiceDesk.Controllers
 
                     var info = _db.his_Ticket.Where(a => a.IdTicket == IdTicket).OrderByDescending(a => a.FechaRegistro).ToList();
                     detalle.historico = info;
-                    detalle.detalle = _db.VWDetalleTicket.Find(IdTicket);
+                    detalle.detalle = _db.VWDetalleTicket.Where(t => t.Id == IdTicket).FirstOrDefault();
 
                     //Archivos adjuntos
                     var dtoDw = _db.tblDocumentos.Where(a => a.IdTicket == IdTicket && a.Tipo != 5).OrderByDescending(a => a.FechaRegisto).ToList();
@@ -707,7 +709,9 @@ namespace ServiceDesk.Controllers
 
 
                     detalle.historico = info;
-                    detalle.detalle = _db.VWDetalleTicket.Find(IdTicket);
+                    //detalle.detalle = _db.VWDetalleTicket.Find(IdTicket);
+                    detalle.detalle = _db.VWDetalleTicket.Where(t => t.Id == IdTicket).FirstOrDefault();
+
 
                     ViewBag.EstadoTicket = new SelectList(_db.cat_EstadoTicket.Where(x => x.Activo), "Id", "Estado");
                     ViewBag.DX = new SelectList(_db.catDiagnosticos, "Diagnostico", "Diagnostico");
@@ -786,7 +790,8 @@ namespace ServiceDesk.Controllers
                     //
 
                     detalle.historico = info;
-                    detalle.detalle = _db.VWDetalleTicket.Find(IdTicket);
+                    //detalle.detalle = _db.VWDetalleTicket.Find(IdTicket);
+                    detalle.detalle = _db.VWDetalleTicket.Where(t => t.Id == IdTicket).FirstOrDefault();
 
                     ViewBag.EstadoTicket = new SelectList(_db.cat_EstadoTicket.Where(x => x.Activo), "Id", "Estado");
                     ViewBag.DX = new SelectList(_db.catDiagnosticos, "Diagnostico", "Diagnostico");
@@ -1241,8 +1246,9 @@ namespace ServiceDesk.Controllers
                 _db.his_Ticket.Add(dtoHis);
                 _db.SaveChanges();
 
-
-                _noti.SetNotiRecategorizacion(dtoHis);
+                if (info.IdTicketPrincipal != null) _noti.SetNotiRecategorizacion(dtoHis, 1);
+                else
+                    _noti.SetNotiRecategorizacion(dtoHis);
 
                 result = "Correcto";
 
@@ -1322,7 +1328,9 @@ namespace ServiceDesk.Controllers
                 _db.his_Ticket.Add(dtoHis);
                 _db.SaveChanges();
 
-                _noti.SetNotiRecategorizacion(dtoHis);
+                if (info.IdTicketPrincipal != null) _noti.SetNotiRecategorizacion(dtoHis, 1);
+                else
+                    _noti.SetNotiRecategorizacion(dtoHis);
 
                 result = "Correcto";
 
@@ -1445,6 +1453,8 @@ namespace ServiceDesk.Controllers
                     datos.FechaRegistro = DateTime.Now;                                 // New info
                     con.tbl_TicketDetalle.Add(datos);
                     con.SaveChanges();
+
+
                 }
             }
 

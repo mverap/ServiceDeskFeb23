@@ -596,8 +596,12 @@ namespace ServiceDesk.Controllers
             vmDashbordResolutor vm = new vmDashbordResolutor();
             List<ticketResumenResolutor> lstTicketsResumen = new List<ticketResumenResolutor>();
             var lstCategoria = _db.cat_Categoria.Where(x => x.Activo == true);
+            var usuario = _db.tbl_User.Where(t => t.EmpleadoID == empledoId).FirstOrDefault();
+
             //var details = _db.tbl_TicketDetalle.Where(x => x.EmpleadoID == empledoId && x.Id == oTicket).ToList();
-            var details = _db.tbl_TicketDetalle.Where(x =>  x.Id == oTicket).ToList();
+            var details = _db.tbl_TicketDetalle.Where(x =>  x.Id == oTicket && x.GrupoResolutor.Contains(usuario.GrupoResolutor)).ToList();
+
+            
             if (details.Count == 0) {
 
                 if (type == "usuario")
@@ -833,187 +837,180 @@ namespace ServiceDesk.Controllers
             ViewBag.rol = rol;
             vmDashbordResolutor vm = new vmDashbordResolutor();
             List<ticketResumenResolutor> lstTicketsResumen = new List<ticketResumenResolutor>();
-            var lstCategoria = _db.cat_Categoria.Where(x => x.Activo == true);
 
-            //SE FILTRAN POR GRUPO RESOLUTOR//
-            var userint = Convert.ToInt32(user);
-            var grupInfo = _db.tbl_User.Where(a => a.EmpleadoID == userint).FirstOrDefault();
-            var details = _db.tbl_TicketDetalle.Where(x => x.Estatus == type && x.GrupoResolutor == grupInfo.GrupoResolutor).ToList();
-            ;
-            if (grupInfo.GrupoResolutor == "TI-Soporte")
-            {
-                // Filtrar por centro if TI-Soporte _ISF            
-                // El filtrado de centros es distinto de tecnicos a Supervisores
-                // En la tabla tbl_User_TI_Exclusion_Filtro_Centro
-                //              estan los Tecnicos a los que el filtro no se les debe aplicar
-                // En la tabla tbl_rel_SupervisorCentros
-                //              estan los supervisores y los centros que les toca supervisar  
-                if (rol == "Tecnico")
+            if (false ) {
+                /*/ ----------------------------------------------------------------
+                var lstCategoria = _db.cat_Categoria.Where(x => x.Activo == true);
+                var userint = Convert.ToInt32(user);
+                var grupInfo = _db.tbl_User.Where(a => a.EmpleadoID == userint).FirstOrDefault();
+                var details = _db.tbl_TicketDetalle.Where(x => x.Estatus == type && x.GrupoResolutor == grupInfo.GrupoResolutor).ToList();
+                ;
+                if (grupInfo.GrupoResolutor == "TI-Soporte")
                 {
-                    // verificar que usuario no esté en lista de usuarios excluidos del filtro
-                    var Usuarios_Excluidos_Filtro_Centro = _db.tbl_User_TI_Exclusion_Filtro_Centro.Select(t => t.EmployeeId).ToList();
-                    if (!Usuarios_Excluidos_Filtro_Centro.Contains(empledoId)) details = details.Where(t => t.Centro == grupInfo.Centro).ToList();
-                }
-                else
-                if (rol == "Supervisor")
-                {
-                    var Centros = _db.tbl_rel_SupervisorCentros.Where(t => t.UserId == grupInfo.Id).Select(t => t.CentroId).ToArray(); // lista de centros
-                    // Si el supervisor no está en la tabla solo le toca supervisar su centro
-                    // Si el supervisor está en la tabla, asegurarse que también le toque supervisar el suyo propio
-                    if (Centros != null)
+                    // Filtrar por centro if TI-Soporte _ISF            
+                    // El filtrado de centros es distinto de tecnicos a Supervisores
+                    // En la tabla tbl_User_TI_Exclusion_Filtro_Centro
+                    //              estan los Tecnicos a los que el filtro no se les debe aplicar
+                    // En la tabla tbl_rel_SupervisorCentros
+                    //              estan los supervisores y los centros que les toca supervisar  
+                    if (rol == "Tecnico")
                     {
-                        Centros = Centros.Concat(new int[] { grupInfo.Centro }).ToArray(); // añadir centro al que pertenece en caso de que no fuera agregado antes
-                        details = details.Where(t => t.GrupoResolutor == "TI-Soporte" && Centros.Contains(t.Centro)).ToList();
+                        // verificar que usuario no esté en lista de usuarios excluidos del filtro
+                        var Usuarios_Excluidos_Filtro_Centro = _db.tbl_User_TI_Exclusion_Filtro_Centro.Select(t => t.EmployeeId).ToList();
+                        if (!Usuarios_Excluidos_Filtro_Centro.Contains(empledoId)) details = details.Where(t => t.Centro == grupInfo.Centro).ToList();
+                    }
+                    else
+                    if (rol == "Supervisor")
+                    {
+                        var Centros = _db.tbl_rel_SupervisorCentros.Where(t => t.UserId == grupInfo.Id).Select(t => t.CentroId).ToArray(); // lista de centros
+                        // Si el supervisor no está en la tabla solo le toca supervisar su centro
+                        // Si el supervisor está en la tabla, asegurarse que también le toque supervisar el suyo propio
+                        if (Centros != null)
+                        {
+                            Centros = Centros.Concat(new int[] { grupInfo.Centro }).ToArray(); // añadir centro al que pertenece en caso de que no fuera agregado antes
+                            details = details.Where(t => t.GrupoResolutor == "TI-Soporte" && Centros.Contains(t.Centro)).ToList();
+                        }
+                        else
+                        {
+                            details = details.Where(t => t.GrupoResolutor == "TI-Soporte" && t.Centro == grupInfo.Centro).ToList();
+                        }
+                    }
+                }
+
+                if (rol == "Tecnico" && type != "Abierto") // SOLO MOSTRAR TICKETS QUE LE CONCIERNEN AL TECNICO
+                {
+                    int idTecnico = _db.tbl_User.Where(t => t.EmpleadoID == userint).Select(t => t.Id).FirstOrDefault();
+
+                    details = details.Where(t =>
+                     (t.IdTecnicoAsignado == idTecnico && t.IdTecnicoAsignadoReag == null && t.IdTecnicoAsignadoReag2 == null) ||
+                     (t.IdTecnicoAsignadoReag == idTecnico && t.IdTecnicoAsignadoReag2 == null) ||
+                     (t.IdTecnicoAsignadoReag2 == idTecnico)
+                     ).ToList();
+                }
+
+                //---- AÑADIR VINCULADOS Y SUBTICKETS: 
+                List<int> ticketsVinculados = _db.tbl_VinculacionDetalle.Where(x => x.Activo == true).Select(x => x.IdTicketChild).ToList();
+                var lstSubTickets = _db.vwDetalleSubticket.ToList();
+                List<tbl_TicketDetalle> lstTemp = new List<tbl_TicketDetalle>();
+                foreach (var item in details)
+                {
+                    item.isPadre = false;
+                    tbl_TicketDetalle o = new tbl_TicketDetalle() { };
+                    var lstSubTicket = lstSubTickets.Where(x => x.Id == item.Id).ToList(); // previamente una llamada
+                    if (lstSubTicket.Count() > 0)
+                    {
+                        lstSubTicket.ForEach(x =>
+                        {
+                            int _idPrioridad = 0;
+                            if (x.Prioridad == "Alto") { _idPrioridad = 1; }
+                            else if (x.Prioridad == "Medio") { _idPrioridad = 2; }
+                            else if (x.Prioridad == "Baja") { _idPrioridad = 3; }
+                            var opCategoria = lstCategoria.Where(c => c.Id == item.Categoria).FirstOrDefault().Categoria;
+                            ticketResumenResolutor obj = new ticketResumenResolutor()
+                            {
+                                categoria = opCategoria,
+                                prioridad = x.Prioridad,
+                                //tickedID = x.IdTicket,
+                                tickedID = x.Id,
+                                checkVincular = false,
+                                totVinculados = 0,
+                                estatus = x.Estatus,
+                                isPadre = true,
+                                idTicketPadre = x.IdTicket,
+                                isSubTicket = true,
+                                idSubTicket = x.Id,
+                                idPrioridad = _idPrioridad,
+                                orden = 2
+                            };
+                            lstTicketsResumen.Add(obj);
+                            obj.isSubTicket = true;
+                        });
+                    }
+                    if (!ticketsVinculados.Contains(item.Id))
+                    {
+                        o = item; // añadir tickets que no están vinculados a otros (hijos)
+                        o.orden = 1;
+                        lstTemp.Add(o);
+
                     }
                     else
                     {
-                        details = details.Where(t => t.GrupoResolutor == "TI-Soporte" && t.Centro == grupInfo.Centro).ToList();
-                    }
-                }
-            }
-
-            if (rol == "Tecnico" && type != "Abierto") // SOLO MOSTRAR TICKETS QUE LE CONCIERNEN AL TECNICO
-            {
-                int idTecnico = _db.tbl_User.Where(t => t.EmpleadoID == userint).Select(t => t.Id).FirstOrDefault();
-
-                details = details.Where(t =>
-                 (t.IdTecnicoAsignado == idTecnico && t.IdTecnicoAsignadoReag == null && t.IdTecnicoAsignadoReag2 == null) ||
-                 (t.IdTecnicoAsignadoReag == idTecnico && t.IdTecnicoAsignadoReag2 == null) ||
-                 (t.IdTecnicoAsignadoReag2 == idTecnico)
-                 ).ToList();
-            }
-
-            //---- AÑADIR VINCULADOS Y SUBTICKETS: 
-            List<int> ticketsVinculados = _db.tbl_VinculacionDetalle.Where(x => x.Activo == true).Select(x => x.IdTicketChild).ToList();
-            var lstSubTickets = _db.vwDetalleSubticket.ToList();
-            List<tbl_TicketDetalle> lstTemp = new List<tbl_TicketDetalle>();
-            foreach (var item in details)
-            {
-                item.isPadre = false;
-                tbl_TicketDetalle o = new tbl_TicketDetalle() { };
-                var lstSubTicket = lstSubTickets.Where(x => x.Id == item.Id).ToList(); // previamente una llamada
-                if (lstSubTicket.Count() > 0)
-                {
-                    lstSubTicket.ForEach(x =>
-                    {
-                        int _idPrioridad = 0;
-                        if (x.Prioridad == "Alto") { _idPrioridad = 1; }
-                        else if (x.Prioridad == "Medio") { _idPrioridad = 2; }
-                        else if (x.Prioridad == "Baja") { _idPrioridad = 3; }
-                        var opCategoria = lstCategoria.Where(c => c.Id == item.Categoria).FirstOrDefault().Categoria;
-                        ticketResumenResolutor obj = new ticketResumenResolutor()
+                        var e = _db.tbl_Vinculacion.Where(x => x.IdTicket == item.Id).FirstOrDefault();
+                        if (e != null)
                         {
-                            categoria = opCategoria,
-                            prioridad = x.Prioridad,
-                            //tickedID = x.IdTicket,
-                            tickedID = x.Id,
-                            checkVincular = false,
-                            totVinculados = 0,
-                            estatus = x.Estatus,
-                            isPadre = true,
-                            idTicketPadre = x.IdTicket,
-                            isSubTicket = true,
-                            idSubTicket = x.Id,
-                            idPrioridad = _idPrioridad,
-                            orden = 2
-                        };
-                        lstTicketsResumen.Add(obj);
-                        obj.isSubTicket = true;
-                    });
-                }
-                if (!ticketsVinculados.Contains(item.Id))
-                {
-                    o = item; // añadir tickets que no están vinculados a otros (hijos)
-                    o.orden = 1;
-                    lstTemp.Add(o);
+                            o = item;
+                            o.totVinculados = _db.tbl_VinculacionDetalle.Where(x => x.IdVinculacion == e.IdVinculacion).Count() - 1;
+                            o.isPadre = true;
+                            o.orden = 1;
+                            lstTemp.Add(o); //añadir los padres
+                        }
+                    }
+                };
+                if (lstTemp.Count > 0) { details = lstTemp; }
+                //---- AÑADIR VINCULADOS Y SUBTICKETS: END
 
+
+                ;
+                var lstSubTicket2 = _db.vwDetalleSubticket.Select(t => t.Id).ToList();
+                details.ForEach(x =>
+                {
+                    int VARIABLE_De_Prueba = x.Id;
+                    int _idPrioridad = 0;
+                    if (x.Prioridad == "Alto") { _idPrioridad = 1; }
+                    else if (x.Prioridad == "Medio") { _idPrioridad = 2; }
+                    else if (x.Prioridad == "Baja") { _idPrioridad = 3; }
+                    var opCategoria = lstCategoria.Where(c => c.Id == x.Categoria).FirstOrDefault().Categoria;
+                    ticketResumenResolutor o = new ticketResumenResolutor()
+                    {
+                        categoria = opCategoria,
+                        prioridad = x.Prioridad,
+                        tickedID = x.Id,
+                        checkVincular = false,
+                        totVinculados = x.totVinculados ?? 0,
+                        estatus = x.Estatus,
+                        isPadre = x.isPadre,
+                        isSubTicket = false, //
+                        idPrioridad = _idPrioridad,
+                        orden = x.orden
+                    };
+
+                    // por cada ticket en tabla de SUBs y MAINs verificar si el ticket o está en la columna de hijos (Id)
+                    if (lstSubTicket2.Contains(o.tickedID))
+                    {
+                        o.isSubTicket = true;
+                    } //informar que o es un hijo
+                    //foreach (var tkt in lstSubTicket2)
+                    //{
+                    //    if (tkt.Id == o.tickedID) { o.isSubTicket = true;  } 
+                    //    //informar que o es un hijo
+                    //}
+                    if (o.isSubTicket != true) //si "ticket o" NO es hijo 
+                        lstTicketsResumen.Add(o); //imprimir o
+                });//imprime a los hijos
+                //-------------------------------------------------------------------------------*/
+            }
+
+
+            
+            if (idFiltro == 1) { vm.lstResumenResolutor = lstTicketsResumen.OrderBy(x => x.orden).ThenBy(x => x.tickedID).ToList(); }                   //Del más antiguo al más reciente
+            else if (idFiltro == 2) { vm.lstResumenResolutor = lstTicketsResumen.OrderBy(x => x.orden).ThenByDescending(x => x.tickedID).ToList(); }    //Del más reciente al más antiguo              
+            else if (idFiltro == 3) {  vm.lstResumenResolutor = lstTicketsResumen.OrderBy(x => x.orden).ThenBy(x => x.idPrioridad).ToList(); }          //Por prioridad
+            else { vm.lstResumenResolutor = lstTicketsResumen; }
+
+            var tareas = new List<vw_TareasProgramadas>(); // && x.Activado_2 == true         // this activates the scheduler
+            if (true) { 
+                if (rol == "Supervisor")
+                {
+                    // Añadir tareas creaadas por este supervisor... añadir las creadas por otros supervisores también?
+                    //tareas = _db.vw_TareasProgramadas.Where(x => x.SupervisorID == empledoId && x.Estatus == type && x.Activado == true ).ToList();                     // SCHEDULER DESACTIVADO
+                    tareas = _db.vw_TareasProgramadas.Where(x => x.EmpleadoID == empledoId && x.Estatus == type && x.Activado == true && x.Activado_2 == true).ToList();  // SCHEDULER ACTIVADO
                 }
                 else
                 {
-                    var e = _db.tbl_Vinculacion.Where(x => x.IdTicket == item.Id).FirstOrDefault();
-                    if (e != null)
-                    {
-                        o = item;
-                        o.totVinculados = _db.tbl_VinculacionDetalle.Where(x => x.IdVinculacion == e.IdVinculacion).Count() - 1;
-                        o.isPadre = true;
-                        o.orden = 1;
-                        lstTemp.Add(o); //añadir los padres
-                    }
+                    // --------------------------------------------------------------------------------------------------------------------------------------------
+                    //tareas = _db.vw_TareasProgramadas.Where(x => x.EmpleadoID == empledoId && x.Estatus == type && x.Activado == true).ToList();                          // SCHEDULER DESACTIVADO
+                    tareas = _db.vw_TareasProgramadas.Where(x => x.EmpleadoID == empledoId && x.Activado == true && x.Estatus == type && x.Activado_2 == true).ToList();    // SCHEDULER ACTIVADO
                 }
-            };
-            if (lstTemp.Count > 0) { details = lstTemp; }
-            //---- AÑADIR VINCULADOS Y SUBTICKETS: END
-
-
-            ;
-            var lstSubTicket2 = _db.vwDetalleSubticket.Select(t => t.Id).ToList();
-            details.ForEach(x => {
-                int VARIABLE_De_Prueba = x.Id;
-                int _idPrioridad = 0;
-                if (x.Prioridad == "Alto") { _idPrioridad = 1; }
-                else if (x.Prioridad == "Medio") { _idPrioridad = 2; }
-                else if (x.Prioridad == "Baja") { _idPrioridad = 3; }
-                var opCategoria = lstCategoria.Where(c => c.Id == x.Categoria).FirstOrDefault().Categoria;
-                ticketResumenResolutor o = new ticketResumenResolutor()
-                {
-                    categoria = opCategoria,
-                    prioridad = x.Prioridad,
-                    tickedID = x.Id,
-                    checkVincular = false,
-                    totVinculados = x.totVinculados ?? 0,
-                    estatus = x.Estatus,
-                    isPadre = x.isPadre,
-                    isSubTicket = false, //
-                    idPrioridad = _idPrioridad,
-                    orden = x.orden
-                };
-
-                // por cada ticket en tabla de SUBs y MAINs verificar si el ticket o está en la columna de hijos (Id)
-                if (lstSubTicket2.Contains(o.tickedID))
-                {
-                    o.isSubTicket = true;
-                } //informar que o es un hijo
-                //foreach (var tkt in lstSubTicket2)
-                //{
-                //    if (tkt.Id == o.tickedID) { o.isSubTicket = true;  } 
-                //    //informar que o es un hijo
-                //}
-                if (o.isSubTicket != true) //si "ticket o" NO es hijo 
-                    lstTicketsResumen.Add(o); //imprimir o
-            });//imprime a los hijos
-            //vm.lstResumenResolutor = lstResumenResolutor ORDER BY X
-            if (idFiltro == 1)
-            {
-                //Del más antiguo al más reciente
-                vm.lstResumenResolutor = lstTicketsResumen.OrderBy(x => x.orden).ThenBy(x => x.tickedID).ToList();
-            }
-            else if (idFiltro == 2)
-            {
-                //Del más reciente al más antiguo
-                vm.lstResumenResolutor = lstTicketsResumen.OrderBy(x => x.orden).ThenByDescending(x => x.tickedID).ToList();
-            }
-            else if (idFiltro == 3)
-            {
-                //Por prioridad
-                vm.lstResumenResolutor = lstTicketsResumen.OrderBy(x => x.orden).ThenBy(x => x.idPrioridad).ToList();
-            }
-            else
-            {
-                vm.lstResumenResolutor = lstTicketsResumen;
-            }
-
-            var tareas = new List<vw_TareasProgramadas>();
-            if (rol == "Supervisor")
-            {
-                // Añadir tareas creaadas por este supervisor... añadir las creadas por otros supervisores también?
-                //tareas = _db.vw_TareasProgramadas.Where(x => x.SupervisorID == empledoId && x.Estatus == type && x.Activado == true ).ToList();                     // SCHEDULER DESACTIVADO
-                tareas = _db.vw_TareasProgramadas.Where(x => x.EmpleadoID == empledoId && x.Estatus == type && x.Activado == true && x.Activado_2 == true).ToList();  // SCHEDULER ACTIVADO
-            }
-            else
-            {
-                // --------------------------------------------------------------------------------------------------------------------------------------------
-                //tareas = _db.vw_TareasProgramadas.Where(x => x.EmpleadoID == empledoId && x.Estatus == type && x.Activado == true).ToList();                          // SCHEDULER DESACTIVADO
-                tareas = _db.vw_TareasProgramadas.Where(x => x.EmpleadoID == empledoId && x.Activado == true && x.Estatus == type && x.Activado_2 == true).ToList();    // SCHEDULER ACTIVADO
             }
 
             vm.listaTareas = tareas;

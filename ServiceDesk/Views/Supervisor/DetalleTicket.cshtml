@@ -19,6 +19,7 @@
     .hide {
         display: none !important
     }
+
     .show {
         display: block !important
     }
@@ -85,6 +86,8 @@
 
     var folio = '@ViewBag.Id';
     var CCenProgreso = '@ViewBag.CC';
+    var resp = '@ViewBag.Mensaje';
+
     $(document).ready(function () {
 
         //$("#gpresolutorContent").addClass("hide");
@@ -115,14 +118,14 @@
             //$(".btn").each(function () {
             //    this.hidden = true;
             //});
-            
+
             $("#btnSubticket").hide();
             $("#btnReasignarTecnico").hide();
             $("#btnCancelar").hide();
             $("#btnRecategorizar").hide();
 
             $("#ccIndicator").show();
-            
+
         }
 
         //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -138,6 +141,13 @@
         $("#Centro").text(cen);
 
         //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        if (resp == "SI") {
+            $('#modalErrorSubticket').modal('show');
+           // alert("No se puede resolver el ticket hasta cerrar sus Subtickets pendientes.");
+
+        }
+
         if (folio != "") {
 
             $("#modalGuardado").modal('show');
@@ -356,7 +366,7 @@
                 case "Pentafon Monterrey": centro = "TI-SoporteMTY";    flag = true; break;
             }
         } else {
-            centro = gp; 
+            centro = gp;
         }
 
 
@@ -664,7 +674,7 @@
                     TicketId: id,
                     //Motivo: $("#detalle_ComentariosRecategoriza").val(),
                     Categoria: $("#RecategorizaCat").val(),
-                    Subcategoria: $("#RecategorizaSubcat").val(), 
+                    Subcategoria: $("#RecategorizaSubcat").val(),
                     Centro: $('#RecategorizaCentro').val()
                 },
                 success: function (result) {
@@ -1165,7 +1175,8 @@
                                                 @Html.HiddenFor(m => m.detalle.Id)
                                                 @Html.HiddenFor(m => m.EmployeeIdBO)
 
-                                                @if (ViewBag.EdoTicket != "Abierto") { 
+                                                @if (ViewBag.EdoTicket != "Abierto")
+                                                {
                                                     <h5 style="font-weight:bold;color:black;">
                                                         ESTATUS
                                                     </h5>
@@ -1207,11 +1218,11 @@
                                                 </div>
                                             </div>
                                             @*<div class="col-md-4" style="display:none;" id="divGuardar" >
-                                <div class="col-md-12 ">
-                                    <br />
-                                    <button type="button" class="btn btn-primary" id="btnGuardarCambioEstatuss" onclick="GuardarCambioEstatus()">Guardar</button>
-                                </div>
-                            </div>*@
+                                                    <div class="col-md-12 ">
+                                                        <br />
+                                                        <button type="button" class="btn btn-primary" id="btnGuardarCambioEstatuss" onclick="GuardarCambioEstatus()">Guardar</button>
+                                                    </div>
+                                                </div>*@
                                             @*CAMBIO ESTATUS*@
                                         </div>
 
@@ -1668,11 +1679,11 @@
                         <tr>
                             <td style="width:100%;">
                                 @*<br />
-                                <b>GRUPO RESOLUTOR*</b><br />*@
+                                    <b>GRUPO RESOLUTOR*</b><br />*@
                                 @Html.DropDownList("GrupoResCat", (SelectList)ViewBag.GrupoResolutorCat, "SELECCIONE SUBCATEGORIA", new { @class = "form-control hidden", style = "text-align:center", onChange = "changeGP()" })
                                 <br />
                                 <b>GRUPO RESOLUTOR*</b><br />
-                                <input type="text" id="gpresolutor" name="fname" class="form-control" readonly >
+                                <input type="text" id="gpresolutor" name="fname" class="form-control" readonly>
                                 <br />
                             </td>
                             <td id="gpresolutorContent">
@@ -1700,16 +1711,16 @@
                             </td>
                         </tr>
                         @*<tr>
-            <td>
-                <br />
-                <text style="font-weight:bold;color:#808080;font-size:12px;margin: 0px 39px 0px 10px;">
-                    MOTIVO DE RECATEGORIZACIÓN DEL TICKET
-                    <br />
-                    @Html.TextAreaFor(m => m.detalle.ComentariosRecategoriza, new { @class = "form-control", style = "margin: 0px 39px 0px 10px; max-width: 75% !important; width: 559px; height: 250px;" })
-                    <br />
-                    <br />
-            </td>
-        </tr>*@
+                                <td>
+                                    <br />
+                                    <text style="font-weight:bold;color:#808080;font-size:12px;margin: 0px 39px 0px 10px;">
+                                        MOTIVO DE RECATEGORIZACIÓN DEL TICKET
+                                        <br />
+                                        @Html.TextAreaFor(m => m.detalle.ComentariosRecategoriza, new { @class = "form-control", style = "margin: 0px 39px 0px 10px; max-width: 75% !important; width: 559px; height: 250px;" })
+                                        <br />
+                                        <br />
+                                </td>
+                            </tr>*@
                     </table>
                 </div>
             </div>
@@ -1775,6 +1786,31 @@
 </div>
 
 
+@*//Modal de Error de subtickets*@
+<div class="modal fade" tabindex="-1" role="dialog" id="modalErrorSubticket">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div>
+                <div class="col-md-12">
+                    @Html.HiddenFor(m => m.EmployeeIdBO)
+                    <table style="width:100%;">
+                        <tr>
+                            <td>
+                                <div class="modal-header">
+                                    <h4 class="modal-title"><b>Error de Flujo: </b></h4>
+                                    <h5> Este ticket contiene subtickets que no han sido cerrados.<br />No se puede resolver el ticket hasta resolver sus subtickets pendientes. </h5>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" onclick="$('#modalErrorSubticket').modal('hide');">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 @*//Modal de Asignar tecnico*@

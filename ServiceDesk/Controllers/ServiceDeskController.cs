@@ -648,7 +648,8 @@ namespace ServiceDesk.Controllers
 
                     var info = _db.his_Ticket.Where(a => a.IdTicket == IdTicket).OrderByDescending(a => a.FechaRegistro).ToList();
                     detalle.historico = info;
-                    detalle.detalle = _db.VWDetalleTicket.Find(IdTicket);
+                    //detalle.detalle = _db.VWDetalleTicket.Find(IdTicket);
+                    detalle.detalle = _db.VWDetalleTicket.Where(t => t.Id == IdTicket).FirstOrDefault();
 
                     var his2 = _db.his_Ticket.Where(a => a.IdTicket == IdTicket).OrderByDescending(a => a.FechaRegistro).FirstOrDefault();
 
@@ -922,6 +923,8 @@ namespace ServiceDesk.Controllers
                 _db.his_Ticket.Add(dtoHis);
                 _db.SaveChanges();
 
+                if (info.IdTicketPrincipal != null)  _noti.SetNotiRecategorizacion(dtoHis, 1); 
+                else
                 _noti.SetNotiRecategorizacion(dtoHis);
 
                 result = "Correcto";
@@ -1388,7 +1391,8 @@ namespace ServiceDesk.Controllers
 
 
                     detalle.historico = info;
-                    detalle.detalle = _db.VWDetalleTicket.Find(IdTicket);
+                    //detalle.detalle = _db.VWDetalleTicket.Find(IdTicket);
+                    detalle.detalle = _db.VWDetalleTicket.Where(t => t.Id == IdTicket).FirstOrDefault();
 
                     var his2 = _db.his_Ticket.Where(a => a.IdTicket == IdTicket).OrderByDescending(a => a.FechaRegistro).FirstOrDefault();
 
@@ -1444,7 +1448,8 @@ namespace ServiceDesk.Controllers
 
 
                     detalle.historico = info;
-                    detalle.detalle = _db.VWDetalleTicket.Find(IdTicket);
+                    //detalle.detalle = _db.VWDetalleTicket.Find(IdTicket);
+                    detalle.detalle = _db.VWDetalleTicket.Where(t => t.Id == IdTicket).FirstOrDefault();
 
                     var his2 = _db.his_Ticket.Where(a => a.IdTicket == IdTicket).OrderByDescending(a => a.FechaRegistro).FirstOrDefault();
 

@@ -176,7 +176,8 @@ namespace ServiceDesk.Controllers
                     var historico = _db.his_Ticket.Where(a => a.IdTicket == IdTicket).OrderByDescending(a => a.FechaRegistro).ToList();
                     detalle.historico = historico;
 
-                    detalle.detalle = _db.VWDetalleTicket.Find(IdTicket);
+                    //detalle.detalle = _db.VWDetalleTicket.Find(IdTicket);
+                    detalle.detalle = _db.VWDetalleTicket.Where(t => t.Id == IdTicket).FirstOrDefault();
 
                     var his2 = historico.FirstOrDefault();
 
@@ -326,7 +327,8 @@ namespace ServiceDesk.Controllers
                     //
 
                     detalle.historico = info;
-                    detalle.detalle = _db.VWDetalleTicket.Find(IdTicket);
+                    //detalle.detalle = _db.VWDetalleTicket.Find(IdTicket);
+                    detalle.detalle = _db.VWDetalleTicket.Where(t => t.Id == IdTicket).FirstOrDefault();
 
                     ViewBag.EstadoTicket = new SelectList(_db.cat_EstadoTicket.Where(x => x.Activo), "Id", "Estado");
                     ViewBag.DX = new SelectList(_db.catDiagnosticos.Where(x => x.Activo), "Diagnostico", "Diagnostico");
@@ -852,7 +854,9 @@ namespace ServiceDesk.Controllers
                 _db.his_Ticket.Add(dtoHis);
                 _db.SaveChanges();
 
-                _noti.SetNotiRecategorizacion(dtoHis);
+                if (info.IdTicketPrincipal != null) _noti.SetNotiRecategorizacion(dtoHis, 1);
+                else
+                    _noti.SetNotiRecategorizacion(dtoHis);
 
                 result = "Correcto";
 
@@ -943,7 +947,7 @@ namespace ServiceDesk.Controllers
                         {
                             //No se puede cerrar
                             Resp = "Error";
-
+                            ViewBag.Mensaje = "SI";
                         }
 
                         
@@ -1087,7 +1091,8 @@ namespace ServiceDesk.Controllers
             }
 
 
-            //Carga de Archivo            
+
+            //Carga de Archivo       
             if (upload != null && upload.ContentLength > 0)
             {
                 var extension = upload.FileName.ToUpper();
@@ -1123,7 +1128,7 @@ namespace ServiceDesk.Controllers
                         Console.WriteLine(e);
                     }
 
-                    return RedirectToAction("DetalleTicket", "Tecnico", new { IdTicket = datos.Id, EmployeeId = vm.EmployeeIdBO });
+                    //return RedirectToAction("DetalleTicket", "Tecnico", new { IdTicket = datos.Id, EmployeeId = vm.EmployeeIdBO });
                 }
                 else
                 {

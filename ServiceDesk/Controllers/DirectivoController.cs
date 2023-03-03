@@ -400,7 +400,8 @@ namespace ServiceDesk.Controllers
 
                     var info = _db.his_Ticket.Where(a => a.IdTicket == IdTicket).OrderByDescending(a => a.FechaRegistro).ToList();
                     detalle.historico = info;
-                    detalle.detalle = _db.VWDetalleTicket.Find(IdTicket);
+                    //detalle.detalle = _db.VWDetalleTicket.Find(IdTicket);
+                    detalle.detalle = _db.VWDetalleTicket.Where(t => t.Id == IdTicket).FirstOrDefault();
 
                     var his2 = _db.his_Ticket.Where(a => a.IdTicket == IdTicket).OrderByDescending(a => a.FechaRegistro).FirstOrDefault();
 
@@ -515,7 +516,8 @@ namespace ServiceDesk.Controllers
 
 
                     detalle.historico = info;
-                    detalle.detalle = _db.VWDetalleTicket.Find(IdTicket);
+                    //detalle.detalle = _db.VWDetalleTicket.Find(IdTicket);
+                    detalle.detalle = _db.VWDetalleTicket.Where(t => t.Id == IdTicket).FirstOrDefault();
 
                     ViewBag.EstadoTicket = new SelectList(_db.cat_EstadoTicket.Where(x => x.Activo), "Id", "Estado");
                     ViewBag.DX = new SelectList(_db.catDiagnosticos, "Diagnostico", "Diagnostico");
@@ -1122,7 +1124,9 @@ namespace ServiceDesk.Controllers
 
                 // Obtener datos: SLA Total en minutos                  //x = ticket.Id;
                 id = vwReportes[x].Id;
-                detalle.detalle = _db.VWDetalleTicket.Find(id);
+                //detalle.detalle = _db.VWDetalleTicket.Find(id);
+                detalle.detalle = _db.VWDetalleTicket.Where(t => t.Id == id).FirstOrDefault();
+
                 var info = _db.his_Ticket.Where(a => a.IdTicket == id).ToList(); // OrderByDescending(a => a.FechaRegistro).
                 detalle.Slas = _sla.GetSlaTimes(info);
                 foreach (var sLa in detalle.Slas)

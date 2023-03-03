@@ -187,9 +187,10 @@
         $("#NotificarDesc").text(pers);
         $("#GrupoResolutorDesc").text(gpo);
         $("#SoporteDesc").text(sopo);
-
+        EnableButton();
         if (desc.length > 500) {
             alert("La descripción de la incidencia no puede contener más de 500 caracteres")
+
         } else {
             $("#modalConfirmar").modal('show');
         }
@@ -222,6 +223,7 @@
             $("#DescripcionIncidencia").css('border-color', "red");
             alert("Es obligatorio colocar: Descripción de la Incidencia.");
             $("#modalConfirmar").modal('hide');
+            EnableButton();
             return;
         }
         if (cat == "")
@@ -230,6 +232,7 @@
             $("#Categoria").css('border-color', "red");
             alert("Es obligatorio seleccionar: Categoría.");
             $("#modalConfirmar").modal('hide');
+            EnableButton();
             return;
         }
         if (subcat == "") {
@@ -237,6 +240,7 @@
             $("#SubCategoria").css('border-color', "red");
             alert("Es obligatorio seleccionar: SubCategoría.");
             $("#modalConfirmar").modal('hide');
+            EnableButton();
             return;
         }
         if (cent == "") {
@@ -244,6 +248,7 @@
             $("#Centro").css('border-color', "red");
             alert("Es obligatorio seleccionar: Centro.");
             $("#modalConfirmar").modal('hide');
+            EnableButton();
             return;
         }
 
@@ -252,6 +257,13 @@
         $("#formFinal").submit();
     }
     //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    function EnableButton() {
+        console.log("---Enable button");
+        var button = document.getElementById("btnAcepta");
+        $("#btnAcepta").disabled = false;
+        button.disabled = false;
+
+    }
     function Regresar() {
 
         var id = $("#EmpleadoID").val();
@@ -300,7 +312,7 @@
                     <br />
                     <label>EXTENSIÓN</label>
                     <br />
-                    @Html.TextBoxFor(m => m.Extencion, new { @class = "form-control" })
+                    @Html.TextBoxFor(m => m.Extencion, new { @class = "form-control", TABINDEX = 1 })
                 </div>
                 <div class="col-md-4" style="display:none;" id="ShowNombreTer">
                     <br />
@@ -312,7 +324,7 @@
                     <br />
                     <label>PISO</label>
                     <br />
-                    @Html.TextBoxFor(m => m.Piso, new { @class = "form-control" })
+                    @Html.TextBoxFor(m => m.Piso, new { @class = "form-control", TABINDEX = 4 })
                 </div>
                 <div class="col-md-4" style="display:none" id="ShowEmailTerc">
                     <br />
@@ -334,7 +346,7 @@
                     <br />
                     <label>POSICIÓN (NOMBRE DEL EQUIPO)</label>
                     <br />
-                    @Html.TextBoxFor(m => m.Posicion, new { @class = "form-control" })
+                    @Html.TextBoxFor(m => m.Posicion, new { @class = "form-control", TABINDEX = 2 })
                 </div>
                 <div class="col-md-8" style="display:none;" id="ShowExtensionTerc">
                     <br />
@@ -362,7 +374,7 @@
                     <br />
                     <label>CATEGORÍA *</label>
                     <br />
-                    @Html.DropDownListFor(m => m.Categoria, (SelectList)ViewBag.Categoria, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                    @Html.DropDownListFor(m => m.Categoria, (SelectList)ViewBag.Categoria, "SELECCIONE", new { @class = "form-control", style = "text-align:center", TABINDEX = 5 })
                 </div>
                 <div class="col-md-4" style="border-color: lightblue; background-color: aliceblue;">
                     <br />
@@ -380,7 +392,7 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="col-md-4" style="margin-top:-3%;">
-                    @Html.TextAreaFor(m => m.DescripcionIncidencia, new { @class = "form-control", style = "margin: 0px 39px 0px 10px; max-width: 75% !important; width: 859px; height: 250px;" })
+                    @Html.TextAreaFor(m => m.DescripcionIncidencia, new { @class = "form-control", style = "margin: 0px 39px 0px 10px; max-width: 75% !important; width: 859px; height: 250px;", TABINDEX = 3 })
                     <br />
                     <label class="fileContainer">
                         <label>SOPORTE DE LA INCIDENCIA</label>
@@ -394,23 +406,23 @@
                     <br />
                     <label>SUBCATEGORÍA *</label>
                     <br />
-                    @Html.DropDownListFor(m => m.SubCategoria, (SelectList)ViewBag.SubCategoria, "SELECCIONE", new { @class = "form-control", style = "text-align:center" })
+                    @Html.DropDownListFor(m => m.SubCategoria, (SelectList)ViewBag.SubCategoria, "SELECCIONE", new { @class = "form-control", style = "text-align:center", TABINDEX = 6 })
                     <br />
                     <label>CENTRO *</label>
                     <br />
-                    @Html.DropDownListFor(m => m.Centro, (SelectList)ViewBag.Centro, "SELECCIONE", new { @class = "form-control", style = "text-align:center", @onChange = "changeGP()"})
+                    @Html.DropDownListFor(m => m.Centro, (SelectList)ViewBag.Centro, "SELECCIONE", new { @class = "form-control", style = "text-align:center", @onChange = "changeGP()", TABINDEX = 7})
                     <br />
                     <label>PERSONAS A NOTIFICAR EL ESTADO DEL TICKET</label>
                     <br />
-                    <input type="text" class="form-control" style="width:70%; display:inline-block" id="comment">
-                    <button type="button" class="btn btn-success " onclick="addNotificar();" style="display:inline-block">Agregar</button>
+                    <input type="text" class="form-control" style="width:70%; display:inline-block" id="comment"  TABINDEX = 8>
+                    <button type="button" class="btn btn-success " onclick="addNotificar();" style="display:inline-block" TABINDEX = 9>Agregar</button>
                     <button type="button" class="btn btn-danger " onclick="limpiar();" style="display:inline-block">Limpiar</button>
                     <br />
                     <br />
                     @Html.TextAreaFor(m => m.PersonasAddNotificar, new { @class = "form-control", style = "margin: 0px 39px 0px 2px; max-width: 95% !important; width: 859px; height: 90px;", @readonly = "true" })
                     <br />
-                    <button type="button" class="btn btn-warning" id="btnBack" onclick="Regresar()">Regresar</button>
-                    <button type="button" class="btn btn-primary" id="btnEnviar" onclick="EnviarSolicitud()">Enviar Solicitud</button>
+                    <button type="button" class="btn btn-warning" id="btnBack" onclick="Regresar()" TABINDEX = 10>Regresar</button>
+                    <button type="button" class="btn btn-primary" id="btnEnviar" onclick="EnviarSolicitud()" TABINDEX = 11>Enviar Solicitud</button>
                 </div>
                 <div class="col-md-4" style="border-color: lightblue; background-color: aliceblue;">
                     <h5>Atención del Incidente</h5>

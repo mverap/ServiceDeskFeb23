@@ -872,7 +872,9 @@ namespace ServiceDesk.Controllers
                         // Obtener datos: SLA Total en minutos
                         {
                             id = vwReportes[x].Id;
-                            detalle.detalle = _db.VWDetalleTicket.Find(id);
+                            //detalle.detalle =  id);
+                            detalle.detalle = _db.VWDetalleTicket.Where(t => t.Id == id).FirstOrDefault();
+
                             Estatus = detalle.detalle.Estatus;
                             var info = _db.his_Ticket.Where(a => a.IdTicket == id).ToList();
                             detalle.Slas = _sla.GetSlaTimes(info);

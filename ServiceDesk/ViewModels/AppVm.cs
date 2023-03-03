@@ -18,6 +18,8 @@ namespace ServiceDesk.ViewModels
         public string Fecha { get; set; }
         public string Color { get; set; }     
         public int Visto { get; set; }
+        public bool Enviada { get; set; }
+
     }
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     public class NotificacionesVm {
