@@ -28,6 +28,7 @@
     var folio = '@ViewBag.Id';
     var user = '@ViewBag.user';
     var user2 = '@ViewBag.user2';
+    var edited = '@ViewBag.EdicionCorrecta';
     var tblSelected = '';
     var CentrosASupervisar = new Array();
     var newempleadoid = 0;
@@ -153,12 +154,15 @@
         }
     //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         if (user2 != "") {
-
             $("#modalNotificaciones").modal('show');
             $("#tblSuccess").css('display', 'block');
-            $("#tituloAddUser").css('display', 'block');
-            $("#LeyendaAddUser").css('display', 'block');
-
+            if (edited != "") {
+                $("#tituloEditUser").css('display', 'block');
+                $("#LeyendaEditUser").css('display', 'block');
+            } else {
+                $("#tituloAddUser").css('display', 'block');
+                $("#LeyendaAddUser").css('display', 'block');
+            }
         }
     //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         //CATEGORIA - SUBCATEGORIA
@@ -2045,6 +2049,7 @@ if (window.confirm('Deseas eliminar la subcategoria seleccionada?')) {
                                     <h4 class="modal-title" id="tituloBajaNivel" style="display:none;"><b>Eliminar Nivel</b></h4>
                                     <h4 class="modal-title" id="tituloAddNivel" style="display:none;"><b>Agregar nivel de experiencia</b></h4>
                                     <h4 class="modal-title" id="tituloAddUser" style="display:none;"><b>Agregar técnico</b></h4>
+                                    <h4 class="modal-title" id="tituloEditUser" style="display:none;"><b>Editar técnico</b></h4>
                                 </div>
                             </td>
                         </tr>
@@ -2068,6 +2073,7 @@ if (window.confirm('Deseas eliminar la subcategoria seleccionada?')) {
                                 <label style="color:slategray; margin-left:150px;display:none" id="LeyendaBajaNivel">El nivel se dió de baja correctamente</label>
                                 <label style="color:slategray; margin-left:150px;display:none" id="LeyendaAddNivel">El nivel de experincia se agregó <br /> correctamente</label>
                                 <label style="color:slategray; margin-left:150px;display:none" id="LeyendaAddUser">Se creó el técnico correctamente</label>
+                                <label style="color:slategray; margin-left:150px;display:none" id="LeyendaEditUser">Se editó el técnico correctamente</label>
                                 <br />
                             </td>
                         </tr>

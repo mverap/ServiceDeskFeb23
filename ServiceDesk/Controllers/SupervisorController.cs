@@ -552,7 +552,7 @@ namespace ServiceDesk.Controllers
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
         [HttpPost] public ActionResult GuardarUser(DetalleGestiones vm)
         {
-
+            int EsEdicion = 0;
             //Guarda los tecnicos
             var usu = new tbl_User();
             var ven = new tbl_VentanaAtencion();
@@ -571,7 +571,7 @@ namespace ServiceDesk.Controllers
                 
                 using (var con = new ServiceDeskContext())
                 {
-
+                    EsEdicion = 1;
                     _db.tbl_User.Attach(usu);
                     upduser.EmpleadoID = vm.user.EmpleadoID;
                     upduser.NombreTecnico = vm.user.NombreTecnico;
@@ -679,7 +679,7 @@ namespace ServiceDesk.Controllers
             }
 
 
-            return RedirectToAction("Gestiones", "Supervisor", new { User = usu.Id, EmployeeId = vm.EmployeeIdBO });
+            return RedirectToAction("Gestiones", "Supervisor", new { User = usu.Id, EmployeeId = vm.EmployeeIdBO, EsEdicion = EsEdicion });
 
         }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
@@ -1512,12 +1512,14 @@ namespace ServiceDesk.Controllers
             return RedirectToAction("DetalleTicket", "Supervisor", new { IdTicket = datos.IdTicketPrincipal, folio = datos.Id, EmployeeId = vm.EmployeeIdBO });
         }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        public ActionResult Gestiones(string User, string EmployeeId)
+        public ActionResult Gestiones(string User, string EmployeeId, int EsEdicion = 0)
         {
             var empid = 0;
             try {
                 empid = Int32.Parse(EmployeeId);
             } catch { }
+
+            if (EsEdicion == 1) { ViewBag.EdicionCorrecta = 1; }
 
             ViewBag.user2 = string.IsNullOrEmpty(User) ? "" : User;
             ViewBag.Empid = EmployeeId;
