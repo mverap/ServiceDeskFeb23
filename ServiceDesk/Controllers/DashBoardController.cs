@@ -58,7 +58,7 @@ namespace ServiceDesk.Controllers
             }
             //lst = lstOutput;
 
-            vm.Tickets = lst;
+            vm.Tickets = lst.OrderBy(t => t.noTicket).ToList();
             vm.type = _type ?? "1";
             return View(vm);
         }
@@ -637,8 +637,8 @@ namespace ServiceDesk.Controllers
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
         public PartialViewResult GetResolutorTickets(string user, string type, int idFiltro = 0)
         {
-
-
+            if (type == "Espera") type = "En Espera";
+            if (type == "Garantia") type = "En Garantía";
             int empledoId = int.Parse(user);
             string rol = RoldeUsuario(empledoId);
             ViewBag.rol = rol;
