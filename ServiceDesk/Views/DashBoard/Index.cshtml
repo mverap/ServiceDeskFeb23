@@ -403,14 +403,15 @@
                         <div class="blocksTickets" name="RectangleTicket" id="ticket_@item.noTicket">
                             <div class="col-md-12" style="border-bottom:2px solid #868E96">
                                 <div class="col-md-12">
-                                    @*@if (item.subticket == false)
-                                        {
-                                            <h4 style="color:black;"><b>Subticket ID:  @item.noTicket</b></h4>
-                                        }
-                                        else
-                                        {
-                                        }*@
-                                    <h4 style="color:black;"><b>Ticket ID:  @item.noTicket</b></h4>
+                                    @if (item.subticket == false)
+                                    {
+                                        <h4 style="color:black;"><b>Subticket ID:  @item.noTicket</b></h4>
+                                    }
+                                    else
+                                    {
+                                        <h4 style="color:black;"><b>Ticket ID:  @item.noTicket</b></h4>
+
+                                    }
                                     <h5 style="color:black;">Categoría: @item.categoria</h5>
                                     <h5 style="color:black;">Categoría: @item.subcategoria</h5>
                                     <h5 style="color:black;">Grupo resolutor: @item.GrupoResolutor</h5>

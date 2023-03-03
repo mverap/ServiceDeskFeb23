@@ -49,11 +49,7 @@ namespace ServiceDesk.Controllers
                 ;
                 //ls.tiempoTranscurrido = ls.hours + ":" + ls.minutes;
                 int? ticketprincipal = _db.tbl_TicketDetalle.Where(t => t.Id == ls.noTicket).Select(t => t.IdTicketPrincipal).FirstOrDefault();
-                if (ticketprincipal != null)
-                {
-                    //lstOutput.Add(ls); 
-                    ls.subticket = false;
-                }
+                if (ticketprincipal != null) { ls.subticket = false; }
                 else { ls.subticket = true; }
             }
             //lst = lstOutput;
@@ -71,6 +67,9 @@ namespace ServiceDesk.Controllers
             var lstSubcategoria = _db.cat_SubCategoria.Where(x => x.Activo == true);
 
             var oTicket = _db.tbl_TicketDetalle.Where(x => x.Id == ticket).FirstOrDefault();
+
+            //if (oTicket.IdTicketPrincipal != null) { ViewBag.EsSubticket = 1; } else { ViewBag.EsSubticket = 0; }
+            ViewBag.EsSubticket = (oTicket.IdTicketPrincipal != null) ? 1 : 0;
 
             //Poner aquí validación de la Encuesta de Satisfacción
             if (oTicket.EstatusTicket == 6) //Cerrado
@@ -601,7 +600,7 @@ namespace ServiceDesk.Controllers
             //var details = _db.tbl_TicketDetalle.Where(x => x.EmpleadoID == empledoId && x.Id == oTicket).ToList();
             var details = _db.tbl_TicketDetalle.Where(x =>  x.Id == oTicket && x.GrupoResolutor.Contains(usuario.GrupoResolutor)).ToList();
 
-            
+
             if (details.Count == 0) {
 
                 if (type == "usuario")
@@ -626,6 +625,13 @@ namespace ServiceDesk.Controllers
                     tickedID = x.Id,
                     estatus = x.Estatus
                 };
+
+                o.isSubTicket = (x.IdTicketPrincipal != null) ? true : false;
+                if (o.isSubTicket) {
+                    o.idTicketPadre = (int)x.IdTicketPrincipal;
+                    o.idSubTicket = o.tickedID;
+                }
+
                 lstTicketsResumen.Add(o);
             });
             vm.lstResumenResolutor = lstTicketsResumen;

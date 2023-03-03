@@ -63,7 +63,7 @@
 </style>
 <script>
 
-
+    var Es_subticket = '@ViewBag.EsSubticket';
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     $(document).on("click", "[name='Tab']", function (e) {
         $("#span1").removeClass("inactive");
@@ -280,9 +280,18 @@
         <div class="col-md-6" style="margin-top:-8%; right:auto">
 
             <div class="-Tab-Label-Copy-8 TextTitleBlack-6" style="margin-left:25px;text-align:left">
-                <b>
-                    Ticket ID: @Model.ticket.Id
-                </b>
+                @if (ViewBag.EsSubticket == 1)
+                {
+                    <b>
+                        Subticket ID: @Model.ticket.Id
+                    </b>
+                }
+                else
+                {
+                    <b>
+                        Ticket ID: @Model.ticket.Id
+                    </b>
+                }
                 <br />
             </div>
             <span style="margin-left:37px;">
