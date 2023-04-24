@@ -84,9 +84,12 @@
 
     }
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    function GoToNotif(Id, Motivo) {
+    function GoToNotif(Id) {
         // añadir cancelar acción previa
-         $.ajax({
+        window.location = '../Supervisor/GotoNotifs?EmployeeId=' + user + "&notifId=" + Id;
+         @*
+             GoToNotif(Id, Motivo)
+             $.ajax({
                  url: '@Url.Action("GoToNotif", "Home")',
                 type: "POST",
                 data: {
@@ -102,7 +105,7 @@
                     alert(err);
 
                 }
-            });
+            });*@
     }
 </script>
 
@@ -152,12 +155,12 @@
                                                                 <td style="width:80%">
                                                                     <h4 style="color:black;"><b>@Html.DisplayFor(t => not.Motivo)</b></h4>
                                                                 </td>
-                                                                @*<td style="width:20%;text-align:right;">
-                                                                    <i class="fa fa-arrow-circle-o-right" style="color:#66AEFD;font-size:25px;"
-                                                                       onclick="GoToNotif(@not.Id);"></i>   
-                                                                </td>*@
                                                                 <td style="width:20%;text-align:right;">
-                                                                    <i class="fa fa-trash" style="color:#66AEFD;font-size:25px;"
+                                                                    <i class="fa fa-arrow-circle-o-right" style="color:#66AEFD;font-size:25px;" title="Ir a Notificación"
+                                                                       onclick="GoToNotif(@not.Id);"></i>   
+                                                                </td>
+                                                                <td style="width:20%;text-align:right;">
+                                                                    <i class="fa fa-trash" style="color:#66AEFD;font-size:25px;" title="Borrar Notificación"
                                                                        onclick="Delete(@not.Id);"></i>
                                                                 </td>
                                                             </tr>
@@ -197,7 +200,8 @@
                             {
 
                             }
-                            else { 
+                            else
+                            {
                                 @*@if (Request.IsAuthenticated)
                                 {
                                     <li> <div class="col-md-12" style="color: dodgerblue"onclick="returnMenu(@ViewBag.user)"> <h4> @User.Identity.Name</h4> </div> </li>
@@ -206,17 +210,45 @@
                                 {
                                     <li> <div class="col-md-12" style="color: dodgerblue" onclick="GoGestiones();"> <h4><i class="fa fa-toggle-on"></i> Configuración</h4> </div> </li>
                                 }
+                                string grupo = ViewBag.grupo;
                                 if (ViewBag.userRol == "Supervisor")
                                 {
-                                    <li><div class="col-md-12" style="color: dodgerblue" onclick="goToTareas(@ViewBag.user);">       <h4><i class="fa fa-clock-o"></i> Tareas Programadas         </h4></div></li>
-                                    //                                        Control de cambios setup
-                                    <li><div class="col-md-12" style="color: dodgerblue" onclick="goToControlConfig(@ViewBag.user);"><h4><i class="fa fa-cog"></i>Gestiones de Control de Cambios </h4></div></li>
+                                    //if (
+                                    //    ViewBag.grupo == "TI-Soporte" ||
+                                    //    ViewBag.grupo == "MIS & BI" ||
+                                    //    ViewBag.grupo == "Innovacion-Voip" ||
+                                    //    ViewBag.grupo == "Infraestructura" ||
+                                    //    ViewBag.grupo == "TI-Infraestructura"
+                                    //    )
+                                    if (
+                                        grupo.Contains("TI-Soporte") ||
+                                        grupo.Contains("Infraestructura") ||
+                                        grupo.Contains("MIS & BI") ||
+                                        grupo.Contains("Innovacion") ||
+                                        grupo.Contains("INNOVACION") 
+                                        )
+                                    {
+                                        ;
+                                        <li><div class="col-md-12" style="color: dodgerblue" onclick="goToTareas(@ViewBag.user);">       <h4><i class="fa fa-clock-o"></i> Tareas Programadas         </h4></div></li>
+                                        //                                        Control de cambios setup
+                                        <li><div class="col-md-12" style="color: dodgerblue" onclick="goToControlConfig(@ViewBag.user);"><h4><i class="fa fa-cog"></i>Gestiones de Control de Cambios </h4></div></li>
+                                    }
                                 }
                                 if (ViewBag.userRol != "Solicitante")
                                 {
                                     <li> <div class="col-md-12" style="color: dodgerblue" onclick="goToReportes(@ViewBag.user);"> <h4><i class="fa fa-pie-chart"></i> Reportes</h4> </div> </li>
                                 }
-                                <li><div class="col-md-12" style="color: dodgerblue" onclick="goToControl(@ViewBag.user);"> 	   <h4><i class="fa fa-share-alt"></i> Control de Cambios       </h4></div></li>
+                                if (
+                                    grupo.Contains("TI-Soporte") ||
+                                    grupo.Contains("Infraestructura") ||
+                                    grupo.Contains("MIS & BI") ||
+                                    grupo.Contains("Innovacion") ||
+                                    grupo.Contains("INNOVACION") 
+                                    )
+                                {
+                                    ;
+                                    <li><div class="col-md-12" style="color: dodgerblue" onclick="goToControl(@ViewBag.user);"> 	   <h4><i class="fa fa-share-alt"></i> Control de Cambios       </h4></div></li>
+                                }
                                 <li>
                                     <div class="col-md-12" style="color: dodgerblue" onclick="logOut();">
                                         @using (Html.BeginForm("CloseSession", "Home", FormMethod.Post, new { id = "formLogout" })) { }

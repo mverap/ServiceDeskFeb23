@@ -12,9 +12,7 @@ using System.IO;
 using System.Data.Entity.Migrations;
 //
 using System.Web.Security;
-
-
-
+using System.Text.RegularExpressions;
 
 namespace ServiceDesk.Controllers
 {
@@ -37,8 +35,14 @@ namespace ServiceDesk.Controllers
         {
             // copiar y pegar en cualquier actionresult que requiere mandar usuario por un tubo si se intenta pasar de listo
             var userSession = Session["EmpleadoNo"].ToString(); if (userSession != EmployeeId) { return RedirectToAction("Error", "Document"); }
-
+            if (_db.tbl_TicketDetalle.FirstOrDefault(t => t.Id == IdTicket) == null) { return RedirectToAction("TicketNotFound", "Document"); }
             if (Respuesta == "Error") { ViewBag.Mensaje = "SI"; }
+
+            //Asigna el valor del user logueado
+            var idEmp = Int32.Parse(EmployeeId);
+            var MisDatos = _db.tbl_User.Where(t => t.EmpleadoID == idEmp).FirstOrDefault();
+            string Centro = _db.cat_Centro.Where(t => t.Id == MisDatos.Centro).Select(t => t.Centro).FirstOrDefault();
+            ViewBag.EmpGrpRes = MisDatos.GrupoResolutor;
 
             ViewBag.idChild = 0;
             var hisCCount = _db.his_Ticket.Where(t => t.IdTicket == IdTicket && t.Motivo.Contains("Ticket pasó a Control de Cambios")).Count();
@@ -61,7 +65,6 @@ namespace ServiceDesk.Controllers
             }
             ViewBag.Id = string.IsNullOrEmpty(folio) ? "" : folio;
 
-
             if (IdTicket != null)
             {
 
@@ -70,16 +73,10 @@ namespace ServiceDesk.Controllers
 
                 if (IdTicket != null)
                 {
-
-                    //Asigna el valor del user logueado
-                    var idEmp = Int32.Parse(EmployeeId);
-                    var MisDatos = _db.tbl_User.Where(t => t.EmpleadoID == idEmp).FirstOrDefault();
-                    string Centro = _db.cat_Centro.Where(t => t.Id == MisDatos.Centro).Select(t => t.Centro).FirstOrDefault();
                     detalle.EmployeeIdBO = EmployeeId;
                     detalle.NombreCompleto = MisDatos.NombreTecnico;
                     detalle.Correo = MisDatos.Correo;
                     detalle.Area = Centro;
-
 
                     //Valida si el ticket tiene solicitud para aprobación
                     //Estatus de Aprobaciones
@@ -96,7 +93,6 @@ namespace ServiceDesk.Controllers
 
                     }
 
-
                     var AsignacionInfo = _db.tbl_TicketDetalle.Where(a => a.Id == IdTicket).FirstOrDefault();
 
                     if (AsignacionInfo.TecnicoAsignado == null)
@@ -104,9 +100,7 @@ namespace ServiceDesk.Controllers
                         ViewBag.MuestraAsignacion = "SI";
                     }
 
-
                     //Valida si es subticket
-
                     if (AsignacionInfo.IdTicketPrincipal != null)
                     {
 
@@ -182,6 +176,7 @@ namespace ServiceDesk.Controllers
                     //var his2 = _db.his_Ticket.Where(a => a.IdTicket == IdTicket).OrderByDescending(a => a.FechaRegistro).FirstOrDefault();
                     //detalle.detalle.GrupoResolutor = his2.GrupoResolutor;                   
                     detalle.detalle.GrupoResolutor = info.FirstOrDefault().GrupoResolutor;
+                    ViewBag.TktGrpRes = detalle.detalle.GrupoResolutor;
                     ViewBag.EstadoTicket = new SelectList(_db.cat_EstadoTicket.Where(x => x.Activo), "Id", "Estado");
                     switch (detalle.detalle.EstatusTicket) {
                         case 2: ViewBag.EstadoTicket = new SelectList(_db.cat_EstadoTicket.Where(x => x.Id == 3), "Id", "Estado"); break;
@@ -1545,25 +1540,33 @@ namespace ServiceDesk.Controllers
             ViewBag.NivelExpLst = new SelectList(_db.catNivelExperiencia.Where(x => x.Activo), "Nivel", "Nivel");
             //
             var lstNivel = _db.catNivelExperiencia.Where(a => a.Activo == true).ToList();
-            var lstCat = _db.vwDetalleCategoria.Where(a => a.Activo == true).ToList();
-            var lstSubCat = _db.vwDetalleSubcategorias.Where(a => a.Activo == true).ToList();
+
+            var lstCat = new List<vwDetalleCategoria>();//_db.vwDetalleCategoria.Where(a => a.Activo == true).ToList();
+            var lstSubCat = new List<vwDetalleSubcategorias>();// _db.vwDetalleSubcategorias.Where(a => a.Activo == true).ToList();
             var lstUser = new List<vwDetalleUsuario>();
             var lstDX = new List<vwDetalleDiagnostico>();
             //var lstDX = _db.vwDetalleDiagnostico.Where(a => a.Activo == true).ToList();
             if (empid == 19237) // Daniel Fuentes tiene permisos especiales
             {
-                lstDX = _db.vwDetalleDiagnostico.Where(a => a.Activo == true).ToList();
                 lstUser = _db.vwDetalleUsuario.Where(a => a.Activo == true).ToList();
+                lstDX = _db.vwDetalleDiagnostico.Where(a => a.Activo == true).ToList();
+
+                lstCat = _db.vwDetalleCategoria.Where(a => a.Activo == true).ToList();
+                lstSubCat = _db.vwDetalleSubcategorias.Where(a => a.Activo == true).ToList();
             }
             else { 
                 //lstUser : Solo los usuarios del mismo grupo resolutor
                 lstUser = _db.vwDetalleUsuario.Where(a => a.Activo == true && a.GrupoResolutor == gpr).ToList();
 
                 //lstDx : Solo los diagnosticos pertinentes al grupo resolutor del usuario
-                int idGrupoRes = _db.catGrupoResolutor.Where(t => t.Grupo == gpr).Select(t => t.Id).FirstOrDefault();
-                var categoriasDelGrupo = _db.cat_Categoria.Where(t => t.GrupoResolutor == idGrupoRes).Select(t => t.Id).ToArray();
-                var diagsByGrp = _db.catDiagnosticos.Where(t => categoriasDelGrupo.Contains(t.IdCategoria)).Select(t => t.Id).ToArray();
-                lstDX = _db.vwDetalleDiagnostico.Where(a => a.Activo == true && diagsByGrp.Contains(a.Id)).ToList();
+
+                int idGrupoRes = _db.catGrupoResolutor.Where(t => t.Grupo == gpr).Select(t => t.Id).FirstOrDefault();                       // get id of grupo resolutor
+                var categoriasDelGrupo = _db.cat_Categoria.Where(t => t.GrupoResolutor == idGrupoRes).Select(t => t.Id).ToArray();          // get list of ids of categorías of that id
+                var diagsByGrp = _db.catDiagnosticos.Where(t => categoriasDelGrupo.Contains(t.IdCategoria)).Select(t => t.Id).ToArray();    // get list of ids of diagnosticos of that list of categorias
+
+                lstDX = _db.vwDetalleDiagnostico.Where(a => a.Activo == true && diagsByGrp.Contains(a.Id)).ToList();                        // get info exclusive to that grupo resolutor
+                lstCat = _db.vwDetalleCategoria.Where(a => a.Activo == true && categoriasDelGrupo.Contains(a.Id)).ToList();
+                lstSubCat = _db.vwDetalleSubcategorias.Where(a => a.Activo == true && categoriasDelGrupo.Contains(a.CategoriaId)).ToList();
             }
             //
 
@@ -2721,6 +2724,62 @@ namespace ServiceDesk.Controllers
         public void Notif_Recategorizacion_de_Ticket(string grupoRes, int ticketId, string origen) {
             //notificar a supervisores y servicedesks de grupo resolutor que un ticket ha sido recategorizado hacia ellos
             //_noti.CrearNotificacion();
+        }
+
+        public ActionResult GotoNotifs(int notifId, int EmployeeId)
+        {
+            string msj;
+            string mtv;
+            int id = 0;
+            bool notif_is_CC = false;
+            string rol = RoldeUsuario(EmployeeId);
+            var notif = _db.Notificaciones.Where(t => t.Id == notifId).FirstOrDefault();
+
+            if (notif != null)
+            {
+                msj = notif.Mensaje;
+                mtv = notif.Motivo;
+                // Notif is about a CC
+                if (msj.Contains("ID CC")) { id = idofstring(msj, 1); notif_is_CC = true; }
+                else
+                if (msj.Contains(" (CC")) { id = idofstring(msj, 2); notif_is_CC = true; }
+                else
+                if (mtv.Contains(" (CC")) { id = idofstring(mtv, 2); notif_is_CC = true; }
+                else
+                if (mtv.Contains(".") && !notif_is_CC) // Las notificaciones de Tarea tienen puntos en el motivo
+                {
+                    id = idofstring(msj, 1);
+                    return RedirectToAction("DetalleTarea", rol, new { EmployeeId = EmployeeId, TareaId = id });
+                }
+                else if (!notif_is_CC)
+                {
+                    id = idofstring(msj, 1);
+                    return RedirectToAction("DetalleTicket", rol, new { EmployeeId = EmployeeId, IdTicket = id });
+                }
+            }
+            return RedirectToAction("DetalleCC", "ControlCambios", new { EmployeeId = EmployeeId, CCid = id });
+        }
+        public int idofstring(string txt, int type)
+        {
+            // get the id of the obj out of the notification string
+            int g = 0; int id;
+            string[] numbers = Regex.Split(txt, @"\D+");
+            try
+            {
+                switch (type)
+                {
+                    case 1:
+                        g = int.Parse(numbers[1]);
+                        break;
+                    case 2:
+                        int last = numbers.Length;
+                        g = int.Parse(numbers[last - 2]);
+                        break;
+                }
+            }
+            catch { }
+            id = g;
+            return id;
         }
         public string RoldeUsuario(int EmployeeID) //String que obtiene el Rol del usuario dado su ID 
         {

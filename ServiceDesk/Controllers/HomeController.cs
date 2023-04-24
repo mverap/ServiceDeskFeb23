@@ -17,6 +17,7 @@ namespace ServiceDesk.Controllers
         ServiceDeskManager _sdmanager = new ServiceDeskManager();
         private readonly NotificacionesManager _noti = new NotificacionesManager();
         DashBoardController _dash = new DashBoardController();
+        private readonly ServiceDeskContext _db = new ServiceDeskContext();
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         public ActionResult Index()
@@ -101,7 +102,7 @@ namespace ServiceDesk.Controllers
                 // error 103: var ptoSupRol viene nula, BD ServiceDesk no tiene relación en rel_PuestosRoless
                 if (ptoSupRol.Count() == 0) { string rolID = rols[0]; return RedirectToAction("Login", "Home", new { error = rolID });  }
 
-                ActualizarRol(ptoSupRol, idemp);
+                int existeEnServiceDesk = ActualizarRol(ptoSupRol, idemp); // if 0 then username existe en admin pero devuelve un employee id que no existe en tbl_user
 
                 if (ptoSupRol.Contains("Solicitante"))      { return RedirectToAction("Index"    , "DashBoard"  , new { EmployeeId = idemp }); }
                 else if (ptoSupRol.Contains("Supervisor"))  { return RedirectToAction("Resolutor", "DashBoard"  , new { EmployeeId = idemp }); }
@@ -142,10 +143,10 @@ namespace ServiceDesk.Controllers
                         // error 103: var ptoSupRol viene nula, BD ServiceDesk no tiene relación en rel_PuestosRoless
                         if (ptoSupRol.Count() == 0) { string rolID = rols[0]; return RedirectToAction("Login", "Home", new { error = rolID });  }
 
-                        ActualizarRol(ptoSupRol, idemp);
+                        int existeEnServiceDesk = ActualizarRol(ptoSupRol, idemp); // if 0 then username existe en admin pero devuelve un employee id que no existe en tbl_user
 
-                        System.Diagnostics.Debug.WriteLine("Id Employee: " + idemp);
-                        foreach (string rol in ptoSupRol) { System.Diagnostics.Debug.WriteLine("Rol: " + rol); }
+                        //System.Diagnostics.Debug.WriteLine("Id: " + idemp + " Username: " + vm.Usuario);
+                        foreach (string rol in ptoSupRol) { System.Diagnostics.Debug.WriteLine("Id: " + idemp + " Username: " + vm.Usuario + " Rol: " + rol); }
 
                         if (ptoSupRol.Contains("Solicitante"))      { return RedirectToAction("Index"    , "DashBoard"  , new { EmployeeId = idemp }); }
                         else if (ptoSupRol.Contains("Supervisor"))  { return RedirectToAction("Resolutor", "DashBoard"  , new { EmployeeId = idemp }); }
@@ -167,8 +168,8 @@ namespace ServiceDesk.Controllers
 
         }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        public void ActualizarRol(List<string> Rol, int EmployeeId) {
-            _dash.ActualizarRol( Rol, EmployeeId);
+        public int ActualizarRol(List<string> Rol, int EmployeeId) {
+            return _dash.ActualizarRol( Rol, EmployeeId);
         }
         public ActionResult Error()
         {
@@ -212,6 +213,12 @@ namespace ServiceDesk.Controllers
 
             ViewBag.user = EmployeeId;
             ViewBag.userRol = _dash.RoldeUsuario(EmployeeId);
+
+            var userdata = _db.tbl_User.FirstOrDefault(t => t.EmpleadoID == EmployeeId);
+            string grupo = "";
+            if (userdata == null) { grupo = "null"; }
+            else { grupo = userdata.GrupoResolutor; }
+            ViewBag.grupo = grupo;
 
             var menus = _admin.MenusPermisos.Where(a => a.ApplicationName == Membership.ApplicationName && a.UserName == User.Identity.Name).ToList();
             ViewBag.Menus =

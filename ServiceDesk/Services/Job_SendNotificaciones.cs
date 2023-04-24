@@ -16,10 +16,12 @@ namespace QuartzScheduler.Services
             var Notificaciones_Sin_Mandar = db.Notificaciones.Where(t => t.Enviada == false).ToList();
             foreach (var notificacion in Notificaciones_Sin_Mandar)
             {
-                nt.SendEmailByEmployeeId(notificacion.EmpleadoId, notificacion.Mensaje);
-                notificacion.Enviada = true;
-                db.Notificaciones.AddOrUpdate(notificacion);
-                db.SaveChanges();
+                string sentEstatus = nt.SendEmailByEmployeeId(notificacion.EmpleadoId, notificacion.Mensaje);
+                if (sentEstatus != "failed") { 
+                    notificacion.Enviada = true;
+                    db.Notificaciones.AddOrUpdate(notificacion);
+                    db.SaveChanges();
+                }
             }
 
         }

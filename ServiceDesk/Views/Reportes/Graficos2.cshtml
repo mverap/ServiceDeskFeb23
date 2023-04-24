@@ -1,0 +1,439 @@
+﻿@model ServiceDesk.ViewModels.GraphicInfo
+
+
+@{
+    ViewBag.Title = "Index";
+
+}
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Reportes</title>
+    <style>
+        .animOut {
+            -webkit-animation: scale-out-center 0.3s cubic-bezier(0.550, 0.085, 0.680, 0.530) both;
+            animation: scale-out-center 0.3s cubic-bezier(0.550, 0.085, 0.680, 0.530) both;
+        }
+
+        @@-webkit-keyframes scale-out-center {
+            0% {
+                -webkit-transform: scale(1);
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            100% {
+                -webkit-transform: scale(0);
+                transform: scale(0);
+                opacity: 1;
+            }
+        }
+
+        @@keyframes scale-out-center {
+            0% {
+                -webkit-transform: scale(1);
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            100% {
+                -webkit-transform: scale(0);
+                transform: scale(0);
+                opacity: 1;
+            }
+        }
+
+        .animIn {
+            -webkit-animation: scale-in-center 0.3s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+            animation: scale-in-center 0.3s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
+        }
+
+        @@-webkit-keyframes scale-in-center {
+            0% {
+                -webkit-transform: scale(0);
+                transform: scale(0);
+                opacity: 1;
+            }
+
+            100% {
+                -webkit-transform: scale(1);
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @@keyframes scale-in-center {
+            0% {
+                -webkit-transform: scale(0);
+                transform: scale(0);
+                opacity: 1;
+            }
+
+            100% {
+                -webkit-transform: scale(1);
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+    </style>
+    <script type="text/javascript">
+        var user =  @ViewBag.user;
+        var _type       = "";
+        var dateFinal, dateInicial;
+        var lineSalida = "";
+        var pie1 = "";
+
+        @{ string url = "../Reportes/Descargar_Excel_Encuestas?EmployeeId=" + @ViewBag.User;}
+        //Conexiones
+        var controller = '@ViewBag.Rol';
+        function returnMenu() {
+            var urlMenu = "";
+            if (controller == "Directivo" || controller == "ServiceDesk")   urlMenu = '../' + controller + '/Dashboard?EmployeeId=' + user;
+            if (controller == "Tecnico")                                    urlMenu = '../Dashboard/Tecnico?EmployeeId=' + user;
+            if (controller == "Tecnico")                                    urlMenu = '../Dashboard/Resolutor?EmployeeId=' + user; // DUDA: tecnico va usar el dashboard de técnico o el de resolutor?
+            if (controller == "Resolutor" || controller == "Supervisor")    urlMenu = '../Dashboard/Resolutor?EmployeeId=' + user;
+            window.location = urlMenu;
+        }
+        function goToReportes()         { window.location = '../Reportes/Graficos?EmployeeId='       + user; }
+        function goToGridTickets()      { window.location = '../Reportes/gridTickets?EmployeeId='    + user; }
+        function goToGridTickets2()     { window.location = '../Reportes/GridEncuesta?EmployeeId='    + user; }
+
+        // Load grafics
+        $(document).ready(function () {
+            console.log("Loading graphics");
+
+
+            document.getElementById('piesla').src       = "PieChartSLA?EmployeeID="          + user;
+            document.getElementById('pieestatus').src   = "PieChartEstatus?EmployeeID="      + user;
+            document.getElementById('pieprioridad').src = "PieChartPrioridad?EmployeeID="    + user;
+            document.getElementById('pieexpertiz').src  = "PieChartExpertiz?EmployeeID="     + user;
+            document.getElementById('pietipo').src      = "PieChartTipo?EmployeeID="         + user;
+            document.getElementById('piecentro').src    = "PieChartCentro?EmployeeID="       + user;
+
+            if (controller == "ServiceDesk" || controller == "Directivo")
+            document.getElementById('pieres').src       = "PieChartResolutor?EmployeeID="    + user;
+
+            document.getElementById('pieencuesta').src  = "PieChartEncuesta?EmployeeID="     + user;
+            document.getElementById('piecalif').src = "PieChartCalidad?EmployeeID=" + user;
+
+        });
+
+        function fechaFinalCambiada() {
+            //obtener fecha_final
+            var datepícker = document.getElementById("datePickerFinal");
+            dateFinal = datepícker.value;
+            //obtener fecha_inicial
+            datepícker = document.getElementById("datePickerInicial");
+            dateInicial = datepícker.value;
+
+            //linea de salida para nuevos pies
+            lineSalida = "EmployeeID=" + @ViewBag.user + "&fechaInici=" + dateInicial + "&fechaFinal=" + dateFinal;
+
+            //actualizar pies
+            //document.getElementById('piesla').src       = "PieChartEstatus?EmployeeID=@ViewBag.user"; //linea de prueba
+            console.log("PieChartResolutor?" + lineSalida);
+            document.getElementById('piesla').src       = "PieChartSLA?"        + lineSalida;
+            document.getElementById('pieestatus').src   = "PieChartEstatus?"    + lineSalida;
+            document.getElementById('pieprioridad').src = "PieChartPrioridad?"  + lineSalida;
+            document.getElementById('pieexpertiz').src  = "PieChartExpertiz?"   + lineSalida;
+            document.getElementById('pietipo').src      = "PieChartTipo?"       + lineSalida;
+            document.getElementById('piecentro').src    = "PieChartCentro?"     + lineSalida;
+            document.getElementById('pieres').src       = "PieChartResolutor?"  + lineSalida;
+
+            document.getElementById('pieencuesta').src  = "PieChartEncuesta?"   + lineSalida;
+            document.getElementById('piecalif').src = "PieChartCalidad?" + lineSalida;
+
+            console.log("pies actualizados");
+        }
+        function fechaFinalCambiada2() {
+
+            //obtener fecha_final
+            var datepícker  = document.getElementById("datePickerFinal2");
+            dateFinal       = datepícker.value;
+            //obtener fecha_inicial
+            datepícker      = document.getElementById("datePickerInicial2");
+            dateInicial     = datepícker.value;
+
+            //linea de salida para nuevos pies
+            lineSalida = "EmployeeID=" + @ViewBag.user + "&fechaInicial=" + dateInicial + "&fechaFinal=" + dateFinal;
+
+            document.getElementById('pieencuesta').src  = "PieChartEncuesta?"   + lineSalida;
+            document.getElementById('piecalif').src     = "PieChartCalidad?"    + lineSalida;
+            console.log("pies actualizados");
+
+        }
+
+        function hideDrop() {
+            //Esconder checkboxes
+            var drop = document.getElementById("fakedrop");
+            if (drop.hidden == true) drop.hidden = false; else drop.hidden = true;
+        }
+        function hideDrop2() {
+            //Esconder checkboxes
+            var drop = document.getElementById("fakedrop2");
+            if (drop.hidden == true) drop.hidden = false; else drop.hidden = true;
+        }
+
+        function hidePie(int) {
+            //Hide and Show con animaciones
+            console.log("pie debugg: " + int);
+            var pie = document.getElementById("Pie" + int.toString());
+            if (pie.classList.contains("animOut")) {
+                pie.classList.remove("animOut");
+                pie.hidden = false;
+                pie.classList.add("animIn");
+                pie.addEventListener("animationend", function () {
+                    pie.hidden = false;
+                });
+            } else {
+                pie.classList.remove("animIn");
+                pie.classList.add("animOut");
+                pie.addEventListener("animationend", function () {
+                    pie.hidden = true;
+                });
+            }
+            //Hide and Show sin animaciones
+            //document.getElementById("Pie" + int.toString()).element.classList.add("animOut");
+            //pie.className += "animOut";
+            //if (pie.hidden == true) pie.hidden = false; else pie.hidden = true;
+
+            //Esconder checkboxes despues de usar boton:
+            //hideDrop();
+        }
+    </script>
+</head>
+<body>
+
+    <p>
+        <br />
+        <a style="color: dodgerblue" onclick="returnMenu()">Dashboard</a> / <a style="color: dodgerblue" onclick="goToReportes();"> Reportes </a>
+    </p>
+
+    <ul class="nav nav-tabs navbar-left" id="myTab" role="tablist">
+        <li class="nav-item active" role="presentation">
+            <a class="nav-link"
+               id="historialID-tab"
+               data-toggle="tab"
+               href="#historial"
+               role="tab"
+               aria-controls="historial"
+               aria-selected="True">
+                <h4> <b style="color:black">Reportes Tickets</b> </h4>
+            </a>
+        </li>
+        @if (@ViewBag.EdoTicket == "Trabajando")
+        {
+            if (ViewBag.SubticketInfo != "SI")
+            {
+                <li class="nav-item">
+                    <a class="nav-link"
+                       id="subticketsID-tab"
+                       data-toggle="tab"
+                       href="#subtickets"
+                       role="tab"
+                       aria-controls="subtickets"
+                       aria-selected="false">
+                        <h4> <b style="color:white">Subtickets</b></h4>
+                    </a>
+                </li>
+            }
+        }
+        @if (ViewBag.SubticketInfo != "SI")
+        {
+            <li class="nav-item">
+                <a class="nav-link"
+                   id="vinculacion-tab"
+                   data-toggle="tab"
+                   href="#vinculacion"
+                   role="tab"
+                   aria-controls="vinculacion"
+                   aria-selected="false">
+                    <h4> <b style="color:black"> Reporte Encuestas </b> </h4>
+                </a>
+            </li>
+        }
+    </ul>
+
+
+
+    <div class="tab-content">
+
+        <div class="tab-pane active" id="historial" role="tabpanel" aria-labelledby="historialID-tab">
+            @*Cabeza de JOSUE*@
+            <div class="Content-header" style="width:100%;  height: 150px; display:flex;">
+                @*Checkboxes*@
+                <div class="Content-header-left scale-out-center" style="height:100%; width:70%; padding-top: 20px">
+                    <div style="width:100%">
+                        <button class="btn btn-light" value="ExportoCSV" onclick="hideDrop()">Personalizar Vista</button>
+                        <ul id="fakedrop" hidden="true">
+
+                            @if (ViewBag.Rol == "ServiceDesk" || ViewBag.Rol == "Directivo")
+                            {
+                                <table>
+                                    <tr>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td><input type="checkbox" onclick="hidePie('1')" checked="true"> Por SLA </td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox" onclick="hidePie('2')" checked="true"> Por Tipo     </td>
+                                        <td><input type="checkbox" onclick="hidePie('3')" checked="true"> Por Estatus </td>
+                                        <td><input type="checkbox" onclick="hidePie('4')" checked="true"> Por Prioridad   </td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox" onclick="hidePie('5')" checked="true"> Por Centro    </td>
+                                        <td><input type="checkbox" onclick="hidePie('6')" checked="true"> Por Grupo Resolutor     </td>
+                                        <td><input type="checkbox" onclick="hidePie('7')" checked="true"> Por Expertiz    </td>
+                                    </tr>
+                                    <tr>
+                                    </tr>
+                                </table>
+                            }
+                            else
+                            {
+                                <table>
+                                    <tr>
+                                        <td><input type="checkbox" onclick="hidePie('1')" checked="true"> Por Tipo </td>
+                                        <td><input type="checkbox" onclick="hidePie('2')" checked="true"> Por SLA </td>
+                                        <td><input type="checkbox" onclick="hidePie('3')" checked="true"> Por Prioridad   </td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox" onclick="hidePie('4')" checked="true"> Por Centro     </td>
+                                        <td><input type="checkbox" onclick="hidePie('5')" checked="true"> Por Estatus     </td>
+                                        <td><input type="checkbox" onclick="hidePie('6')" checked="true"> Por Expertiz    </td>
+                                    </tr>
+                                    <tr>
+                                    </tr>
+                                </table>
+                            }
+                        </ul>
+                    </div>
+                </div>
+                @*Datepickers*@
+                <div class="Content-header-right" style="height: 100%; width: 30%; ">
+                    <div class="sub-header1" style="height:50%; width: 75%; display:flex">
+
+                        <div class="Fecha1" style="height: 50%; width: 50%; text-align:center; padding-left: 5px">
+                            Fecha Inicio
+                            <input type="date" id="datePickerInicial" placeholder="dd/mm/yyyy" />
+                        </div>
+                        <div class="Fecha2" style="height:50%; width: 50%; text-align:center">
+                            Fecha Final
+                            <input type="date" id="datePickerFinal" onchange="fechaFinalCambiada()" />
+                        </div>
+
+                    </div>
+                    <div class="sub-header1" style="height:50%; width:30%; display: flex;">
+
+                        <div class="sub-2" style="width: 100%; height:100%; text-align: center; padding-top:10px">
+                            <button type="submit" class="btn btn-success" onclick="goToGridTickets();" value="DetalleTickets" style="background-color: #007bff; width: 90%; height: 54%;">
+                                Ver Detalle Tickets
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @*Pies*@
+            <div class="container-pae" style="position:relative;  width:100%; margin-top:10px; height:900px;">
+
+                @if (ViewBag.Rol == "ServiceDesk" || ViewBag.Rol == "Directivo")
+                {
+                    <div class="graf-second" style="width:100%; height:35%; display:flex" id="divSla">
+                        <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" animation: myAnim 1s ease 0s 1 normal forwards; id="Pie1">
+                            <p> <img src="" id="piesla" /></p>
+                        </div>
+                    </div>
+                    <div class="graf-second" style="width:100%; height:35%; display:flex">
+                        <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie2"> <p> <img src="" id="pietipo" /></p> </div>
+                        <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie3"> <p> <img src="" id="pieestatus" /></p> </div>
+                        <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie4"> <p> <img src="" id="pieprioridad" /></p> </div>
+                    </div>
+                    <div class="graf-second" style="width:100%; height:35%;display:flex">
+                        <div class="graf-second" style="height: 100%; margin-left: auto; margin-right: auto;" id="Pie5"> <p> <img src="" id="piecentro" /></p> </div>
+                        <div class="graf-second" style="height: 100%; margin-left: auto; margin-right: auto;" id="Pie6"> <p> <img src="" id="pieres" /></p> </div>
+                        <div class="graf-second" style="height: 100%; margin-left: auto; margin-right: auto;" id="Pie7"> <p> <img src="" id="pieexpertiz" /></p> </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="graf-second" style="width:100%; height:35%; display:flex">
+                        <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie1"> <p> <img src="" id="pietipo" /></p> </div>
+                        <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie2"> <p> <img src="" id="piesla" /></p> </div>
+                        <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie3"> <p> <img src="" id="pieprioridad" /></p> </div>
+                    </div>
+                    <div class="graf-second" style="width:100%; height:35%;display:flex">
+                        <div class="graf-second" style="height: 100%; margin-left: auto; margin-right: auto;" id="Pie4">  <p> <img src="" id="piecentro" /></p> </div>
+                        <div class="graf-second" style="height: 100%; margin-left: auto; margin-right: auto;" id="Pie5">  <p> <img src="" id="pieestatus" /></p> </div>
+                        <div class="graf-second" style="height: 100%; margin-left: auto; margin-right: auto;" id="Pie6">  <p> <img src="" id="pieexpertiz" /></p> </div>
+                    </div>
+
+                }
+
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="subtickets" role="tabpanel" aria-labelledby="subticketsID-tab">
+            Contenido de tab2, subtickets
+        </div>
+
+        <div class="tab-pane fade" id="vinculacion" role="tabpanel" aria-labelledby="vinculacion-tab">
+            @*Cabeza de JOSUE*@
+            <div class="Content-header" style="width:100%;  height: 150px; display:flex;">
+                @*Checkboxes*@
+                <div class="Content-header-left scale-out-center" style="height:100%; width:70%; padding-top: 20px">
+                    <div style="width:100%">
+                        <button class="btn btn-light" value="ExportoCSV" onclick="hideDrop2()">Personalizar Vista</button>
+                        <ul id="fakedrop2" hidden="true">
+                            <table>
+                                <tr>
+                                    <td><input type="checkbox" onclick="hidePie('8')" checked="true"> Por Estado de Encuesta </td>
+                                </tr>
+                                <tr>
+                                    <td><input type="checkbox" onclick="hidePie('9')" checked="true"> Por Calificación   </td>
+                                </tr>
+                                <tr>
+                                </tr>
+                            </table>
+                        </ul>
+                    </div>
+                </div>
+                @*Datepickers*@
+                <div class="Content-header-right" style="height: 100%; width: 30%; ">
+                    <div class="sub-header1" style="height:50%; width: 75%; display:flex">
+
+                        <div class="Fecha1" style="height: 50%; width: 50%; text-align:center; padding-left: 5px">
+                            Fecha Inicio
+                            <input type="date" id="datePickerInicial2" placeholder="dd/mm/yyyy" />
+                        </div>
+                        <div class="Fecha2" style="height:50%; width: 50%; text-align:center">
+                            Fecha Final
+                            <input type="date" id="datePickerFinal2" onchange="fechaFinalCambiada2()" />
+                        </div>
+
+                    </div>
+                    <div class="sub-header1" style="height:50%; width:100%; display: flex;">
+
+                        <div class="sub-2" style="width: 30%; height:100%; text-align: center; padding-top:10px">
+                            <button type="submit" class="btn btn-success" onclick="goToGridTickets2();" value="DetalleTickets" style="background-color: #007bff; width: 90%; height: 54%;">
+                                Ver Detalle Encuestas
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            @*Pies*@
+            <div class="graf-second" style="width:100%; height:35%; display:flex">
+                <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie8"> <p> <img src="" id="pieencuesta" /></p> </div>
+                <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie9"> <p> <img src="" id="piecalif" /></p> </div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

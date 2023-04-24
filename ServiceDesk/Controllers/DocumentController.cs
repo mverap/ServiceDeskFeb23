@@ -28,6 +28,12 @@ namespace ServiceDesk.Controllers
             ViewBag.Rol = "Solicitante";
             return View();
         }
+        public ActionResult TicketNotFound()
+        {
+            ViewBag.NoBar = "Block";
+            ViewBag.Rol = "Solicitante";
+            return View();
+        }
         public int ServerC() {
             // AppExt = 1
             // Condor = 2

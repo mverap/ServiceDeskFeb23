@@ -610,16 +610,17 @@ namespace ServiceDesk.Managers
 
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        public void SendEmailByEmployeeId(int employeeId, string message)
+        public string SendEmailByEmployeeId(int employeeId, string message)
         {
 
             var usuario = _sd.vw_INFO_USER_EMPLEADOS.Where(a=>a.NumeroPenta == employeeId).FirstOrDefault();
             if (usuario != null)
             {
                 var email = usuario.Email;
-                _msg.SendEmail("Notificacion", "", message, email, new List<string>());
+                string sent = _msg.SendEmail("Notificacion", "", message, email, new List<string>());
+                return sent;
             }
-
+            return "failed";
         }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     }

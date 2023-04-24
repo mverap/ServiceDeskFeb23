@@ -1,4 +1,4 @@
-﻿@model ServiceDesk.ViewModels.vmDashbordResolutor
+﻿@model ServiceDesk.ViewModels.GraphicInfo
 
 
 @{
@@ -77,13 +77,30 @@
                 opacity: 1;
             }
         }
+
+        classPieGoogle {
+            border: 1px solid #ccc;
+        }
     </style>
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript">
         var user =  @ViewBag.user;
         var _type       = "";
         var dateFinal, dateInicial;
         var lineSalida = "";
         var pie1 = "";
+
+        // CARGAR GOOGLE API para los gráficos
+        google.charts.load('current', { 'packages': ['corechart'] });
+        google.charts.setOnLoadCallback(piePrioridad);
+        google.charts.setOnLoadCallback(piecentro);
+        google.charts.setOnLoadCallback(pieestatus);
+        google.charts.setOnLoadCallback(pietipo);
+        google.charts.setOnLoadCallback(pieexpertiz);
+        google.charts.setOnLoadCallback(pieresolutor);
+        google.charts.setOnLoadCallback(piesla);
+        google.charts.setOnLoadCallback(pieencuesta);
+        google.charts.setOnLoadCallback(piecalidad);
 
         @{ string url = "../Reportes/Descargar_Excel_Encuestas?EmployeeId=" + @ViewBag.User;}
         //Conexiones
@@ -96,7 +113,6 @@
             if (controller == "Resolutor" || controller == "Supervisor")    urlMenu = '../Dashboard/Resolutor?EmployeeId=' + user;
             window.location = urlMenu;
         }
-
         function goToReportes()         { window.location = '../Reportes/Graficos?EmployeeId='       + user; }
         function goToGridTickets()      { window.location = '../Reportes/gridTickets?EmployeeId='    + user; }
         function goToGridTickets2()     { window.location = '../Reportes/GridEncuesta?EmployeeId='    + user; }
@@ -104,21 +120,28 @@
         // Load grafics
         $(document).ready(function () {
             console.log("Loading graphics");
-            document.getElementById('piesla').src       = "PieChartSLA?EmployeeID="          + user;
-            document.getElementById('pieestatus').src   = "PieChartEstatus?EmployeeID="      + user;
-            document.getElementById('pieprioridad').src = "PieChartPrioridad?EmployeeID="    + user;
-            document.getElementById('pieexpertiz').src  = "PieChartExpertiz?EmployeeID="     + user;
-            document.getElementById('pietipo').src      = "PieChartTipo?EmployeeID="         + user;
-            document.getElementById('piecentro').src    = "PieChartCentro?EmployeeID="       + user;
 
-            if (controller == "ServiceDesk" || controller == "Directivo")
-            document.getElementById('pieres').src       = "PieChartResolutor?EmployeeID="    + user;
+            //document.getElementById('piesla').src       = "PieChartSLA?EmployeeID="          + user;
+            //document.getElementById('pieestatus').src   = "PieChartEstatus?EmployeeID="      + user;
+            //document.getElementById('pieprioridad').src = "PieChartPrioridad?EmployeeID="    + user;
+            //document.getElementById('pieexpertiz').src  = "PieChartExpertiz?EmployeeID="     + user;
+            //document.getElementById('pietipo').src      = "PieChartTipo?EmployeeID="         + user;
+            //document.getElementById('piecentro').src    = "PieChartCentro?EmployeeID="       + user;
 
-            document.getElementById('pieencuesta').src  = "PieChartEncuesta?EmployeeID="     + user;
-            document.getElementById('piecalif').src     = "PieChartCalidad?EmployeeID="      + user;
+            //if (controller == "ServiceDesk" || controller == "Directivo")
+            //document.getElementById('pieres').src       = "PieChartResolutor?EmployeeID="    + user;
+
+            //document.getElementById('pieencuesta').src  = "PieChartEncuesta?EmployeeID="     + user;
+            //document.getElementById('piecalif').src = "PieChartCalidad?EmployeeID=" + user;
+
         });
 
+        function loadGraphs() {
+            window.location = lineSalida;
+            console.log("cargando pagina: " + lineSalida);
+        }
         function fechaFinalCambiada() {
+            document.getElementById("loadFechas").style.display = "block";
             //obtener fecha_final
             var datepícker = document.getElementById("datePickerFinal");
             dateFinal = datepícker.value;
@@ -126,26 +149,13 @@
             datepícker = document.getElementById("datePickerInicial");
             dateInicial = datepícker.value;
 
-            //linea de salida para nuevos pies
-            lineSalida = "EmployeeID=" + @ViewBag.user + "&fechaInici=" + dateInicial + "&fechaFinal=" + dateFinal;
+            // Nueva linea para graficos de Google
+            lineSalida = "Graficos?EmployeeID=" + @ViewBag.user + "&fechaInicial=" + dateInicial + "&fechaFinal=" + dateFinal;
 
-            //actualizar pies
-            //document.getElementById('piesla').src       = "PieChartEstatus?EmployeeID=@ViewBag.user"; //linea de prueba
-            console.log("PieChartResolutor?" + lineSalida);
-            document.getElementById('piesla').src       = "PieChartSLA?"        + lineSalida;
-            document.getElementById('pieestatus').src   = "PieChartEstatus?"    + lineSalida;
-            document.getElementById('pieprioridad').src = "PieChartPrioridad?"  + lineSalida;
-            document.getElementById('pieexpertiz').src  = "PieChartExpertiz?"   + lineSalida;
-            document.getElementById('pietipo').src      = "PieChartTipo?"       + lineSalida;
-            document.getElementById('piecentro').src    = "PieChartCentro?"     + lineSalida;
-            document.getElementById('pieres').src       = "PieChartResolutor?"  + lineSalida;
-
-            document.getElementById('pieencuesta').src  = "PieChartEncuesta?"   + lineSalida;
-            document.getElementById('piecalif').src     = "PieChartCalidad?"    + lineSalida;
-            console.log("pies actualizados");
+            console.log("fechas actualizadas: " + lineSalida);
         }
         function fechaFinalCambiada2() {
-
+            document.getElementById("loadFechas").style.display = "block";
             //obtener fecha_final
             var datepícker  = document.getElementById("datePickerFinal2");
             dateFinal       = datepícker.value;
@@ -153,16 +163,13 @@
             datepícker      = document.getElementById("datePickerInicial2");
             dateInicial     = datepícker.value;
 
-            //linea de salida para nuevos pies
-            lineSalida = "EmployeeID=" + @ViewBag.user + "&fechaInicial=" + dateInicial + "&fechaFinal=" + dateFinal;
+            // Nueva linea para graficos de Google
+            lineSalida = "Graficos?EmployeeID=" + @ViewBag.user + "&fechaInicial=" + dateInicial + "&fechaFinal=" + dateFinal;
 
-            document.getElementById('pieencuesta').src  = "PieChartEncuesta?"   + lineSalida;
-            document.getElementById('piecalif').src     = "PieChartCalidad?"    + lineSalida;
-            console.log("pies actualizados");
+            console.log("fechas actualizadas: " + lineSalida);
         }
 
-
-
+        // ANIMACIONES
         function hideDrop() {
             //Esconder checkboxes
             var drop = document.getElementById("fakedrop");
@@ -173,7 +180,6 @@
             var drop = document.getElementById("fakedrop2");
             if (drop.hidden == true) drop.hidden = false; else drop.hidden = true;
         }
-
         function hidePie(int) {
             //Hide and Show con animaciones
             console.log("pie debugg: " + int);
@@ -200,67 +206,161 @@
             //Esconder checkboxes despues de usar boton:
             //hideDrop();
         }
+
+        // CARGAR PIES
+        @{
+            int contador= 0;
+            string opcionesPIe = " width: 600, height: 400, is3D: true";
+        }
+        function piePrioridad() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'Prioridades');
+            data.addColumn('number', 'Tickets');
+
+            @{
+                contador= 0;
+                foreach (var prioridad in Model.column_prioridad)
+                {
+                    <text>  data.addRows([['@Html.Raw(HttpUtility.HtmlDecode(prioridad))', @Model.count_prioridad[contador]]]); </text>
+                    contador++;
+                }
+            }
+            var options = {
+                title: 'Tickets por prioridad',  @opcionesPIe };
+            var chart = new google.visualization.PieChart(document.getElementById('pieprioridad'));
+            chart.draw(data, options);
+        }
+        function piecentro() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'Centro');
+            data.addColumn('number', 'Tickets');
+            @{
+                contador= 0;
+                foreach (var centros in Model.column_centro)
+                {
+                    <text>  data.addRows([['@Html.Raw(HttpUtility.HtmlDecode(centros))', @Model.count_centro[contador]]]); </text>
+                    contador++;
+                }
+            }
+            var options = { title: 'Tickets por Centro', @opcionesPIe };
+            var chart = new google.visualization.PieChart(document.getElementById('piecentro'));
+            chart.draw(data, options);
+        }
+        function pieestatus() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'Estatus');
+            data.addColumn('number', 'Tickets');
+            @{
+                contador= 0;
+                foreach (var estatus in Model.column_estatus)
+                {
+                    <text>  data.addRows([['@Html.Raw(HttpUtility.HtmlDecode(estatus))', @Model.count_estatus[contador]]]); </text>
+                    contador++;
+                }
+            }
+            var options = { title: 'Tickets por Estatus', @opcionesPIe };
+            var chart = new google.visualization.PieChart(document.getElementById('pieestatus'));
+            chart.draw(data, options);
+        }
+        function pietipo() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'Tipo');
+            data.addColumn('number', 'Tickets');
+            @{
+                contador= 0;
+                foreach (var tipo in Model.column_tipo)
+                {
+                    <text>  data.addRows([['@Html.Raw(HttpUtility.HtmlDecode(tipo))', @Model.count_tipo[contador]]]); </text>
+                    contador++;
+                }
+            }
+            var options = { title: 'Tickets por Tipo',  @opcionesPIe};
+            var chart = new google.visualization.PieChart(document.getElementById('pietipo'));
+            chart.draw(data, options);
+        }
+        function pieexpertiz() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'Expertiz');
+            data.addColumn('number', 'Tickets');
+            @{
+                contador= 0;
+                foreach (var expertiz in Model.column_expertiz)
+                {
+                    <text>  data.addRows([['@Html.Raw(HttpUtility.HtmlDecode(expertiz))', @Model.count_expertiz[contador]]]); </text>
+                    contador++;
+                }
+            }
+            var options = { title: 'Tickets por Expertiz',  @opcionesPIe };
+            var chart = new google.visualization.PieChart(document.getElementById('pieexpertiz'));
+            chart.draw(data, options);
+        }
+        function pieresolutor() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'Resolutor');
+            data.addColumn('number', 'Tickets');
+            @{
+                contador= 0;
+                foreach (var Resolutor in Model.column_resolutor)
+                {
+                    <text>  data.addRows([['@Html.Raw(HttpUtility.HtmlDecode(Resolutor))', @Model.count_resolutor[contador]]]); </text>
+                    contador++;
+                }
+            }
+            var options = { title: 'Tickets por Resolutor',  @opcionesPIe };
+            var chart = new google.visualization.PieChart(document.getElementById('pieres'));
+            chart.draw(data, options);
+        }
+        function piesla() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'SLA');
+            data.addColumn('number', 'Tickets');
+            @{
+                contador= 0;
+                foreach (var sla in Model.column_sla)
+                {
+                    <text>  data.addRows([['@Html.Raw(HttpUtility.HtmlDecode(sla))', @Model.count_sla[contador]]]); </text>
+                    contador++;
+                }
+            }
+            var options = { title: 'Tickets por SLA',  @opcionesPIe };
+            var chart = new google.visualization.PieChart(document.getElementById('piesla'));
+            chart.draw(data, options);
+        }
+        function pieencuesta() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'Encuesta');
+            data.addColumn('number', 'Tickets');
+            @{
+                contador= 0;
+                foreach (var encuesta in Model.column_encuesta)
+                {
+                    <text>  data.addRows([['@Html.Raw(HttpUtility.HtmlDecode(encuesta))', @Model.count_encuesta[contador]]]); </text>
+                    contador++;
+                }
+            }
+            var options = { title: 'Encuesta',  @opcionesPIe };
+            var chart = new google.visualization.PieChart(document.getElementById('pieencuesta'));
+            chart.draw(data, options);
+        }
+        function piecalidad() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'Calidad');
+            data.addColumn('number', 'Tickets');
+            @{
+                contador= 0;
+                foreach (var sla in Model.column_calidad)
+                {
+                    <text>  data.addRows([['@Html.Raw(HttpUtility.HtmlDecode(sla))', @Model.count_calidad[contador]]]); </text>
+                    contador++;
+                }
+            }
+            var options = { title: 'Calidad',  @opcionesPIe };
+            var chart = new google.visualization.PieChart(document.getElementById('piecalif'));
+            chart.draw(data, options);
+        }
     </script>
 </head>
 <body>
-
-    @*<nav class="navbar navbar-default navbar-fixed-top" style="background:red; color: dodgerblue!important;">
-            <div class="container-fluid">
-                <div class="navbar-header">
-                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar"> </button>
-                </div>
-                <div id="navbar" class="navbar-collapse collapse">
-                    <ul class="nav navbar-nav navbar-right">
-                        <li class="dropdown" style="background-color:red;">
-                            <a style="color: white !important" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> <span class="glyphicon glyphicon-bell"></span></a>
-
-                        </li>
-                        <li class="dropdown" style="background-color:red;">
-                            <a style="color: white !important" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> <span class="fa fa-bars"></span></a>
-                            <ul class="dropdown-menu">
-
-                                @if (ViewBag.rol == "Directivo") { }
-                                else
-                                {
-                                    <a style="color: dodgerblue" href="@Url.Action("Gestiones", "Supervisor")">
-                                    <li style="margin-left:5%;" class="fa fa-toggle-on">&nbsp;Configuración</li>
-                                    </a>
-                                }
-                                <a>
-                                <li style="margin-left:5%" class="fa fa-pie-chart" onclick="goToReportes();">&nbsp;Reportes</li>
-                                <a>
-                                    @if (ViewBag.Rol == "Supervisor")
-                                    {
-                                        <a>
-                                    <li style="margin-left:5%" class="fa fa-clock-o" onclick="goToTareas();">&nbsp;Tareas Programadas</li>
-                                    </a>
-                                }
-                                    <li style="margin-left:5%" class="fa fa-toggle-on">&nbsp;Cerrar sesión</li>
-                                    </a>
-                                </ul>
-                        </li>
-                        @if (Request.IsAuthenticated)
-                        {
-                            <li style="font-size: 12px;">
-                                <a href="#" style="color: white">
-                                    @User.Identity.Name
-                                </a>
-                            </li>
-                            <li style="font-size: 12px; color: white">
-                                @using (Html.BeginForm("CloseSession", "Home", FormMethod.Post, new { id = "formLogout" })) { }
-                                <a style="color: white !important" href="#"
-                                   class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" onclick="logOut();"
-                                   aria-expanded="false">
-                                    Salir
-                                    <span class="glyphicon glyphicon-off"></span>
-                                </a>
-
-                            </li>
-                        }
-                    </ul>
-                </div>
-            </div>
-        </nav>*@
 
     <p>
         <br />
@@ -312,15 +412,90 @@
         }
     </ul>
 
+    <div style="height: 100%; width: 70%; display:flex;">
+        <div style="height: 100%; width: 10%; display:flex;">
+
+        </div>
+        <div style="height: 100%; width: 40%; ">
+            <div>
+                @{
+                    string fechaIni = ViewBag.fechaInicial;
+                    string fechafinal = ViewBag.fechaFinal;
+                }
+                @if (fechaIni != "" && fechafinal != "") // ambas fechas
+                {
+                    <span>
+                        Mostrando información de tickets creados
+                        <br />durante o después de @fechaIni
+                        <br />y durante o antes de: @fechafinal
+                    </span>
+                }
+                @if (fechaIni != "" && fechafinal == "") // solo fecha inicial
+                {
+                    <span>
+                        Mostrando información de tickets creados
+                        <br />durante o después de @fechaIni
+                    </span>
+                }
+
+                @if (fechafinal != "" && fechaIni == "") // solo fecha final
+                {
+                    <span>
+                        Mostrando información de tickets creados
+                        <br />durante o antes de @fechafinal
+                    </span>
+                }
+            </div>
+        </div>
+        <div class="Content-header-right" style="height: 100%; width: 50%; ">
+            <table>
+                <tr>
+                    <td>
+                        <div class="Fecha1" style="height: 50%; width: 50%; text-align:center; margin-left:30px;">
+                            Fecha Inicio
+                            <input type="date" id="datePickerInicial" placeholder="dd/mm/yyyy" onchange="fechaFinalCambiada()" />
+                        </div>
+                    </td>
+                    <td>
+                        <button type="submit" class="btn btn-success" onclick="goToGridTickets();" value="DetalleTickets" style="background-color: #007bff; width: 100%; height: 54%;">
+                            Ver Detalle Tickets
+                        </button>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-bottom:15px;">
+                        <div class="Fecha2" style="height: 50%; width: 50%; text-align: center; margin-left:30px;">
+                            Fecha Final
+                            <input type="date" id="datePickerFinal" onchange="fechaFinalCambiada()" />
+                        </div>
+                    </td>
+                    <td style="padding-bottom:15px;">
+                        <button type="submit" class="btn btn-success" onclick="goToGridTickets2();" value="DetalleTickets" style="background-color: #007bff; width: 100%; height: 54%;">
+                            Ver Detalle Encuestas
+                        </button>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-bottom:15px;">
+                        <button class="btn btn-success" onclick="loadGraphs();" style="background-color: #007bff; width: 100%; height: 54%; display:none;" id="loadFechas">
+                            Cargar Gráficos entre fechas
+                        </button>
+                    </td>
+                    <td>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
 
 
     <div class="tab-content">
-
         <div class="tab-pane active" id="historial" role="tabpanel" aria-labelledby="historialID-tab">
             @*Cabeza de JOSUE*@
             <div class="Content-header" style="width:100%;  height: 150px; display:flex;">
                 @*Checkboxes*@
-                <div class="Content-header-left scale-out-center" style="height:100%; width:70%; padding-top: 20px">
+                <div class="Content-header-left scale-out-center" style="height:100%; width:50%; padding-top: 20px">
                     <div style="width:100%">
                         <button class="btn btn-light" value="ExportoCSV" onclick="hideDrop()">Personalizar Vista</button>
                         <ul id="fakedrop" hidden="true">
@@ -369,67 +544,42 @@
                     </div>
                 </div>
                 @*Datepickers*@
-                <div class="Content-header-right" style="height: 100%; width: 30%; ">
-                    <div class="sub-header1" style="height:50%; width: 75%; display:flex">
-
-                        <div class="Fecha1" style="height: 50%; width: 50%; text-align:center; padding-left: 5px">
-                            Fecha Inicio
-                            <input type="date" id="datePickerInicial" placeholder="dd/mm/yyyy" />
-                        </div>
-                        <div class="Fecha2" style="height:50%; width: 50%; text-align:center">
-                            Fecha Final
-                            <input type="date" id="datePickerFinal" onchange="fechaFinalCambiada()" />
-                        </div>
-
-                    </div>
-                    <div class="sub-header1" style="height:50%; width:30%; display: flex;">
-
-                        <div class="sub-2" style="width: 100%; height:100%; text-align: center; padding-top:10px">
-                            <button type="submit" class="btn btn-success" onclick="goToGridTickets();" value="DetalleTickets" style="background-color: #007bff; width: 90%; height: 54%;">
-                                Ver Detalle Tickets
-                            </button>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             @*Pies*@
-            <div class="container-pae" style="position:relative;  width:100%; margin-top:10px; height:900px;">
-
-                @if (ViewBag.Rol == "ServiceDesk" || ViewBag.Rol == "Directivo")
-                {
-                    <div class="graf-second" style="width:100%; height:35%; display:flex" id="divSla">
-                        <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" animation: myAnim 1s ease 0s 1 normal forwards; id="Pie1">
-                            <p> <img src="" id="piesla" /></p>
-                        </div>
+        <div class="container-pae" style="position:relative;  width:100%; margin-top:10px; height:900px;">
+            @if (ViewBag.Rol == "ServiceDesk" || ViewBag.Rol == "Directivo")
+            {
+                <div class="graf-second" style="width:100%; height:35%; display:flex" id="divSla">
+                    <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" animation: myAnim 1s ease 0s 1 normal forwards; id="Pie1">
+                        <p> <div id="piesla" class="classPieGoogle"></div> </p>
                     </div>
-                    <div class="graf-second" style="width:100%; height:35%; display:flex">
-                        <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie2"> <p> <img src="" id="pietipo" /></p> </div>
-                        <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie3"> <p> <img src="" id="pieestatus" /></p> </div>
-                        <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie4"> <p> <img src="" id="pieprioridad" /></p> </div>
-                    </div>
-                    <div class="graf-second" style="width:100%; height:35%;display:flex">
-                        <div class="graf-second" style="height: 100%; margin-left: auto; margin-right: auto;" id="Pie5"> <p> <img src="" id="piecentro" /></p> </div>
-                        <div class="graf-second" style="height: 100%; margin-left: auto; margin-right: auto;" id="Pie6"> <p> <img src="" id="pieres" /></p> </div>
-                        <div class="graf-second" style="height: 100%; margin-left: auto; margin-right: auto;" id="Pie7"> <p> <img src="" id="pieexpertiz" /></p> </div>
-                    </div>
-                }
-                else
-                {
-                    <div class="graf-second" style="width:100%; height:35%; display:flex">
-                        <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie1"> <p> <img src="" id="pietipo" /></p> </div>
-                        <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie2"> <p> <img src="" id="piesla" /></p> </div>
-                        <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie3"> <p> <img src="" id="pieprioridad" /></p> </div>
-                    </div>
-                    <div class="graf-second" style="width:100%; height:35%;display:flex">
-                        <div class="graf-second" style="height: 100%; margin-left: auto; margin-right: auto;" id="Pie4">  <p> <img src="" id="piecentro" /></p> </div>
-                        <div class="graf-second" style="height: 100%; margin-left: auto; margin-right: auto;" id="Pie5">  <p> <img src="" id="pieestatus" /></p> </div>
-                        <div class="graf-second" style="height: 100%; margin-left: auto; margin-right: auto;" id="Pie6">  <p> <img src="" id="pieexpertiz" /></p> </div>
-                    </div>
-
-                }
-
-            </div>
+                </div>
+                <div class="graf-second" style="width:100%; height:35%; display:flex">
+                    <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie2"> <p> <div id="pietipo" class="classPieGoogle"></div> </p> </div>
+                    <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie3"> <p> <div id="pieestatus" class="classPieGoogle"></div> </p> </div>
+                    <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie4"> <p> <div id="pieprioridad" class="classPieGoogle"></div> </p> </div>
+                </div>
+                <div class="graf-second" style="width:100%; height:35%;display:flex">
+                    <div class="graf-second" style="height: 100%; margin-left: auto; margin-right: auto;" id="Pie5"> <p> <div id="piecentro" class="classPieGoogle"></div> </p> </div>
+                    <div class="graf-second" style="height: 100%; margin-left: auto; margin-right: auto;" id="Pie6"> <p> <div id="pieres" class="classPieGoogle"></div> </p> </div>
+                    <div class="graf-second" style="height: 100%; margin-left: auto; margin-right: auto;" id="Pie7"> <p> <div id="pieexpertiz" class="classPieGoogle"></div> </p> </div>
+                </div>
+            }
+            else
+            {
+                <div class="graf-second" style="width:100%; height:35%; display:flex">
+                    <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie1"> <p> <div id="pietipo" class="classPieGoogle"></div> </p> </div>
+                    <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie2"> <p> <div id="piesla" class="classPieGoogle"></div> </p> </div>
+                    <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie3"> <p> <div id="pieprioridad" class="classPieGoogle"></div> </p> </div>
+                </div>
+                <div class="graf-second" style="width:100%; height:35%;display:flex">
+                    <div class="graf-second" style="height: 100%; margin-left: auto; margin-right: auto;" id="Pie4">  <p> <div id="piecentro" class="classPieGoogle"></div> </p> </div>
+                    <div class="graf-second" style="height: 100%; margin-left: auto; margin-right: auto;" id="Pie5">  <p> <div id="pieestatus" class="classPieGoogle"></div> </p> </div>
+                    <div class="graf-second" style="height: 100%; margin-left: auto; margin-right: auto;" id="Pie6">  <p> <div id="pieexpertiz" class="classPieGoogle"></div> </p> </div>
+                </div>
+            }
+        </div>
         </div>
 
         <div class="tab-pane fade" id="subtickets" role="tabpanel" aria-labelledby="subticketsID-tab">
@@ -458,7 +608,7 @@
                     </div>
                 </div>
                 @*Datepickers*@
-                <div class="Content-header-right" style="height: 100%; width: 30%; ">
+                @*<div class="Content-header-right" style="height: 100%; width: 30%; ">
                     <div class="sub-header1" style="height:50%; width: 75%; display:flex">
 
                         <div class="Fecha1" style="height: 50%; width: 50%; text-align:center; padding-left: 5px">
@@ -480,12 +630,12 @@
                         </div>
 
                     </div>
-                </div>
+                </div>*@
             </div>
             @*Pies*@
             <div class="graf-second" style="width:100%; height:35%; display:flex">
-                <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie8"> <p> <img src="" id="pieencuesta" /></p> </div>
-                <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie9"> <p> <img src="" id="piecalif" /></p> </div>
+                <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie8"> <p> <div id="pieencuesta" class="classPieGoogle"></div></p> </div>
+                <div class="graf-second" style=" height: 100%; margin-left: auto; margin-right: auto;" id="Pie9"> <p> <div id="piecalif" class="classPieGoogle"></div></p> </div>
             </div>
         </div>
 

@@ -749,7 +749,7 @@ namespace ServiceDesk.Managers
 
             return slaTimesVms.OrderBy(t => t.Order).ToList();
         } // Method 1 Iv
-        public List<SlaTimesVm> GetSlaTimes2(List<his_Ticket> historico) // Method 2 Iv ---------------- BEING USED
+        public List<SlaTimesVm> GetSlaTimes2(List<his_Ticket> historico) // Method 2 Iv 
         {
             historico = historico.OrderBy(t => t.IdHis).ToList();
             UserTimeData JornadaDelTecnico = new UserTimeData();
@@ -1016,7 +1016,7 @@ namespace ServiceDesk.Managers
 
             return slaTimesVms.OrderBy(t => t.Order).ToList();
         } 
-        public List<SlaTimesVm> GetSlaTimes(List<his_Ticket> historico) // Method 3 Iv
+        public List<SlaTimesVm> GetSlaTimes(List<his_Ticket> historico) // Method 3 Iv ----- IN USE en caso de modificar este también modificar inTime que funciona de manera casi identica 
         {
             historico = historico.OrderBy(t => t.IdHis).ToList();
             UserTimeData JornadaDelTecnico = new UserTimeData();
@@ -1033,6 +1033,7 @@ namespace ServiceDesk.Managers
             his_Ticket Garantia = historico.Where(t => t.EstatusTicket == 5).FirstOrDefault(); // fecha que empezó a estar en garantía// 
             var MatrizCat = _sd.cat_MatrizCategoria.FirstOrDefault(t => t.IDSubCategoria == LastEntry.SubCategoria);
             int SLA_Objetivo_int = 0, hrs = 0, min = 0, min_EnEspera_Tecnico_Actual = 0; // vars usados para parsear datos
+            System.Diagnostics.Debug.WriteLine("SLA: " + FirstEntry.IdTicket);
 
             // Obtener Eventos de creación y Ahora, si está cerrado o cancelado remplazar ahora con la fecha de ese evento
             DateTime Fecha_de_Creacion_de_ticket = FirstEntry.FechaRegistro; // Fecha de cración
@@ -1419,6 +1420,206 @@ namespace ServiceDesk.Managers
             }
 
             return slaTimesVms.OrderBy(t => t.Order).ToList();
+        }
+
+        public bool inTime(List<his_Ticket> historico, List<cat_MatrizCategoria> catMatrizCat, List<tbl_User> tbl_User, List<tbl_VentanaAtencion> tbl_VentanaAtencion) 
+            // Method 4, para reporteria, regresa true si sla total < sla objetivo
+        {
+            // copiado pegado y modificado de GetSlaTimes Method 3
+            // nótese como se eliminaron todas las llamadas a BD, esto para optimizar el conteo
+            historico = historico.OrderBy(t => t.IdHis).ToList();
+            UserTimeData JornadaDelTecnico = new UserTimeData();
+            string[] DiasLaborales = new string[0];
+            TimeSpan Inicio_Jrnd = new TimeSpan(9, 00, 00);
+            TimeSpan Final_Jrnd = new TimeSpan(17, 00, 00);
+            tbl_User DataTecnico = new tbl_User();
+            his_Ticket LastEntry = historico.OrderByDescending(t => t.IdHis).FirstOrDefault();
+            his_Ticket FirstEntry = historico.Where(t => t.Historial = true).FirstOrDefault();
+            his_Ticket Asignado = historico.OrderByDescending(t => t.FechaRegistro).Where(t => t.EstatusTicket == 2).FirstOrDefault(); // Fecha de última asignación
+            his_Ticket Cerrado = historico.Where(t => t.EstatusTicket == 6).FirstOrDefault(); // fecha de cierre
+            his_Ticket Cancelado = historico.Where(t => t.EstatusTicket == 8).FirstOrDefault(); // fecha de cancelación
+            his_Ticket Garantia = historico.Where(t => t.EstatusTicket == 5).FirstOrDefault(); // fecha que empezó a estar en garantía// 
+            var MatrizCat = catMatrizCat.FirstOrDefault(t => t.IDSubCategoria == LastEntry.SubCategoria);
+            int SLA_Objetivo_int = 0, hrs = 0, min = 0; // vars usados para parsear datos
+            System.Diagnostics.Debug.WriteLine("SLA: " + FirstEntry.IdTicket);
+
+            // Obtener Eventos de creación y Ahora, si está cerrado o cancelado remplazar ahora con la fecha de ese evento
+            DateTime Fecha_de_Creacion_de_ticket = FirstEntry.FechaRegistro; // Fecha de cración
+            DateTime Fecha_de_CierreCancelacionHoy = DateTime.Now;    // Fecha de cierre, cancelación u hoy
+            if (Cerrado != null)    Fecha_de_CierreCancelacionHoy = Cerrado.FechaRegistro; else
+            if (Cancelado != null)  Fecha_de_CierreCancelacionHoy = Cancelado.FechaRegistro;
+
+            // Obterner datos del último tecnico asignado que tuvo el ticket DataTenico, Inicio_Jrnd, Final_Jrnd, DíasLaborales[]
+            if (true)
+            {
+                // IF no data, then use dummy info, normal weekday, 9am to 5pm
+                DiasLaborales = DiasLaborales.Concat(new string[] { "Monday" }).ToArray();
+                DiasLaborales = DiasLaborales.Concat(new string[] { "Tuesday" }).ToArray();
+                DiasLaborales = DiasLaborales.Concat(new string[] { "Wednesday" }).ToArray();
+                DiasLaborales = DiasLaborales.Concat(new string[] { "Thursday" }).ToArray();
+                DiasLaborales = DiasLaborales.Concat(new string[] { "Friday" }).ToArray();
+                Inicio_Jrnd = new TimeSpan(9, 00, 00);
+                Final_Jrnd = new TimeSpan(17, 00, 00);
+
+                if (LastEntry.TecnicoAsignado != null &&
+                    LastEntry.TecnicoAsignadoReag == null &&
+                    LastEntry.TecnicoAsignadoReag2 == null)
+                {
+                    DataTecnico = tbl_User.Where(x => x.NombreTecnico == LastEntry.TecnicoAsignado).FirstOrDefault();
+                }
+                else if (LastEntry.TecnicoAsignado != null &&
+                        LastEntry.TecnicoAsignadoReag != null &&
+                        LastEntry.TecnicoAsignadoReag2 == null)
+                {
+                    DataTecnico = tbl_User.Where(x => x.NombreTecnico == LastEntry.TecnicoAsignadoReag).FirstOrDefault();
+                }
+                else if (LastEntry.TecnicoAsignado != null &&
+                        LastEntry.TecnicoAsignadoReag != null &&
+                        LastEntry.TecnicoAsignadoReag2 != null)
+                {
+                    DataTecnico = tbl_User.Where(x => x.NombreTecnico == LastEntry.TecnicoAsignadoReag2).FirstOrDefault();
+                }
+
+                if (DataTecnico != null && DataTecnico.NombreTecnico != null)
+                {
+                    //empty the info dummy and replace with actual correct data
+                    var Ini = Convert.ToDateTime(DataTecnico.HoraInicioATC);
+                    var Fin = Convert.ToDateTime(DataTecnico.HoraFinATC);
+
+                    Inicio_Jrnd = new TimeSpan(Ini.Hour, Ini.Minute, 00);
+                    Final_Jrnd = new TimeSpan(Fin.Hour, Fin.Minute, 00);
+
+                    var data_Dias = tbl_VentanaAtencion.Where(t => t.EmpleadoID == DataTecnico.EmpleadoID).FirstOrDefault();
+
+                    if (data_Dias != null)
+                    {
+                        DiasLaborales = new string[0];
+                        if (data_Dias.Lunes) { DiasLaborales = DiasLaborales.Concat(new string[] { "Monday" }).ToArray(); }
+                        if (data_Dias.Martes) { DiasLaborales = DiasLaborales.Concat(new string[] { "Tuesday" }).ToArray(); }
+                        if (data_Dias.Miercoles) { DiasLaborales = DiasLaborales.Concat(new string[] { "Wednesday" }).ToArray(); }
+                        if (data_Dias.Jueves) { DiasLaborales = DiasLaborales.Concat(new string[] { "Thursday" }).ToArray(); }
+                        if (data_Dias.Viernes) { DiasLaborales = DiasLaborales.Concat(new string[] { "Friday" }).ToArray(); }
+                        if (data_Dias.Sabado) { DiasLaborales = DiasLaborales.Concat(new string[] { "Saturday" }).ToArray(); }
+                        if (data_Dias.Domingo) { DiasLaborales = DiasLaborales.Concat(new string[] { "Sunday" }).ToArray(); }
+                    }
+                }
+
+                JornadaDelTecnico.Inicio_Jrnd = Inicio_Jrnd;
+                JornadaDelTecnico.Final_Jrnd = Final_Jrnd;
+                JornadaDelTecnico.DiasLaborales = DiasLaborales;
+                JornadaDelTecnico.debug = 0;
+            }
+
+            // Obtener SLA Objetivo      OK
+            if (true)
+            {
+                SLA_Objetivo_int = (MatrizCat != null) ? Int32.Parse(MatrizCat.SLAObjetivo) : 99;
+                //var SLA_Objetivo = new SlaTimesVm
+                //{
+                //    Type = "SLA Objetivo",
+                //    Order = 1,
+                //    Enable = true,
+                //    Tecnico = "~",
+                //    Time = SLA_Objetivo_int + ":00"
+                //};
+                //slaTimesVms.Add(SLA_Objetivo);
+            }
+
+            // Obtener SLA Total Y SLA En Espera y Actual
+            if (true)
+            {
+                string prev_evento = "";
+                UserTimeData prev_tecnico = new UserTimeData();
+                DateTime prev_fecha = DateTime.Now;
+                int min_asignado = 0;         // tiempo laboral que el ticket ha estado asignado a alguien
+                int min_asignado_actual = 0;  // tiempo laboral que el ticket ha estado asignado al tecnico actual
+                int min_espera = 0;           // tiempo laboral que el ticket ha estado En Espera
+                int min_prev_asign = 0;       // tiempo 27/7 que el ticket no estuvo asignado a nadie
+                int min_espera_prev = 0;      // tiempo que otros grupos o tecnicos lo tuvieron en espera antes que el tecnico actual
+                bool asignado_a_tecnico_actual = false; // ticket ya está en su última asignación
+                min = 0;
+                DateTime fecha_Ultima_asignación = new DateTime();
+                var historico2 = historico.OrderBy(t => t.FechaRegistro).ToList();
+                if (Asignado != null) fecha_Ultima_asignación = Asignado.FechaRegistro;
+                foreach (var evento in historico2)
+                {
+                    if (prev_evento.Contains("Abierto"))
+                    {
+                        prev_tecnico = GetUserTimeData(-1); // obtener usertimedata dummy
+                        min = Min_Laborales_Entre_Eventos(prev_fecha, evento.FechaRegistro, prev_tecnico);
+                        min_prev_asign += min;
+                        min_espera_prev += min_espera;
+                        min_espera = 0;
+                        asignado_a_tecnico_actual = false;
+                    }
+                    if (prev_evento.Contains("Asignado") || prev_evento.Contains("Trabajando"))
+                    {
+                        // agregar if para contar si hay otro Abierto después de asignado_a_tecnicoactual, de ser así reiniciar contaodr de asignado-actual
+                        // tambier resetear min_espera
+                        min = Min_Laborales_Entre_Eventos(prev_fecha, evento.FechaRegistro, prev_tecnico);
+                        min_asignado += min;
+                        if (asignado_a_tecnico_actual) min_asignado_actual += min;
+                    }
+                    if (prev_evento.Contains("Espera"))
+                    {
+                        min = Min_Laborales_Entre_Eventos(prev_fecha, evento.FechaRegistro, prev_tecnico);
+                        min_espera += min;
+                    }
+                    //--- preparacion
+                    ;
+                    prev_evento = evento.Estatus;
+                    prev_fecha = evento.FechaRegistro;
+                    prev_tecnico = GetUserTimeData(GetTecnicoAsignadoByHistoric(evento, tbl_User), tbl_User, tbl_VentanaAtencion);
+                    // if evento previo fue la última asignación del ticket
+                    if (prev_fecha == fecha_Ultima_asignación)
+                    {
+                        asignado_a_tecnico_actual = true;
+                    }
+                }
+                if (true)
+                {
+                    if (prev_evento.Contains("Abierto"))
+                    {
+                        prev_tecnico = GetUserTimeData(-1); // obtener usertimedata dummy
+                        min = Min_Laborales_Entre_Eventos(prev_fecha, DateTime.Now, prev_tecnico);
+                        min_prev_asign += min;
+                        min_asignado_actual = 0;
+                        min_espera_prev = min_espera;
+                        min_espera = 0;
+                    }
+                    if (prev_fecha == fecha_Ultima_asignación) { asignado_a_tecnico_actual = true; }
+                    if (prev_evento.Contains("Asignado") || prev_evento.Contains("Trabajando"))
+                    {
+                        min = Min_Laborales_Entre_Eventos(prev_fecha, DateTime.Now, prev_tecnico);
+                        min_asignado += min;
+                        if (asignado_a_tecnico_actual) min_asignado_actual += min;
+                    }
+                    if (prev_evento.Contains("Espera"))
+                    {
+                        min = Min_Laborales_Entre_Eventos(prev_fecha, DateTime.Now, prev_tecnico);
+                        min_espera += min;
+                    }
+                } // obtener tiempo del último elemento del historico
+
+                min = min_asignado + min_prev_asign + min_espera + min_espera_prev; // minutos que estuvo asignado - minutos previos a primera asignacion //--------------------------------- agregar aunque esté en espera
+                hrs = (min != 0) ? min / 60 : 0;
+                //var SLA_Total = new SlaTimesVm
+                //{
+                //    Type = "SLA total",
+                //    Order = 3,
+                //    Time = String_Reloj_FromMinutos(min),
+                //    Enable = true,
+                //    Color = GetColor(hrs, SLA_Objetivo_int),
+                //    Tecnico = "-"
+                //};
+                //slaTimesVms.Add(SLA_Total);     
+            }
+
+            TimeSpan objetivo = new TimeSpan(SLA_Objetivo_int,0,0);
+            TimeSpan slatotal = new TimeSpan(0, min, 0);
+
+            if (objetivo > slatotal) return false; 
+            else return true;
         }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         public List<SlaTimesVm> GetSlaTiempoActual(List<SlaTimesVm> slatimes, int slaobjetivo)
@@ -1877,8 +2078,8 @@ namespace ServiceDesk.Managers
                     date_current = add_1_day(date_current);
                 }
 
-                System.Diagnostics.Debug.WriteLine("Entre fechas: " + A_Date + " and " + B_Time);
-                System.Diagnostics.Debug.WriteLine("Hay " + amount_of_days + " días laborales");
+                //System.Diagnostics.Debug.WriteLine("Entre fechas: " + A_Date + " and " + B_Time);
+                //System.Diagnostics.Debug.WriteLine("Hay " + amount_of_days + " días laborales");
                 // Get time worked
                 total_work_time = TimeSpan.FromMinutes(FullDay_in_Minutes * amount_of_days); 
 
@@ -1922,7 +2123,7 @@ namespace ServiceDesk.Managers
             }
 
             // Output total work time
-            System.Diagnostics.Debug.WriteLine("Total work time: " + total_work_time.ToString(@"hh\:mm"));
+            //System.Diagnostics.Debug.WriteLine("Total work time: " + total_work_time.ToString(@"hh\:mm"));
             return Int32.Parse(total_work_time.TotalMinutes.ToString());
         }
 
@@ -2041,6 +2242,99 @@ namespace ServiceDesk.Managers
             if(DataTecnico != null) id = DataTecnico.Id;
             if (id == 0) 
                 ;
+            return id;
+        }
+        public UserTimeData GetUserTimeData(int tbl_user_ID, List<tbl_User> tbl_User, List<tbl_VentanaAtencion> tbl_VentanaAtencion)
+        { // this is not EmployeeId but tbl_user id
+            UserTimeData utd = new UserTimeData();
+            var DiasLaborales = new string[0];
+            // info dummy
+            DiasLaborales = DiasLaborales.Concat(new string[] { "Monday" }).ToArray();
+            DiasLaborales = DiasLaborales.Concat(new string[] { "Tuesday" }).ToArray();
+            DiasLaborales = DiasLaborales.Concat(new string[] { "Wednesday" }).ToArray();
+            DiasLaborales = DiasLaborales.Concat(new string[] { "Thursday" }).ToArray();
+            DiasLaborales = DiasLaborales.Concat(new string[] { "Friday" }).ToArray();
+            utd.DiasLaborales = DiasLaborales;
+            utd.Inicio_Jrnd = new TimeSpan(9, 00, 00);
+            utd.Final_Jrnd = new TimeSpan(17, 00, 00);
+
+            // if user 0  then return dummy, 9-5pm, 5 day weekk
+            // if user -1 then return full time, 24/7
+            if (tbl_user_ID == 0)
+            {
+                return utd;
+            }
+            else if (tbl_user_ID == -1)
+            {
+                DiasLaborales = DiasLaborales.Concat(new string[] { "Saturday" }).ToArray();
+                DiasLaborales = DiasLaborales.Concat(new string[] { "Sunday" }).ToArray();
+                utd.DiasLaborales = DiasLaborales;
+                utd.Inicio_Jrnd = new TimeSpan(0, 00, 00);
+                utd.Final_Jrnd = new TimeSpan(23, 59, 00);
+
+                return utd;
+            }
+
+            // ----------------------------------- Actually get the info
+            var user = tbl_User.FirstOrDefault(t => t.Id == tbl_user_ID);
+            if (user == null)
+            {
+                return utd;
+            }
+            else
+            {
+
+                //empty the info dummy and replace with actual correct data
+                var Ini = Convert.ToDateTime(user.HoraInicioATC);
+                var Fin = Convert.ToDateTime(user.HoraFinATC);
+
+                utd.Inicio_Jrnd = new TimeSpan(Ini.Hour, Ini.Minute, 00);
+                utd.Final_Jrnd = new TimeSpan(Fin.Hour, Fin.Minute, 00);
+
+                var data_Dias = tbl_VentanaAtencion.Where(t => t.EmpleadoID == user.EmpleadoID).FirstOrDefault();
+
+                if (data_Dias != null)
+                {
+                    DiasLaborales = new string[0]; // Vaciar info dummy
+                    if (data_Dias.Lunes) { DiasLaborales = DiasLaborales.Concat(new string[] { "Monday" }).ToArray(); }
+                    if (data_Dias.Martes) { DiasLaborales = DiasLaborales.Concat(new string[] { "Tuesday" }).ToArray(); }
+                    if (data_Dias.Miercoles) { DiasLaborales = DiasLaborales.Concat(new string[] { "Wednesday" }).ToArray(); }
+                    if (data_Dias.Jueves) { DiasLaborales = DiasLaborales.Concat(new string[] { "Thursday" }).ToArray(); }
+                    if (data_Dias.Viernes) { DiasLaborales = DiasLaborales.Concat(new string[] { "Friday" }).ToArray(); }
+                    if (data_Dias.Sabado) { DiasLaborales = DiasLaborales.Concat(new string[] { "Saturday" }).ToArray(); }
+                    if (data_Dias.Domingo) { DiasLaborales = DiasLaborales.Concat(new string[] { "Sunday" }).ToArray(); }
+                }
+                utd.DiasLaborales = DiasLaborales;
+
+            }
+
+            return utd;
+        }
+        public int GetTecnicoAsignadoByHistoric(his_Ticket his, List<tbl_User> tbl_User)
+        {
+            // DOES NOT RETURN EMPLOYEE ID, only tbl_user id
+            int id = 0;
+            var DataTecnico = new tbl_User();
+            if (    his.TecnicoAsignado      != null &&
+                    his.TecnicoAsignadoReag  == null &&
+                    his.TecnicoAsignadoReag2 == null)
+            {
+                DataTecnico = tbl_User.Where(x => x.NombreTecnico == his.TecnicoAsignado).FirstOrDefault();
+            }
+            else if (his.TecnicoAsignado        != null &&
+                     his.TecnicoAsignadoReag    != null &&
+                     his.TecnicoAsignadoReag2   == null)
+            {
+                DataTecnico = tbl_User.Where(x => x.NombreTecnico == his.TecnicoAsignadoReag).FirstOrDefault();
+            }
+            else if (his.TecnicoAsignado      != null &&
+                     his.TecnicoAsignadoReag  != null &&
+                     his.TecnicoAsignadoReag2 != null)
+            {
+                DataTecnico = tbl_User.Where(x => x.NombreTecnico == his.TecnicoAsignadoReag2).FirstOrDefault();
+            }
+
+            if (DataTecnico != null) id = DataTecnico.Id;
             return id;
         }
     }

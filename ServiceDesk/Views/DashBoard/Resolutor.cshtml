@@ -181,10 +181,75 @@
     .navbar-default .navbar-nav > .open > a, .navbar-default .navbar-nav > .open > a:focus, .navbar-default .navbar-nav > .open > a:hover {
         background-color: red !important;
     }
+
+    /* The switch - the box around the slider */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 30px;
+        height: 17px;
+    }
+
+        /* Hide default HTML checkbox */
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+    /* The slider */
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        -webkit-transition: .4s;
+        transition: .4s;
+    }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 13px;
+            width: 13px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+
+    input:checked + .slider {
+        background-color: #2196F3;
+    }
+
+    input:focus + .slider {
+        box-shadow: 0 0 1px #2196F3;
+    }
+
+    input:checked + .slider:before {
+        -webkit-transform: translateX(13px);
+        -ms-transform: translateX(13px);
+        transform: translateX(13px);
+    }
+
+    /* Rounded sliders */
+    .slider.round {
+        border-radius: 34px;
+    }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
 </style>
 <script type="text/javascript">
     var user =  @ViewBag.user;
     var _type = "";
+    var typeofticket = "";
+    var ShowingSquares = true;
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     $(document).ready(function () {
@@ -221,14 +286,14 @@
 
     });
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    $(document).on("click", "[name='RectangleTicket']", function (e) {
-
+    $(document).on("click", "[name='RectangleTicket']", function (e) {     
+        // al hacer clicn en Abierto, Cerrado u otro estatus
         $(".labelS").removeClass("labelSelected");
         $("#" + e.currentTarget.children[0].id).addClass("labelSelected")
         _type = e.currentTarget.children[0].id.split('_')[1]
-        $('#partialView').load('../DashBoard/GetResolutorTickets', { user: user , type: e.currentTarget.id.split('_')[1] });
+        console.log("cargando: " + '../DashBoard/GetResolutorTickets' + e.currentTarget.id.split('_')[1]);
+        $('#partialView').load('../DashBoard/GetResolutorTickets', { user: user, type: e.currentTarget.id.split('_')[1] });
     });
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //  Mostrar boton Vincular
     $(document).on("click", "[name='vincular']", function (e) {
         var roldeusuario = '@ViewBag.Rol';
@@ -244,7 +309,6 @@
             }
         }
     });
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     function getModalVincular() {
         var list = $("input[name='vincular']:checked").map(function () {
             return this.id.split('_')[1];
@@ -268,7 +332,6 @@
 
 
     }
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     function searchTicket() {
         //debugger;
         var ticket = $("#searchTicket").val()
@@ -283,13 +346,11 @@
         $('#partialView').load('../DashBoard/getTicketById', { ticket: ticket, user: @ViewBag.user });
 
     }
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     function CerrarModal() {
         $('#ModalDetalleSolicitud').modal('toggle');
 
         fastRefresh();
     }
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     function SaveVinculacion() {
         //debugger;
         var ticketPadre = $("input[name='TicketPadre']:checked").map(function () {
@@ -334,14 +395,14 @@
     function goToControlConfig() { window.location = '../ControlCambios/Gestiones?EmployeeId=' + user; }
     function goToDetail(Ticket) {
         var rolename = $("#RolNameBO").val();
-        
+
         rolename = '@ViewBag.Rol';
         if (rolename == "Supervisor") {
-            location.href = '@Url.Action("DetalleTicket", "Supervisor")?IdTicket=' + parseInt(Ticket) + '&EmployeeId=' +@ViewBag.user;
+            location.href = '@Url.Action("DetalleTicket", "Supervisor")?IdTicket=' + parseInt(Ticket) + '&EmployeeId=' + @ViewBag.user
         }
         else if (rolename == "Tecnico")
         {
-            location.href = '@Url.Action("DetalleTicket", "Tecnico")?IdTicket=' + parseInt(Ticket)+'&EmployeeId='+@ViewBag.user;
+            location.href = '@Url.Action("DetalleTicket", "Tecnico")?IdTicket=' + parseInt(Ticket)+'&EmployeeId='+ @ViewBag.user ;
         }
     }
     function goToDetailTarea(TareaId) {
@@ -352,6 +413,35 @@
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     function goToReportes() { window.location = '../Reportes/Graficos?EmployeeId=' + user; }
     function goToConfigurar() { window.location = '../Supervisor/Gestiones?EmployeeId=' + user; }
+    function SwitchView() {
+        var tbl = document.getElementById("TABLE");
+        var sqr = document.getElementById("SQUARES");
+
+        if (tbl.style.display == "none") {
+            sqr.style.display = "none";
+            tbl.style.display = "table";
+            ShowingSquares = false;
+            return;
+        }
+        if (sqr.style.display == "none") {
+            tbl.style.display = "none";
+            sqr.style.display = "block";
+            ShowingSquares = true;
+            return;
+        }
+    }
+    function ClearView() {
+        var tbl = document.getElementById("TABLE");
+        var sqr = document.getElementById("SQUARES");
+
+        if (ShowingSquares) {
+            tbl.style.display = "none";
+            sqr.style.display = "block";
+        } else {
+            sqr.style.display = "none";
+            tbl.style.display = "table";
+        }
+    }
 </script>
 
 <style type="text/css">
@@ -366,60 +456,6 @@
     }
 </style>
 
-
-
-
-@*<nav class="navbar navbar-default navbar-fixed-top" style="background:red; color: dodgerblue!important;">
-        <div class="container-fluid">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            </div>
-            <div id="navbar" class="navbar-collapse collapse">
-                <ul class="nav navbar-nav navbar-right">
-                    <li class="dropdown" style="background-color:red;">
-                        <a style="color: white !important" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> <span class="glyphicon glyphicon-bell"></span></a>
-
-                    </li>
-                    <li class="dropdown" style="background-color:red;">
-                        <a style="color: white !important" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> <span class="fa fa-bars"></span></a>
-                        <ul class="dropdown-menu">
-                            <a style="color: dodgerblue" href="@Url.Action("Gestiones", "Supervisor", new {EmployeeId =@ViewBag.user})">
-                                <li style="margin-left:5%;" class="fa fa-toggle-on">&nbsp;Configuración</li>
-                            </a>
-                            <a>
-                                <li style="margin-left:5%" class="fa  fa-pie-chart">&nbsp;Reportes</li>
-                            </a>
-                            <a>
-                                <li style="margin-left:5%" class="fa fa-toggle-on">&nbsp;Cerrar sesión</li>
-                            </a>
-                        </ul>
-                    </li>
-                    @if (Request.IsAuthenticated)
-                    {
-                        <li style="font-size: 12px;">
-                            <a href="#" style="color: white">
-                                @User.Identity.Name
-                            </a>
-                        </li>
-                        <li style="font-size: 12px; color: white">
-                            @using (Html.BeginForm("CloseSession", "Home", FormMethod.Post, new { id = "formLogout" }))
-                            {
-
-                            }
-                            <a style="color: white !important" href="#"
-                               class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" onclick="logOut();"
-                               aria-expanded="false">
-                                Salir
-                                <span class="glyphicon glyphicon-off"></span>
-                            </a>
-
-                        </li>
-                    }
-                </ul>
-            </div>
-        </div>
-    </nav>*@
-
 @Html.HiddenFor(m => m.RolNameBO)
 
 <div class="col-md-12">
@@ -431,13 +467,12 @@
                     Ir a mis solicitudes
                 </button>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <button class="btn btnP" style="display:none;position:relative;" id="btnVincular" onclick="getModalVincular()">Vincular Tickets</button>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 @Html.DropDownList("Filtro", new SelectList(ViewBag.filtro, "Value", "Text"), "SELECCIONE",
                             new { @class = "form-control", @style = "max-width:55% !important;" })
-
             </div>
             <div class="col-md-2">
                 @using (Html.BeginForm("getTicketById", "DashBoard", FormMethod.Get, new { enctype = "multipart/form-data", id = "formTicketsByType" }))
@@ -487,6 +522,12 @@
 
             </div>
             <div class="col-md-10">
+                <div class="col-md-1 container" style="display:flex; align-items:center; width:5%; padding-top:1.35%;">
+                    <label class="switch" onchange="SwitchView()" style="order:2;">
+                        <input type="checkbox">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
                 <div id="partialView" style="max-width:100%;min-width:650px;background-color:white;">
                 </div>
             </div>

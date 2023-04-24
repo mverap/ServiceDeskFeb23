@@ -106,6 +106,8 @@ namespace ServiceDesk.ViewModels
         public int idSubTicket { get; set; }        //
         public int orden { get; set; }              //
         public int? EmployeeAsignado { get; set; }  // new vw ticket
+        public string EmployeeAsignado1 { get; set; }
+        public string descripcion { get; set; }
     }
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 }

@@ -191,10 +191,74 @@
     .dropdown-menu li a {
         color: dodgerblue;
     }
+
+    /* The switch - the box around the slider */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 30px;
+        height: 17px;
+    }
+
+        /* Hide default HTML checkbox */
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+    /* The slider */
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        -webkit-transition: .4s;
+        transition: .4s;
+    }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 13px;
+            width: 13px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+
+    input:checked + .slider {
+        background-color: #2196F3;
+    }
+
+    input:focus + .slider {
+        box-shadow: 0 0 1px #2196F3;
+    }
+
+    input:checked + .slider:before {
+        -webkit-transform: translateX(13px);
+        -ms-transform: translateX(13px);
+        transform: translateX(13px);
+    }
+
+    /* Rounded sliders */
+    .slider.round {
+        border-radius: 34px;
+    }
+
+        .slider.round:before {
+            border-radius: 50%;
+        } 
 </style>
 <script type="text/javascript">
     var user =  @ViewBag.user;
     var _type = "";
+    var ShowingSquares = true;
 
     $(document).ready(function () {
 
@@ -276,11 +340,9 @@
         }
         //ticket = $("<input id='ticket' name='ticket'>").attr("type", "hidden").val(ticket);
         var user = $("<input id='user' name='user'>").attr("type", "hidden").val(@ViewBag.user);
-        //$('#formTicketsByType').append($(ticket));
-        //$('#formTicketsByType').append($(user));
-        //$('#formTicketsByType').submit();
 
-        $('#partialView').load('../ServiceDesk/getTicketById', { ticket: ticket, showall: @ViewBag}); //user: Viewbage es agregado
+       // $('#partialView').load('../ServiceDesk/getTicketById', { ticket: ticket, showall: @ViewBag}); //user: Viewbage es agregado
+        $('#partialView').load('../ServiceDesk/getTicketById', { ticket: ticket }); //user: Viewbage es agregado
     }
 
     function CerrarModal() {
@@ -321,6 +383,37 @@
                 alert("Error", data.message);
             }
         });
+    }
+
+
+    function SwitchView() {
+        var tbl = document.getElementById("TABLE");
+        var sqr = document.getElementById("SQUARES");
+
+        if (tbl.style.display == "none") {
+            sqr.style.display = "none";
+            tbl.style.display = "table";
+            ShowingSquares = false;
+            return;
+        }
+        if (sqr.style.display == "none") {
+            tbl.style.display = "none";
+            sqr.style.display = "block";
+            ShowingSquares = true;
+            return;
+        }
+    }
+    function ClearView() {
+        var tbl = document.getElementById("TABLE");
+        var sqr = document.getElementById("SQUARES");
+
+        if (ShowingSquares) {
+            tbl.style.display = "none";
+            sqr.style.display = "block";
+        } else {
+            sqr.style.display = "none";
+            tbl.style.display = "table";
+        }
     }
 </script>
 
@@ -389,6 +482,12 @@
                 </div>
             </div>
             <div class="col-md-10">
+                <div class="col-md-1 container" style="display:flex; align-items:center; width:5%; padding-top:1.35%;">
+                    <label class="switch" onchange="SwitchView()" style="order:2;">
+                        <input type="checkbox">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
                 <div id="partialView" style="max-width:100%;min-width:650px;background-color:white;">
                 </div>
             </div>

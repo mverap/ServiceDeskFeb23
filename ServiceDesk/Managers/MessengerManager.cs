@@ -51,19 +51,6 @@ namespace ServiceDesk.Managers
                         mailMessage = mail
                     });
 
-                    //DEBUGGING----------------- START
-                    //string json = new JavaScriptSerializer().Serialize(new
-                    //{
-                    //    Host = "smtp.ionos.mx",
-                    //    port = "465",
-                    //    mailaddress = "",     //
-                    //    emailpassword = "*",  //
-                    //    mailTo = to,
-                    //    cc = cc,
-                    //    mailTitle = subject,
-                    //    mailMessage = mail
-                    //});
-                    //DEBUGGING----------------- END
 
                     streamWriter.Write(json);
                 }
@@ -100,3 +87,16 @@ namespace ServiceDesk.Managers
     }
     //==================================================================================================================
 }
+                    //DEBUGGING----------------- START
+                    //string json = new JavaScriptSerializer().Serialize(new
+                    //{
+                    //    Host = "smtp.ionos.mx",
+                    //    port = "465",
+                    //    mailaddress = "",     //
+                    //    emailpassword = "*",  //
+                    //    mailTo = to,
+                    //    cc = cc,
+                    //    mailTitle = subject,
+                    //    mailMessage = mail
+                    //});
+                    //DEBUGGING----------------- END

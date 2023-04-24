@@ -29,7 +29,388 @@ namespace ServiceDesk.Controllers
         private readonly AdminContext _admin = new AdminContext();
         ServiceDeskManager _sdmanager = new ServiceDeskManager();
 
-        /***********Codigo MVP Pie Chart********/
+
+        public DatosReportes PiedataPrioridad(List<tbl_TicketDetalle> tickets)
+        {
+            var data = tickets.GroupBy(info => info.Prioridad).Select(group => new
+            {
+                Prioridad = group.Key,
+                Count = group.Count()
+            }).OrderBy(x => x.Prioridad);
+            DatosReportes datos = null;
+            String[] strPrioridad = new string[data.Count()];
+            int[] intCount = new int[data.Count()];
+            int i = 0;
+            foreach (var item in data)
+            {
+                strPrioridad[i] = item.Prioridad;
+                if (strPrioridad[i] == null) strPrioridad[i] = "Prioridad no establecida";
+                intCount[i] = item.Count;
+                i++;
+            }
+
+            datos = new DatosReportes
+            {
+                Column = strPrioridad,
+                Count = intCount
+            };
+
+            return datos;
+        }
+
+        public DatosReportes PiedataCentro(List<tbl_TicketDetalle> tickets)
+        {
+            var Centros = _db.cat_Centro.ToList();
+
+            // Poner todos los tickets sin centro en un mismo centro "Centro Borrado"
+            var CentrosExistentes = Centros.Select(t => t.Id);
+            foreach (var ticket in tickets)
+            {
+                if (!CentrosExistentes.Contains(ticket.Centro)) { ticket.Centro = 0; }
+            }
+
+            var data = tickets.GroupBy(info => info.Centro).Select(group => new
+            {
+                Centro = group.Key,
+                Count = group.Count()
+            }).OrderBy(x => x.Centro);
+            DatosReportes datos = null;
+            String[] strPrioridad = new string[data.Count()];
+            int[] intCount = new int[data.Count()];
+            int i = 0;
+            foreach (var item in data)
+            {
+                if (item.Centro == 0) { strPrioridad[i] = "Centro Borrado"; }
+                else { strPrioridad[i] = Centros.Where(c => c.Id == item.Centro).FirstOrDefault().Centro; }
+                intCount[i] = item.Count;
+                i++;
+            }
+
+            datos = new DatosReportes
+            {
+                Column = strPrioridad,
+                Count = intCount
+            };
+
+            return datos;
+        }
+        public DatosReportes PiedataEstatus(List<tbl_TicketDetalle> tickets)
+        {
+            var data = tickets.GroupBy(info => info.Estatus).Select(group => new
+            {
+                Estatus = group.Key,
+                Count = group.Count()
+            }).OrderBy(x => x.Estatus);
+            DatosReportes datos = null;
+            String[] strColumnName = new string[data.Count()];
+            int[] intCount = new int[data.Count()];
+            int i = 0;
+            foreach (var item in data)
+            {
+                strColumnName[i] = item.Estatus;
+                intCount[i] = item.Count;
+                i++;
+            }
+
+            datos = new DatosReportes
+            {
+                Column = strColumnName,
+                Count = intCount
+            };
+
+
+            return datos;
+        }
+        public DatosReportes PiedataTipo(List<tbl_TicketDetalle> tickets)
+        {
+            var categorias = new List<cat_MatrizCategoria>();
+
+            var IntSubCats = new List<int>();
+            foreach (var item in tickets) { IntSubCats.Add(item.SubCategoria); }
+            // En este punto IntSubCats tiene una lista de ids de subcategorías filtrada por fechas -----------------------------------------------------------
+            categorias = _db.cat_MatrizCategoria.Where(Matriz => IntSubCats.Contains(Matriz.IDSubCategoria)).ToList();
+            Console.Write("debug");
+
+            //-------------------------------------------------------------------------
+            var data = categorias.GroupBy(info => info.Incidencia).Select(group => new
+            {
+                Incidencia = group.Key,
+                Count = group.Count()
+            }).OrderBy(x => x.Incidencia);
+            DatosReportes datos = null;
+            String[] strColumnName = new string[data.Count()];
+            int[] intCount = new int[data.Count()];
+            int i = 0;
+            foreach (var item in data)
+            {
+                strColumnName[i] = item.Incidencia;
+                intCount[i] = item.Count;
+                i++;
+            }
+
+            datos = new DatosReportes
+            {
+                Column = strColumnName,
+                Count = intCount
+
+            };
+
+
+            return datos;
+        }
+        public DatosReportes PiedataExpertiz(List<tbl_TicketDetalle> tickets)
+        {
+            var categorias = new List<cat_MatrizCategoria>();
+
+            var List_Int_Subcat = new List<int>();
+            foreach (var item in tickets) { List_Int_Subcat.Add(item.SubCategoria); }
+            // En este punto IntSubCats tiene una lista de ids de subcategorías filtrada por fechas 
+            categorias = _db.cat_MatrizCategoria.Where(Matriz => List_Int_Subcat.Contains(Matriz.IDSubCategoria)).ToList();
+
+            var data = categorias.GroupBy(info => info.NivelExpertiz).Select(group => new
+            {
+                NivelExpertiz = group.Key,
+                Count = group.Count()
+            }).OrderBy(x => x.NivelExpertiz);
+            DatosReportes datos = null;
+            String[] strColumnName = new string[data.Count()];
+            int[] intCount = new int[data.Count()];
+            int i = 0;
+            foreach (var item in data)
+            {
+                strColumnName[i] = item.NivelExpertiz;
+                intCount[i] = item.Count;
+                i++;
+            }
+
+            datos = new DatosReportes
+            {
+                Column = strColumnName,
+                Count = intCount
+
+            };
+
+
+            return datos;
+        }
+        public DatosReportes PiedataSLA1(List<tbl_TicketDetalle> tickets)
+        {
+            var detalle = new DetalleSelectedTicketVm();
+
+            int ticketsOutOfSLA = 0;
+            int ticketsInsidSLA = 0;
+            int id; string TimeCurrentSLA = "", TimeObjetiveSLA = "", hrSLAact = "", minSLAact = "", hrSLAObj = "", minSLAObj = "";
+            foreach (var ticket in tickets)
+            {
+                // obtener sla total
+                {
+                    id = ticket.Id;
+                    detalle.detalle = _db.VWDetalleTicket.Where(z => z.Id == id).FirstOrDefault();
+                    //var info = _db.his_Ticket.Where(a => a.IdTicket == id).ToList();
+                    var info = _db.his_Ticket.Where(a => a.IdTicket == id).ToList();
+                    foreach (var his in info)
+                    {
+                        if (his.TecnicoAsignado == "") his.TecnicoAsignado = null;
+                        else
+                        if (his.TecnicoAsignado == "Test autoasignación") his.TecnicoAsignado = null;
+                        if (his.TecnicoAsignadoReag == "") his.TecnicoAsignadoReag = null;
+                        if (his.TecnicoAsignadoReag2 == "") his.TecnicoAsignadoReag2 = null;
+                    }
+                    detalle.Slas = _sla.GetSlaTimes(info);
+                    int timeObjetivo = 0, timeActual = 0;
+
+                    // obtener tiempos del ticket actual
+                    foreach (var sLa in detalle.Slas)
+                    {
+                        if (sLa.Type == "SLA Objetivo") { TimeObjetiveSLA = sLa.Time.ToString(); }
+                        if (sLa.Type == "SLA total") { TimeCurrentSLA = sLa.Time.ToString(); }
+                    }
+
+                    // tiempo en formato "248:51"   o   "-30:-5" "-33:-14" "2:5"
+                    // conversión tiempo en formato reloj "248:51" a formato numero entero representando cantidad total de minutos
+                    hrSLAObj = TimeObjetiveSLA.Split(':')[0];
+                    minSLAObj = TimeObjetiveSLA.Split(':')[1];
+                    timeObjetivo = (Int32.Parse(hrSLAObj) * 60) + Int32.Parse(minSLAObj);
+
+                    hrSLAact = TimeCurrentSLA.Split(':')[0];
+                    minSLAact = TimeCurrentSLA.Split(':')[1];
+                    timeActual = (Int32.Parse(hrSLAact) * 60) + Int32.Parse(minSLAact);
+
+                    var inor = "";
+                    if (timeActual > 0) // De ser TimeActual menor que 0, es un ticket con información corrupta, no tomar en cuenta
+                        if (timeActual >= timeObjetivo) { ticketsOutOfSLA++; inor = "out"; }
+                        else { ticketsInsidSLA++; inor = "in"; }
+
+                }
+            }
+
+            DatosReportes datos = null;
+            String[] strColumnName = new string[2];
+            int[] intCount = new int[2];
+
+            strColumnName[0] = "Tickets fuera de SLA";
+            intCount[0] = ticketsOutOfSLA;
+
+            strColumnName[1] = "Tickets dentro de SLA";
+            intCount[1] = ticketsInsidSLA;
+
+            datos = new DatosReportes
+            {
+                Column = strColumnName,
+                Count = intCount
+            };
+
+
+            return datos;
+        }
+        public DatosReportes PiedataSLA(List<tbl_TicketDetalle> tickets) // version optimizada 2
+        {
+            int ticketsOutOfSLA = 0;
+            int ticketsInsidSLA = 0;
+            var categorias = _db.cat_MatrizCategoria.ToList();
+            var historiales = _db.his_Ticket.ToList();
+            var usuarios = _db.tbl_User.ToList();
+            var ventana = _db.tbl_VentanaAtencion.ToList();
+            foreach (var ticket in tickets)
+            {
+                string inn = "";
+                var historial = historiales.Where(t => t.IdTicket == ticket.Id).ToList();
+                if (_sla.inTime(historial, categorias, usuarios, ventana)) 
+                {
+                    ticketsInsidSLA += 1;
+                    inn = "in time";
+                }
+                else 
+                { 
+                    ticketsOutOfSLA += 1;
+                    inn = "out of time";
+                }
+                System.Diagnostics.Debug.WriteLine("SLA {2} de {3} / id{0}: id{1}", ticket.Id, inn, ticketsInsidSLA + ticketsOutOfSLA, tickets.Count());
+            }
+
+            DatosReportes datos = null;
+            String[] strColumnName = new string[2];
+            int[] intCount = new int[2];
+
+            strColumnName[0] = "Tickets fuera de SLA";
+            intCount[0] = ticketsOutOfSLA;
+
+            strColumnName[1] = "Tickets dentro de SLA";
+            intCount[1] = ticketsInsidSLA;
+
+            datos = new DatosReportes
+            {
+                Column = strColumnName,
+                Count = intCount
+            };
+
+            return datos;
+        }
+        public DatosReportes PiedataResolutor(List<tbl_TicketDetalle> tickets)
+        {
+
+            var data = tickets.GroupBy(info => info.GrupoResolutor).Select(group => new
+            {
+                Resolutor = group.Key,
+                Count = group.Count()
+            }).OrderBy(x => x.Resolutor);
+            DatosReportes datos = null;
+            String[] strResolutor = new string[data.Count()];
+            int[] intCount = new int[data.Count()];
+            int i = 0;
+            foreach (var item in data)
+            {
+                strResolutor[i] = item.Resolutor;
+                intCount[i] = item.Count;
+                i++;
+            }
+
+            datos = new DatosReportes
+            {
+                Column = strResolutor,
+                Count = intCount
+
+            };
+
+
+            return datos;
+        }
+        public DatosReportes PiedataEncuesta(List<tbl_TicketDetalle> tickets)
+        {
+            // lista de encuestas
+            var encuest = new List<EncuestaDetalle>();
+
+            var ticketsCerrados = 0;
+            var List_IdTickets_grpResol = new List<int>();
+
+            //encuest = _db.EncuestaDetalle.Where(f => f.GrupoResolutor == strGrupoResolutor).ToList();
+            foreach (var ticket in tickets)
+            {
+                if (ticket.Estatus == "Cerrado") { ticketsCerrados++; }
+                //if (ticket.GrupoResolutor == strGrupoResolutor) { List_IdTickets_grpResol.Add(ticket.Id); }
+                List_IdTickets_grpResol.Add(ticket.Id);
+            }
+            encuest = _db.EncuestaDetalle.Where(tabla => List_IdTickets_grpResol.Contains(tabla.IdTicket)).ToList();
+
+
+            // Preparar formato de datos para el pie
+            var cantEncuest = encuest.Count();
+
+            DatosReportes datos = null;
+            String[] strEncu = new string[2];
+            int[] intCount = new int[2];
+
+            strEncu[0] = "Encuestas contestadas";
+            intCount[0] = cantEncuest;
+
+            strEncu[1] = "Tickets Cerrados sin encuestar";
+            intCount[1] = ticketsCerrados;
+
+            datos = new DatosReportes
+            {
+                Column = strEncu,
+                Count = intCount
+            };
+
+
+            return datos;
+        }
+        public DatosReportes PiedataCalidad(List<tbl_TicketDetalle> tickets)
+        {
+            // lista de encuestas
+            var encuest = new List<EncuestaDetalle>();
+
+            // obtener tickets filtrados por fecha (y resolutor si es necesario)
+            var List_IdTickets_grpResol = new List<int>();
+            foreach (var ticket in tickets) List_IdTickets_grpResol.Add(ticket.Id);
+            //llenar lista encuesta con solo los tickets que pasaron el filtro fecha y el filtro resolutor
+            encuest = _db.EncuestaDetalle.Where(tabla => List_IdTickets_grpResol.Contains(tabla.IdTicket)).ToList();
+
+            // Preparar formato de datos para el pie
+            var data = encuest.GroupBy(info => info.CalificaServicio).Select(group => new {
+                Calificacion = group.Key,
+                Count = group.Count()
+            }).OrderBy(x => x.Calificacion);
+            DatosReportes datos = null;
+            String[] strCalif = new string[data.Count()];
+            int[] intCount = new int[data.Count()];
+            int i = 0;
+            foreach (var item in data)
+            {
+                strCalif[i] = item.Calificacion;
+                intCount[i] = item.Count;
+                i++;
+            }
+            datos = new DatosReportes
+            {
+                Column = strCalif,
+                Count = intCount
+            };
+
+            return datos;
+        }
+
+
         public ActionResult PieChartPrioridad(int EmployeeID, DateTime? fechaInici, DateTime? fechaFinal)
         {
             var tickets = FiltrarTickets(EmployeeID, fechaInici, fechaFinal);
@@ -460,19 +841,83 @@ namespace ServiceDesk.Controllers
 
             return tickets;
         }
-        /***********FIN CODIGO Pie Chart MVP********/
 
-        /************** CODIGO Reportes ************/
-        public ActionResult Graficos(int EmployeeID)
+
+        public ActionResult Graficos2(int EmployeeID)
         {
             ViewBag.user = EmployeeID;
             ViewBag.Rol = RoldeUsuario(EmployeeID);
             return View();
         }
-        public ActionResult GridTickets(int EmployeeID)
+
+        public ActionResult Graficos(int EmployeeID, DateTime? fechaInicial, DateTime? fechaFinal)
         {
             ViewBag.user = EmployeeID;
             ViewBag.Rol = RoldeUsuario(EmployeeID);
+            ViewBag.fechaInicial = (fechaInicial != null) ? fechaInicial?.ToString("d")  : "";
+            ViewBag.fechaFinal   = (fechaFinal != null)   ? fechaFinal?.ToString("d")  : "";
+            GraphicInfo GraInfo = new GraphicInfo();
+            List<tbl_TicketDetalle> tickets = FiltrarTickets(EmployeeID, fechaInicial, fechaFinal);
+
+            var prioridad = PiedataPrioridad(tickets);
+            var centro = PiedataCentro(tickets);
+            var estatus = PiedataEstatus(tickets);
+            var tipo = PiedataTipo(tickets);
+            var expertiz = PiedataExpertiz(tickets);
+            var resolutor = PiedataResolutor(tickets);
+            var sla = PiedataSLA(tickets);
+            var encuesta = PiedataEncuesta(tickets);
+            var calidad = PiedataCalidad(tickets);
+
+            GraInfo.column_prioridad = formatearColumnas(prioridad.Column, prioridad.Count);
+            GraInfo.count_prioridad= prioridad.Count;
+            GraInfo.column_centro = formatearColumnas(centro.Column, centro.Count);
+            GraInfo.count_centro = centro.Count;
+            GraInfo.column_estatus = formatearColumnas(estatus.Column, estatus.Count);
+            GraInfo.count_estatus = estatus.Count;
+
+            GraInfo.column_tipo = formatearColumnas(tipo.Column, tipo.Count);
+            GraInfo.count_tipo = tipo.Count;
+            GraInfo.column_expertiz = formatearColumnas(expertiz.Column, expertiz.Count);
+            GraInfo.count_expertiz = expertiz.Count;
+            GraInfo.column_resolutor = formatearColumnas(resolutor.Column, resolutor.Count);
+            GraInfo.count_resolutor = resolutor.Count;
+
+            GraInfo.column_sla = formatearColumnas(sla.Column, sla.Count);
+            GraInfo.count_sla = sla.Count;
+            GraInfo.column_encuesta = formatearColumnas(encuesta.Column, encuesta.Count);
+            GraInfo.count_encuesta = encuesta.Count;
+            GraInfo.column_calidad = formatearColumnas(calidad.Column, calidad.Count);
+            GraInfo.count_calidad = calidad.Count;
+
+            return View(GraInfo);
+        }
+        public string[] formatearColumnas(string[] column, int[] count) {
+            // formateo de comlumnas de gráficos 
+            int total = 0;
+            foreach (var entero in count) {
+                total += entero;
+            }
+            for (int i = 0; i < column.Length; i++) {
+                float number = count[i];
+                float percentage = (number / total);
+                column[i] = column[i] +" (" + (int)(percentage * 100) + "%)";
+                if (column[i] == "") column[i] = "Sin definir";
+                if (column[i].Contains("\n"))
+                column[i] = column[i].Replace("\r\n", "_");                
+                ;
+            }
+            return column;
+        }
+        public ActionResult GridTickets(int EmployeeID, int pageNumber = 1)
+        {
+            ViewBag.user = EmployeeID;
+            ViewBag.Rol = RoldeUsuario(EmployeeID);
+            int pageSize = 5;
+            int totalElements = 0;
+            int totalPages = 0;
+
+            ViewBag.pageNumber = pageNumber;
 
             var detalle = new DetalleSelectedTicketVm();
             // obtener tickets filtrados por grupo resolutor
@@ -485,22 +930,48 @@ namespace ServiceDesk.Controllers
                 //var idtecnico = _db.vwDetalleUsuario.Where(x => x.EmpleadoID == EmployeeID).Select(x => x.Id).FirstOrDefault();
                 var idtecnico = _db.tbl_User.Where(x => x.EmpleadoID == EmployeeID).Select(x => x.Id).FirstOrDefault();
 
-                dtoViewDetalle = _db.VWDetalleTicket.Where(pointer => 
+                dtoViewDetalle = _db.VWDetalleTicket.
+                    Where(pointer => 
                     (
                     (pointer.IdTecnicoAsignado      == idtecnico && pointer.IdTecnicoAsignadoReag  == null)  ||
                     (pointer.IdTecnicoAsignadoReag  == idtecnico && pointer.IdTecnicoAsignadoReag2 == null)  ||
                     (pointer.IdTecnicoAsignadoReag2 == idtecnico)
                     ) &&
                     pointer.GrupoResolutor == strGrupoResolutor
-                    ).OrderByDescending(pointer => pointer.Id).ToList();
+                    )
+                    .OrderByDescending(pointer => pointer.Id)
+                    .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                    .ToList();
+
+                totalElements = _db.VWDetalleTicket.
+                    Where(pointer =>
+                    (
+                    (pointer.IdTecnicoAsignado == idtecnico && pointer.IdTecnicoAsignadoReag == null) ||
+                    (pointer.IdTecnicoAsignadoReag == idtecnico && pointer.IdTecnicoAsignadoReag2 == null) ||
+                    (pointer.IdTecnicoAsignadoReag2 == idtecnico)
+                    ) &&
+                    pointer.GrupoResolutor == strGrupoResolutor
+                    )
+                    .Count();
             }
             else
             if (ViewBag.Rol.Contains("Supervisor"))
             {
-                //dtoViewDetalle = _db.VWDetalleTicket.Where(pointer => pointer.GrupoResolutor == strGrupoResolutor).OrderByDescending(pointer => pointer.Id).ToList(); //filtro resolutor no funca temporalmente
-                dtoViewDetalle = _db.VWDetalleTicket.Where(t => t.GrupoResolutor == strGrupoResolutor).OrderByDescending(pointer => pointer.Id).ToList();
+                //dtoViewDetalle = _db.VWDetalleTicket.Where(t => t.GrupoResolutor == strGrupoResolutor).OrderByDescending(pointer => pointer.Id).ToList();
+
+                dtoViewDetalle = _db.VWDetalleTicket
+                    .Where(t => t.GrupoResolutor == strGrupoResolutor)
+                    .OrderByDescending(pointer => pointer.Id)
+                    .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                    .ToList();
+
+                totalElements = _db.VWDetalleTicket
+                    .Where(t => t.GrupoResolutor == strGrupoResolutor)
+                    .Count();
             }
 
+            totalPages = 1 + (totalElements / pageSize);
+            ViewBag.totalPages = totalPages;
 
             detalle.ViewDetalleTickets = dtoViewDetalle;
             //Eliminar las horas antes de enviar los datos al grid 
@@ -509,68 +980,90 @@ namespace ServiceDesk.Controllers
                 var fechaSinHora = ticket.FechaRegistro;
                 ticket.FechaRegistro = fechaSinHora.Date;
 
-                if (ticket.TecnicoAsignadoReag != null)
-                {
-                    ticket.TecnicoAsignado = ticket.TecnicoAsignadoReag;
-                }
-                if (ticket.TecnicoAsignadoReag2 != null)
-                {
-                    ticket.TecnicoAsignado = ticket.TecnicoAsignadoReag2;
-                }
+                ticket.TecnicoAsignado = (ticket.TecnicoAsignadoReag != null) ?  ticket.TecnicoAsignadoReag  : ticket.TecnicoAsignado;
+                ticket.TecnicoAsignado = (ticket.TecnicoAsignadoReag2 != null) ? ticket.TecnicoAsignadoReag2 : ticket.TecnicoAsignado;
             }
             return View(detalle);
         }
-        public ActionResult GridEncuesta(int EmployeeID)
+        public ActionResult GridEncuesta(int EmployeeID, int pageNumber = 1)
         {
             string rol = RoldeUsuario(EmployeeID);
             ViewBag.user = EmployeeID;
             ViewBag.Rol = rol;
+            ViewBag.pageNumber = pageNumber;
+            int pageSize = 5;
+            int totalElements = 0;
+            int totalPages = 0;
             var detalle = new DetalleSelectedTicketVm();
 
-
+            var encuesta = _db.EncuestaDetalle.Select(p => p.IdTicket).ToList();
 
             // obtener tickets (filtrar de ser necesario)
-            var dtoViewDetalle = new List<VWDetalleTicket>();
+            List<VWDetalleTicket> dtoViewDetalle = new List<VWDetalleTicket>();
             if (rol == "ServiceDesk")
             {
-                dtoViewDetalle = _db.VWDetalleTicket.OrderByDescending(pointer => pointer.Id).ToList();
+                dtoViewDetalle = _db.VWDetalleTicket
+                    .Where(t => encuesta.Contains(t.Id))
+                    .OrderByDescending(pointer => pointer.Id)
+                    .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                    .ToList();
+
+                totalElements = _db.VWDetalleTicket
+                    .Where(t => encuesta.Contains(t.Id))
+                    .Count();
+                ;
             }
             else
             {
                 if (rol == "Tecnico")
                 {
-                    //String nombre = _db.tbl_User.Where(x => x.EmpleadoID == EmployeeID).Select(x => x.NombreTecnico).SingleOrDefault();
-                    //(f.IdTecnicoAsignadoReag2 == resolutorId) ||
-                    //(f.IdTecnicoAsignadoReag2 == null && f.IdTecnicoAsignadoReag == resolutorId) ||
-                    //(f.IdTecnicoAsignadoReag2 == null && f.IdTecnicoAsignadoReag == null && f.IdTecnicoAsignado == resolutorId)
                     var resolutorId = getResolutorId(EmployeeID);
                     dtoViewDetalle = _db.VWDetalleTicket.Where(f =>
                         (f.IdTecnicoAsignadoReag2 == resolutorId) ||
                         (f.IdTecnicoAsignadoReag2 == null && f.IdTecnicoAsignadoReag == resolutorId) ||
+                        (f.IdTecnicoAsignadoReag2 == null && f.IdTecnicoAsignadoReag == null && f.IdTecnicoAsignado == resolutorId) 
+                        && encuesta.Contains(f.Id))                        
+                        .OrderByDescending(f => f.Id)
+                        .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                        .ToList();
+
+                    totalElements = _db.VWDetalleTicket.Where(f =>
+                        (f.IdTecnicoAsignadoReag2 == resolutorId) ||
+                        (f.IdTecnicoAsignadoReag2 == null && f.IdTecnicoAsignadoReag == resolutorId) ||
                         (f.IdTecnicoAsignadoReag2 == null && f.IdTecnicoAsignadoReag == null && f.IdTecnicoAsignado == resolutorId)
-                    ).OrderByDescending(f => f.Id).ToList();
+                        && encuesta.Contains(f.Id))
+                        .Count();
                 }
-                else
+                else // supervisores
                 {
                     String strGrupoResolutor = _db.tbl_User.Where(x => x.EmpleadoID == EmployeeID).Select(x => x.GrupoResolutor).SingleOrDefault();
                     var ticketsDeGRes = _db.tbl_TicketDetalle.Where(x => x.GrupoResolutor == strGrupoResolutor).ToList().Select(d => d.Id); // lista de (int) tickets pertencientes a grupo resolutor
-                    //dtoViewDetalle = _db.VWDetalleTicket.Where(pointer => pointer.GrupoResolutor == strGrupoResolutor).OrderByDescending(pointer => pointer.Id).ToList();
-                    dtoViewDetalle = _db.VWDetalleTicket.Where(p => ticketsDeGRes.Contains(p.Id)).OrderByDescending(pointer => pointer.Id).ToList(); // obtener info de tickets de lista anterior
+                    dtoViewDetalle = _db.VWDetalleTicket.Where(p => 
+                        ticketsDeGRes.Contains(p.Id) && encuesta.Contains(p.Id)) 
+                        .OrderByDescending(pointer => pointer.Id)
+                        .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                        .ToList(); // obtener info de tickets de lista anterior
+                    totalElements = _db.VWDetalleTicket.Where(p => 
+                        ticketsDeGRes.Contains(p.Id) && encuesta.Contains(p.Id)) 
+                        .Count();
                 }
             }
 
+
+            totalPages = 1 + (totalElements / pageSize);
+            ViewBag.totalPages = totalPages;
+
             // Filtrar los tickets que no tienen encuesta
-            var encuesta = _db.EncuestaDetalle.Select(p => p.IdTicket).ToList();
-            var dtoTEMP = new List<VWDetalleTicket>();
-            foreach (var ticket in dtoViewDetalle)
-            {
-                if (encuesta.Contains(ticket.Id))
-                {
-                    dtoTEMP.Add(ticket);
-                }
-            }
-            dtoViewDetalle.Clear();
-            dtoViewDetalle = dtoTEMP;
+            //var dtoTEMP = new List<VWDetalleTicket>();
+            //foreach (var ticket in dtoViewDetalle)
+            //{
+            //    if (encuesta.Contains(ticket.Id))
+            //    {
+            //        dtoTEMP.Add(ticket);
+            //    }
+            //}
+            //dtoViewDetalle.Clear();
+            //dtoViewDetalle = dtoTEMP;
 
             //Añadir resultados de encuesta a la lista de tickets
             var encuesta2 = _db.EncuestaDetalle.OrderBy(x => x.IdTicket).ToList();
@@ -757,7 +1250,7 @@ namespace ServiceDesk.Controllers
                     style.Fill.SetPattern(PatternValues.Solid, System.Drawing.ColorTranslator.FromHtml(vwReportes[x].Color), System.Drawing.Color.Black); //cambiar style                       
                 }
 
-                //Verificar si es padre
+                //Verificar si es padre, de serlo se imprime primero el padre y luego el hijo
                 int flag = 0;
                 if (ListadePadres.ContainsValue(ticket.Id))
                 {
@@ -783,6 +1276,7 @@ namespace ServiceDesk.Controllers
                     Llenar_Columna_Reportes(NuevaColumna);
                     //Llenar_Columna_Reportes(ticket.Id, spreadsheet, row, vwReportes, subticket, virgulilla, x, incidencia, tenicoQueCerro, noReasignaciones, SLAobjetivo, minSLAint, style, flag, Estatus);
                     row++;
+                    // imprimir hijos
                     row = Imprimir_Hijos_Reportes(ticket.Id, spreadsheet, row, ListadePadres, EmployeeId);
                     flag = 0;
                 }
@@ -1395,8 +1889,8 @@ namespace ServiceDesk.Controllers
 
             if (EmployeeID != 0)
             {
-                if (RoldeUsuario(EmployeeID) == "ServiceDesk") { filtro = true; }
-                if (RoldeUsuario(EmployeeID) == "Directivo") { filtro = true; }
+                if (RoldeUsuario(EmployeeID).Contains("ervice")) { filtro = true; }
+                if (RoldeUsuario(EmployeeID).Contains("irectivo")) { filtro = true; }
             }
             else { 
                 filtro = true;

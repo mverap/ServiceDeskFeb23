@@ -160,7 +160,38 @@ namespace ServiceDesk.ViewModels
     }
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+    public class DashboardInfo { 
+        public List<tbl_TicketDetalle> tbl_TicketDetalles { get; set; }
+        public int totalElements { get; set; }
+    }
+    public class GraphicInfo {
+        public string[] column_prioridad { get; set; }
+        public int[] count_prioridad{ get; set; }
 
+        public string[] column_centro { get; set; }
+        public int[] count_centro { get; set; }
+
+        public string[] column_estatus { get; set; }
+        public int[] count_estatus { get; set; }
+
+        public string[] column_tipo { get; set; }
+        public int[] count_tipo { get; set; }
+
+        public string[] column_sla { get; set; }
+        public int[] count_sla { get; set; }
+
+        public string[] column_expertiz { get; set; }
+        public int[] count_expertiz { get; set; }
+
+        public string[] column_resolutor { get; set; }
+        public int[] count_resolutor { get; set; }
+
+        public string[] column_encuesta { get; set; }
+        public int[] count_encuesta { get; set; }
+
+        public string[] column_calidad { get; set; }
+        public int[] count_calidad { get; set; }
+    }
 
     //--------- TP
     public class TareasProgramadasVM

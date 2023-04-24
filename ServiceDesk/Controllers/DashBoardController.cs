@@ -24,7 +24,7 @@ namespace ServiceDesk.Controllers
         private readonly ServiceDeskManager _sdmanager = new ServiceDeskManager();
         private readonly NotificacionesManager _noti = new NotificacionesManager();
         //============================================================================================================================================
-        public ActionResult Index(int EmployeeId,int type = 0)
+        public ActionResult Index(int EmployeeId, int type = 0) // Dashboard de solicitante
         {
             // copiar y pegar en cualquier actionresult que requiere mandar usuario por un tubo si se intenta pasar de listo
             var userSession = Int32.Parse(Session["EmpleadoNo"].ToString()); if (userSession != EmployeeId) { return RedirectToAction("Error", "Document"); }
@@ -36,8 +36,8 @@ namespace ServiceDesk.Controllers
             var _ticket = Request["ticket"];
 
             vmDashboard vm = new vmDashboard();
-            List<ticket> lst = _db.Database.SqlQuery<ticket>("EXEC dbo.GET_TICKETS_BY_EMPLOYEE_ID @EmpleadoId={0},@EstatusId={1}", 
-                usuario,type).ToList();
+            List<ticket> lst = _db.Database.SqlQuery<ticket>("EXEC dbo.GET_TICKETS_BY_EMPLOYEE_ID @EmpleadoId={0},@EstatusId={1}",
+                usuario, type).ToList();
             List<ticket> lstOutput = new List<ticket>();
             foreach (var ls in lst)
             {
@@ -61,12 +61,15 @@ namespace ServiceDesk.Controllers
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
         public PartialViewResult Getdetail(int ticket)
         {
+            var userSession = Session["EmpleadoNo"].ToString();
+            int empleadoID = Int32.Parse(userSession);
 
             var lstCategoria = _db.cat_Categoria.Where(x => x.Activo == true);
             var lstCentro = _db.cat_Centro.Where(x => x.Activo == true);
             var lstSubcategoria = _db.cat_SubCategoria.Where(x => x.Activo == true);
 
-            var oTicket = _db.tbl_TicketDetalle.Where(x => x.Id == ticket).FirstOrDefault();
+            var oTicket = _db.tbl_TicketDetalle.Where(x => x.Id == ticket && x.EmpleadoID == empleadoID).FirstOrDefault();
+            if (empleadoID == 19237) { oTicket = _db.tbl_TicketDetalle.Where(x => x.Id == ticket).FirstOrDefault(); }
 
             //if (oTicket.IdTicketPrincipal != null) { ViewBag.EsSubticket = 1; } else { ViewBag.EsSubticket = 0; }
             ViewBag.EsSubticket = (oTicket.IdTicketPrincipal != null) ? 1 : 0;
@@ -132,16 +135,16 @@ namespace ServiceDesk.Controllers
             if (slagarantia != null)
             {
                 var garantia = slagarantia.Time;
-                if (garantia != null) { 
+                if (garantia != null) {
                     var garantiaTotal = lstSubcategoria.Where(x => x.Id == oTicket.SubCategoria).FirstOrDefault().Periodo;
                     var TiempoPasadoEnGarantia = 0; var hrSLAgar = 0; var minSLAgar = 0; var slagar = 0;
                     var TiempoEstimadoGarantia = Int32.Parse(garantiaTotal);
-                    try 
+                    try
                     { // if both are singular number format
                         TiempoPasadoEnGarantia = Int32.Parse(garantia);
                         //if (TiempoEstimadoGarantia < 10) { } else { }
                         garantia = (TiempoEstimadoGarantia - TiempoPasadoEnGarantia).ToString() + ":00";
-                    } 
+                    }
                     catch
                     {// if garantia is in clock format
                         TiempoEstimadoGarantia = TiempoEstimadoGarantia * 60; // TiempoEstimadoGarantia a minutos
@@ -224,8 +227,8 @@ namespace ServiceDesk.Controllers
                 {
                     case 1:
                         Type = 8;
-                      result =  _mng.putEstatus(Type, IdTicket, Motivo);
-                    break;
+                        result = _mng.putEstatus(Type, IdTicket, Motivo);
+                        break;
                 }
 
                 return Json(result, JsonRequestBehavior.AllowGet);
@@ -236,7 +239,7 @@ namespace ServiceDesk.Controllers
             }
         }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
-        public ActionResult Resolutor(int EmployeeId,int type = 0) // Mostrar conteo de tickets
+        public ActionResult Resolutor1(int EmployeeId, int type = 0) // Mostrar conteo de tickets
         {
             vmDashbordResolutor vm = new vmDashbordResolutor();
 
@@ -247,7 +250,7 @@ namespace ServiceDesk.Controllers
                 new SelectListItem { Value = "2", Text = "Del más reciente al más antiguo" },
                 new SelectListItem { Value = "3", Text = "Por prioridad" }
             };
-            ViewBag.filtro = filtro;            
+            ViewBag.filtro = filtro;
 
             // copiar y pegar en cualquier actionresult que requiere mandar usuario por un tubo si se intenta pasar de listo
             var userSession = Int32.Parse(Session["EmpleadoNo"].ToString()); if (userSession != EmployeeId) { return RedirectToAction("Error", "Document"); }
@@ -446,7 +449,7 @@ namespace ServiceDesk.Controllers
             }
             foreach (var edo in vm.lstTicket)
             {
-               // if (edo.estado == "Abierto") { edo.total += abierto; } //-- quitar cuando filtro esté listo
+                // if (edo.estado == "Abierto") { edo.total += abierto; } //-- quitar cuando filtro esté listo
                 if (edo.estado == "Abierto")
                 {
                     ticketsAbiertos += abierto;
@@ -463,7 +466,7 @@ namespace ServiceDesk.Controllers
 
             return View(vm);
         }
-        public ActionResult Resolutor1(int EmployeeId, int type = 0) // Mostrar conteo de tickets optimizado 
+        public ActionResult Resolutor(int EmployeeId, int type = 0) // Mostrar conteo de tickets optimizado 
         {
             vmDashbordResolutor vm = new vmDashbordResolutor(); // view model for the page
 
@@ -491,8 +494,9 @@ namespace ServiceDesk.Controllers
 
                 // Checar filtro y agregarlo al query de ser necesario 
                 var Usuarios_Excluidos_Filtro_Centro = _db.tbl_User_TI_Exclusion_Filtro_Centro.Select(t => t.EmployeeId).ToList();
-                if (grupInfo.GrupoResolutor == "TI-Soporte" && !Usuarios_Excluidos_Filtro_Centro.Contains(EmployeeId)) 
+                if (grupInfo.GrupoResolutor == "TI-Soporte" && !Usuarios_Excluidos_Filtro_Centro.Contains(EmployeeId))
                     Query += ", @Type=" + 1;
+                else Query += ", @Type=" + 0;
             }
             else // rol == supervisor
             {
@@ -502,9 +506,10 @@ namespace ServiceDesk.Controllers
                 {
                     //Check filtro centros if supervisor has been added
                     var centrFilter = _db.tbl_rel_SupervisorCentros.Where(t => t.UserId == grupInfo.Id).FirstOrDefault();
-                    if (centrFilter != null) { 
+                    if (centrFilter != null) {
                         Query = "EXEC dbo.GetCountTicketsForSupervisorMultiCentro @EmpleadoId=" + EmployeeId;
-                    }                    
+                    }
+                    // if tbl_supervisorCentros empty then show only centro del u
                 }
             }
 
@@ -512,41 +517,51 @@ namespace ServiceDesk.Controllers
             List<ticketByEstado> lst2 = _db.Database.SqlQuery<ticketByEstado>(Query).ToList();  // get actual values
             foreach (var edo in lst)                                                            // change the 0's for actual values
             {
-                var edoObtenido = lst2.Where(t => t.orden == edo.orden).FirstOrDefault();
-                if (edoObtenido != null) edo.total  = edoObtenido.total; else edo.total = 0;
+                var edoObtenido = lst2.FirstOrDefault(t => t.orden == edo.orden);
+                if (edoObtenido != null) edo.total = edoObtenido.total; else edo.total = 0;
             }
-            vm.lstTicket = lst; // print 
+            vm.lstTicket = lst.OrderBy(t => t.orden).ToList(); // print 
 
             // ADD tareas TO THE COUNTER
-            if (true) { 
+            if (true) {
                 var tareas = _db.tblTareasProgramadas.Where(x => x.TecnicoID == EmployeeId && x.Activado_2 == true).OrderBy(x => x.Estatus).ToList();
                 int asignado = 0, abierto = 0, cerrado = 0, trabajando = 0, resuelto = 0, cancelado = 0, espera = 0;
-                foreach (var tarea in tareas)
-                {
-                    if (tarea.Estatus == "Asignado")                { asignado++; }
-                    if (tarea.Estatus == "En Espera")               { espera++; }
-                    if (tarea.Estatus == "Asignacion Pendiente")    { abierto++; }
-                    if (tarea.Estatus == "Cerrado")                 { cerrado++; }
-                    if (tarea.Estatus == "Trabajando")              { trabajando++; }
-                    if (tarea.Estatus == "Resuelto")                { resuelto++; }
-                    if (tarea.Estatus == "Cancelado")               { cancelado++; }
-                }
-                foreach (var edo in vm.lstTicket)
-                {
-                    //if (edo.estado == "Abierto") { edo.total += abierto; } //-- quitar cuando filtro esté listo
-                    //if (edo.estado == "Abierto")
-                    //{
-                    //    ticketsAbiertos += abierto;
-                    //    edo.total = ticketsAbiertos;
-                    //}
-                    if (edo.estado == "Abierto")    { edo.total += abierto; }
-                    if (edo.estado == "En Espera")  { edo.total += espera; }
-                    if (edo.estado == "Asignado")   { edo.total += asignado; }
-                    if (edo.estado == "Cerrado")    { edo.total += cerrado; }
-                    if (edo.estado == "Trabajando") { edo.total += trabajando; }
-                    if (edo.estado == "Resuelto")   { edo.total += resuelto; }
-                    if (edo.estado == "Cancelado")  { edo.total += cancelado; }
-                }
+                abierto += tareas.Count(t => t.Estatus.Contains("Pendiente"));
+                asignado += tareas.Count(t => t.Estatus.Contains("Asignado"));
+                espera += tareas.Count(t => t.Estatus.Contains("Espera"));
+                trabajando += tareas.Count(t => t.Estatus.Contains("Trabajando"));
+                resuelto += tareas.Count(t => t.Estatus.Contains("Resuelto"));
+                cerrado += tareas.Count(t => t.Estatus.Contains("Cerrado"));
+                cancelado += tareas.Count(t => t.Estatus.Contains("Cancelado"));
+
+                vm.lstTicket.FirstOrDefault(t => t.estado.Contains("Abierto")).total += abierto;
+                vm.lstTicket.FirstOrDefault(t => t.estado.Contains("Asignado")).total += asignado;
+                vm.lstTicket.FirstOrDefault(t => t.estado.Contains("Espera")).total += espera;
+                vm.lstTicket.FirstOrDefault(t => t.estado.Contains("Trabajando")).total += trabajando;
+                vm.lstTicket.FirstOrDefault(t => t.estado.Contains("Resuelto")).total += resuelto;
+                vm.lstTicket.FirstOrDefault(t => t.estado.Contains("Cerrado")).total += cerrado;
+                vm.lstTicket.FirstOrDefault(t => t.estado.Contains("Cancelado")).total += cancelado;
+
+                //foreach (var tarea in tareas)
+                //{
+                //    if (tarea.Estatus == "Asignado")                { asignado++; }
+                //    if (tarea.Estatus == "En Espera")               { espera++; }
+                //    if (tarea.Estatus == "Asignacion Pendiente")    { abierto++; }
+                //    if (tarea.Estatus == "Cerrado")                 { cerrado++; }
+                //    if (tarea.Estatus == "Trabajando")              { trabajando++; }
+                //    if (tarea.Estatus == "Resuelto")                { resuelto++; }
+                //    if (tarea.Estatus == "Cancelado")               { cancelado++; }
+                //}
+                //foreach (var edo in vm.lstTicket)
+                //{
+                //    if (edo.estado == "Abierto")    { edo.total += abierto; }
+                //    if (edo.estado == "En Espera")  { edo.total += espera; }
+                //    if (edo.estado == "Asignado")   { edo.total += asignado; }
+                //    if (edo.estado == "Cerrado")    { edo.total += cerrado; }
+                //    if (edo.estado == "Trabajando") { edo.total += trabajando; }
+                //    if (edo.estado == "Resuelto")   { edo.total += resuelto; }
+                //    if (edo.estado == "Cancelado")  { edo.total += cancelado; }
+                //}
             }
 
             ViewBag.filtro = filtro;
@@ -556,9 +571,9 @@ namespace ServiceDesk.Controllers
         }
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
-        public PartialViewResult getTicketTecnicoById(string ticket, string user ) 
+        public PartialViewResult getTicketTecnicoById(string ticket, string user)
         {
-            int oTicket = int.Parse(ticket);      
+            int oTicket = int.Parse(ticket);
             int empledoId = int.Parse(user);
 
             vmDashbordResolutor vm = new vmDashbordResolutor();
@@ -585,12 +600,10 @@ namespace ServiceDesk.Controllers
             return PartialView("../DashBoard/PartialViews/_TicketTecnico", vm);
         }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
-        public PartialViewResult getTicketById(string ticket, string user , string type="") 
+        public PartialViewResult getTicketById(string ticket, string user, string type = "")
         {
-            int oTicket = int.Parse(ticket);      
+            int oTicket = int.Parse(ticket);
             int empledoId = int.Parse(user);
-
-            
 
             vmDashbordResolutor vm = new vmDashbordResolutor();
             List<ticketResumenResolutor> lstTicketsResumen = new List<ticketResumenResolutor>();
@@ -598,7 +611,7 @@ namespace ServiceDesk.Controllers
             var usuario = _db.tbl_User.Where(t => t.EmpleadoID == empledoId).FirstOrDefault();
 
             //var details = _db.tbl_TicketDetalle.Where(x => x.EmpleadoID == empledoId && x.Id == oTicket).ToList();
-            var details = _db.tbl_TicketDetalle.Where(x =>  x.Id == oTicket && x.GrupoResolutor.Contains(usuario.GrupoResolutor)).ToList();
+            var details = _db.tbl_TicketDetalle.Where(x => x.Id == oTicket && x.GrupoResolutor.Contains(usuario.GrupoResolutor)).ToList();
 
 
             if (details.Count == 0) {
@@ -608,10 +621,10 @@ namespace ServiceDesk.Controllers
                     return PartialView("../DashBoard/PartialViews/_DetailTicket", vm);
 
                 }
-                else 
+                else
                 {
-                
-                return PartialView("../DashBoard/PartialViews/_TicketResolutor", vm);
+
+                    return PartialView("../DashBoard/PartialViews/_TicketResolutor", vm);
                 }
 
             }
@@ -641,7 +654,7 @@ namespace ServiceDesk.Controllers
 
         }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
-        public PartialViewResult GetResolutorTickets(string user, string type, int idFiltro = 0)
+        public PartialViewResult GetResolutorTickets1(string user, string type, int idFiltro = 0)
         {
             if (type == "Espera") type = "En Espera";
             if (type == "Garantia") type = "En Garantía";
@@ -664,13 +677,13 @@ namespace ServiceDesk.Controllers
                 //              estan los Tecnicos a los que el filtro no se les debe aplicar
                 // En la tabla tbl_rel_SupervisorCentros
                 //              estan los supervisores y los centros que les toca supervisar  
-                if (rol == "Tecnico") { 
+                if (rol == "Tecnico") {
                     // verificar que usuario no esté en lista de usuarios excluidos del filtro
-                    var Usuarios_Excluidos_Filtro_Centro = _db.tbl_User_TI_Exclusion_Filtro_Centro.Select(t => t.EmployeeId).ToList(); 
-                    if (! Usuarios_Excluidos_Filtro_Centro.Contains(empledoId)) details = details.Where(t => t.Centro == grupInfo.Centro).ToList();
+                    var Usuarios_Excluidos_Filtro_Centro = _db.tbl_User_TI_Exclusion_Filtro_Centro.Select(t => t.EmployeeId).ToList();
+                    if (!Usuarios_Excluidos_Filtro_Centro.Contains(empledoId)) details = details.Where(t => t.Centro == grupInfo.Centro).ToList();
                 }
-                else 
-                if (rol == "Supervisor") { 
+                else
+                if (rol == "Supervisor") {
                     var Centros = _db.tbl_rel_SupervisorCentros.Where(t => t.UserId == grupInfo.Id).Select(t => t.CentroId).ToArray(); // lista de centros
                     // Si el supervisor no está en la tabla solo le toca supervisar su centro
                     // Si el supervisor está en la tabla, asegurarse que también le toque supervisar el suyo propio
@@ -780,9 +793,9 @@ namespace ServiceDesk.Controllers
                     idPrioridad = _idPrioridad,
                     orden = x.orden
                 };
-                
+
                 // por cada ticket en tabla de SUBs y MAINs verificar si el ticket o está en la columna de hijos (Id)
-                if (lstSubTicket2.Contains(o.tickedID)) { 
+                if (lstSubTicket2.Contains(o.tickedID)) {
                     o.isSubTicket = true; } //informar que o es un hijo
                 //foreach (var tkt in lstSubTicket2)
                 //{
@@ -836,175 +849,44 @@ namespace ServiceDesk.Controllers
             }
             return PartialView("../DashBoard/PartialViews/_TicketResolutor", vm);
         } // mostrar tickets en el dashboard      
-        public PartialViewResult GetResolutorTickets1(string user, string type, int idFiltro = 0)
+        public PartialViewResult GetResolutorTickets(string user, string type, int idFiltro = 0, int pageNumber = 1)
         {
+            if (pageNumber < 1) pageNumber = 1;
+            ViewBag.pageNumber = pageNumber;
+            ViewBag.type = type;
+            ViewBag.filtro = idFiltro;
+            ViewBag.user = user;
+            if (type == "EnEspera") { type = "En Espera"; }
+            if (type == "EnGarantía") { type = "En Garantía"; }
+
+            int pageSize = 30; // cambiar cantidad de tickets que puede mostrarse en el dashboard al mismo tiempo
+
             int empledoId = int.Parse(user);
             string rol = RoldeUsuario(empledoId);
+            var userData = _db.tbl_User.FirstOrDefault(t => t.EmpleadoID == empledoId);
+            string gruporesolutor = userData.GrupoResolutor;
             ViewBag.rol = rol;
             vmDashbordResolutor vm = new vmDashbordResolutor();
-            List<ticketResumenResolutor> lstTicketsResumen = new List<ticketResumenResolutor>();
+            List<ticketResumenResolutor> ResumenTickets = new List<ticketResumenResolutor>();
+            var tickets = new List<tbl_TicketDetalle>();
+            // data for pager
+            int totalElements = 0;
+            int totalPages = 0;
 
-            if (false ) {
-                /*/ ----------------------------------------------------------------
-                var lstCategoria = _db.cat_Categoria.Where(x => x.Activo == true);
-                var userint = Convert.ToInt32(user);
-                var grupInfo = _db.tbl_User.Where(a => a.EmpleadoID == userint).FirstOrDefault();
-                var details = _db.tbl_TicketDetalle.Where(x => x.Estatus == type && x.GrupoResolutor == grupInfo.GrupoResolutor).ToList();
-                ;
-                if (grupInfo.GrupoResolutor == "TI-Soporte")
-                {
-                    // Filtrar por centro if TI-Soporte _ISF            
-                    // El filtrado de centros es distinto de tecnicos a Supervisores
-                    // En la tabla tbl_User_TI_Exclusion_Filtro_Centro
-                    //              estan los Tecnicos a los que el filtro no se les debe aplicar
-                    // En la tabla tbl_rel_SupervisorCentros
-                    //              estan los supervisores y los centros que les toca supervisar  
-                    if (rol == "Tecnico")
-                    {
-                        // verificar que usuario no esté en lista de usuarios excluidos del filtro
-                        var Usuarios_Excluidos_Filtro_Centro = _db.tbl_User_TI_Exclusion_Filtro_Centro.Select(t => t.EmployeeId).ToList();
-                        if (!Usuarios_Excluidos_Filtro_Centro.Contains(empledoId)) details = details.Where(t => t.Centro == grupInfo.Centro).ToList();
-                    }
-                    else
-                    if (rol == "Supervisor")
-                    {
-                        var Centros = _db.tbl_rel_SupervisorCentros.Where(t => t.UserId == grupInfo.Id).Select(t => t.CentroId).ToArray(); // lista de centros
-                        // Si el supervisor no está en la tabla solo le toca supervisar su centro
-                        // Si el supervisor está en la tabla, asegurarse que también le toque supervisar el suyo propio
-                        if (Centros != null)
-                        {
-                            Centros = Centros.Concat(new int[] { grupInfo.Centro }).ToArray(); // añadir centro al que pertenece en caso de que no fuera agregado antes
-                            details = details.Where(t => t.GrupoResolutor == "TI-Soporte" && Centros.Contains(t.Centro)).ToList();
-                        }
-                        else
-                        {
-                            details = details.Where(t => t.GrupoResolutor == "TI-Soporte" && t.Centro == grupInfo.Centro).ToList();
-                        }
-                    }
-                }
+            // Obtener tickets paginados
+            DashboardInfo info = GetTicketsForUser(rol, pageNumber, pageSize, idFiltro, gruporesolutor, empledoId, type, userData.Id);
+            totalElements = info.totalElements;
+            tickets = info.tbl_TicketDetalles;
+            totalPages = 1 + (totalElements / pageSize);
+            ViewBag.totalPages = totalPages;
 
-                if (rol == "Tecnico" && type != "Abierto") // SOLO MOSTRAR TICKETS QUE LE CONCIERNEN AL TECNICO
-                {
-                    int idTecnico = _db.tbl_User.Where(t => t.EmpleadoID == userint).Select(t => t.Id).FirstOrDefault();
+            // Resumir tickets
+            ResumenTickets = ResumirTickets(tickets, rol, idFiltro);
+            vm.lstResumenResolutor = ResumenTickets;
 
-                    details = details.Where(t =>
-                     (t.IdTecnicoAsignado == idTecnico && t.IdTecnicoAsignadoReag == null && t.IdTecnicoAsignadoReag2 == null) ||
-                     (t.IdTecnicoAsignadoReag == idTecnico && t.IdTecnicoAsignadoReag2 == null) ||
-                     (t.IdTecnicoAsignadoReag2 == idTecnico)
-                     ).ToList();
-                }
-
-                //---- AÑADIR VINCULADOS Y SUBTICKETS: 
-                List<int> ticketsVinculados = _db.tbl_VinculacionDetalle.Where(x => x.Activo == true).Select(x => x.IdTicketChild).ToList();
-                var lstSubTickets = _db.vwDetalleSubticket.ToList();
-                List<tbl_TicketDetalle> lstTemp = new List<tbl_TicketDetalle>();
-                foreach (var item in details)
-                {
-                    item.isPadre = false;
-                    tbl_TicketDetalle o = new tbl_TicketDetalle() { };
-                    var lstSubTicket = lstSubTickets.Where(x => x.Id == item.Id).ToList(); // previamente una llamada
-                    if (lstSubTicket.Count() > 0)
-                    {
-                        lstSubTicket.ForEach(x =>
-                        {
-                            int _idPrioridad = 0;
-                            if (x.Prioridad == "Alto") { _idPrioridad = 1; }
-                            else if (x.Prioridad == "Medio") { _idPrioridad = 2; }
-                            else if (x.Prioridad == "Baja") { _idPrioridad = 3; }
-                            var opCategoria = lstCategoria.Where(c => c.Id == item.Categoria).FirstOrDefault().Categoria;
-                            ticketResumenResolutor obj = new ticketResumenResolutor()
-                            {
-                                categoria = opCategoria,
-                                prioridad = x.Prioridad,
-                                //tickedID = x.IdTicket,
-                                tickedID = x.Id,
-                                checkVincular = false,
-                                totVinculados = 0,
-                                estatus = x.Estatus,
-                                isPadre = true,
-                                idTicketPadre = x.IdTicket,
-                                isSubTicket = true,
-                                idSubTicket = x.Id,
-                                idPrioridad = _idPrioridad,
-                                orden = 2
-                            };
-                            lstTicketsResumen.Add(obj);
-                            obj.isSubTicket = true;
-                        });
-                    }
-                    if (!ticketsVinculados.Contains(item.Id))
-                    {
-                        o = item; // añadir tickets que no están vinculados a otros (hijos)
-                        o.orden = 1;
-                        lstTemp.Add(o);
-
-                    }
-                    else
-                    {
-                        var e = _db.tbl_Vinculacion.Where(x => x.IdTicket == item.Id).FirstOrDefault();
-                        if (e != null)
-                        {
-                            o = item;
-                            o.totVinculados = _db.tbl_VinculacionDetalle.Where(x => x.IdVinculacion == e.IdVinculacion).Count() - 1;
-                            o.isPadre = true;
-                            o.orden = 1;
-                            lstTemp.Add(o); //añadir los padres
-                        }
-                    }
-                };
-                if (lstTemp.Count > 0) { details = lstTemp; }
-                //---- AÑADIR VINCULADOS Y SUBTICKETS: END
-
-
-                ;
-                var lstSubTicket2 = _db.vwDetalleSubticket.Select(t => t.Id).ToList();
-                details.ForEach(x =>
-                {
-                    int VARIABLE_De_Prueba = x.Id;
-                    int _idPrioridad = 0;
-                    if (x.Prioridad == "Alto") { _idPrioridad = 1; }
-                    else if (x.Prioridad == "Medio") { _idPrioridad = 2; }
-                    else if (x.Prioridad == "Baja") { _idPrioridad = 3; }
-                    var opCategoria = lstCategoria.Where(c => c.Id == x.Categoria).FirstOrDefault().Categoria;
-                    ticketResumenResolutor o = new ticketResumenResolutor()
-                    {
-                        categoria = opCategoria,
-                        prioridad = x.Prioridad,
-                        tickedID = x.Id,
-                        checkVincular = false,
-                        totVinculados = x.totVinculados ?? 0,
-                        estatus = x.Estatus,
-                        isPadre = x.isPadre,
-                        isSubTicket = false, //
-                        idPrioridad = _idPrioridad,
-                        orden = x.orden
-                    };
-
-                    // por cada ticket en tabla de SUBs y MAINs verificar si el ticket o está en la columna de hijos (Id)
-                    if (lstSubTicket2.Contains(o.tickedID))
-                    {
-                        o.isSubTicket = true;
-                    } //informar que o es un hijo
-                    //foreach (var tkt in lstSubTicket2)
-                    //{
-                    //    if (tkt.Id == o.tickedID) { o.isSubTicket = true;  } 
-                    //    //informar que o es un hijo
-                    //}
-                    if (o.isSubTicket != true) //si "ticket o" NO es hijo 
-                        lstTicketsResumen.Add(o); //imprimir o
-                });//imprime a los hijos
-                //-------------------------------------------------------------------------------*/
-            }
-
-
-            
-            if (idFiltro == 1) { vm.lstResumenResolutor = lstTicketsResumen.OrderBy(x => x.orden).ThenBy(x => x.tickedID).ToList(); }                   //Del más antiguo al más reciente
-            else if (idFiltro == 2) { vm.lstResumenResolutor = lstTicketsResumen.OrderBy(x => x.orden).ThenByDescending(x => x.tickedID).ToList(); }    //Del más reciente al más antiguo              
-            else if (idFiltro == 3) {  vm.lstResumenResolutor = lstTicketsResumen.OrderBy(x => x.orden).ThenBy(x => x.idPrioridad).ToList(); }          //Por prioridad
-            else { vm.lstResumenResolutor = lstTicketsResumen; }
-
+            /* TAREAS */
             var tareas = new List<vw_TareasProgramadas>(); // && x.Activado_2 == true         // this activates the scheduler
-            if (true) { 
+            if (true) {
                 if (rol == "Supervisor")
                 {
                     // Añadir tareas creaadas por este supervisor... añadir las creadas por otros supervisores también?
@@ -1029,6 +911,277 @@ namespace ServiceDesk.Controllers
             return PartialView("../DashBoard/PartialViews/_TicketResolutor", vm);
         } // mostrar tickets en el dashboard OPTOMIZADO
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
+        public DashboardInfo GetTicketsForUser(string rol, int pageNumber, int pageSize, int idFiltro, string gruporesolutor, int empledoId, string type, int userData) {
+            //obtener tickets para cierto usuario, separación por páginación y filtrado
+            DashboardInfo info = new DashboardInfo();
+            List<tbl_TicketDetalle> tickets = new List<tbl_TicketDetalle>();
+            int totalElements = 0;
+
+            if (rol.Contains("Supervisor") || rol.Contains("Service"))
+            {
+                //Check filtro centros if supervisor has been added
+                var centrFilter = _db.tbl_rel_SupervisorCentros.Where(t => t.UserId == empledoId).ToList();
+                if ((gruporesolutor == "TI-Soporte") && (centrFilter.Count() > 0))
+                {
+                    var centros = centrFilter.Select(t => t.CentroId).ToArray();
+
+                    switch (idFiltro)
+                    {
+                        default:
+                            tickets = _db.tbl_TicketDetalle
+                                .Where(t => t.Estatus == type && t.GrupoResolutor == gruporesolutor && centros.Contains(t.Centro))
+                                .OrderBy(t => t.Id)
+                                .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                                .ToList();
+                            break;
+                        case 1:
+                            tickets = _db.tbl_TicketDetalle
+                                .Where(t => t.Estatus == type && t.GrupoResolutor == gruporesolutor && centros.Contains(t.Centro))
+                                .OrderBy(x => x.FechaRegistro).ThenBy(x => x.Id) // Primero el más antiguo
+                                .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                                .ToList();
+                            break;
+                        case 2:
+                            tickets = _db.tbl_TicketDetalle
+                                .Where(t => t.Estatus == type && t.GrupoResolutor == gruporesolutor && centros.Contains(t.Centro))
+                                .OrderByDescending(x => x.FechaRegistro).ThenBy(x => x.Id) // Primero el más reciente
+                                .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                                .ToList();
+                            break;
+                        case 3:
+                            tickets = _db.tbl_TicketDetalle
+                                .Where(t => t.Estatus == type && t.GrupoResolutor == gruporesolutor && centros.Contains(t.Centro))
+                                .OrderBy(t =>
+                                    t.Prioridad.Contains("tic") ? 1 :
+                                    t.Prioridad.Contains("Alt") ? 2 :
+                                    t.Prioridad.Contains("Med") ? 3 :
+                                    t.Prioridad.Contains("Baj") ? 4 : 1)
+                                .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                                .ToList();
+                            break;
+                    }
+
+                    totalElements = _db.tbl_TicketDetalle
+                        .Where(t => t.Estatus == type && t.GrupoResolutor == gruporesolutor && centros.Contains(t.Centro))
+                        .Count();
+                }
+                else
+                {
+                    switch (idFiltro)
+                    {
+                        default:
+                            tickets = _db.tbl_TicketDetalle
+                                .Where(t => t.Estatus == type && t.GrupoResolutor == gruporesolutor)
+                                .OrderBy(t => t.Id)
+                                .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                                .ToList();
+                            break;
+                        case 1:
+                            tickets = _db.tbl_TicketDetalle
+                                .Where(t => t.Estatus == type && t.GrupoResolutor == gruporesolutor)
+                                .OrderBy(x => x.FechaRegistro).ThenBy(x => x.Id) // Primero el más antiguo
+                                .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                                .ToList();
+                            break;
+                        case 2:
+                            tickets = _db.tbl_TicketDetalle
+                                .Where(t => t.Estatus == type && t.GrupoResolutor == gruporesolutor)
+                                .OrderByDescending(x => x.FechaRegistro).ThenBy(x => x.Id) // Primero el más reciente
+                                .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                                .ToList();
+                            break;
+                        case 3:
+                            tickets = _db.tbl_TicketDetalle
+                                .Where(t => t.Estatus == type && t.GrupoResolutor == gruporesolutor)
+                                .OrderBy(t =>
+                                    t.Prioridad.Contains("tic") ? 1 :
+                                    t.Prioridad.Contains("Alt") ? 2 :
+                                    t.Prioridad.Contains("Med") ? 3 :
+                                    t.Prioridad.Contains("Baj") ? 4 : 1)
+                                .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                                .ToList();
+                            break;
+                    }
+
+                    totalElements = _db.tbl_TicketDetalle
+                        .Where(t => t.Estatus == type && t.GrupoResolutor == gruporesolutor)
+                        .Count();
+                }
+            }
+            else
+            {
+                if (!type.Contains("Abierto"))
+                {
+                    switch (idFiltro)
+                    {
+                        default:
+                            tickets = _db.tbl_TicketDetalle
+                                .Where(pointer => (
+                                (pointer.IdTecnicoAsignado == userData && pointer.IdTecnicoAsignadoReag == null) ||
+                                (pointer.IdTecnicoAsignadoReag == userData && pointer.IdTecnicoAsignadoReag2 == null) ||
+                                (pointer.IdTecnicoAsignadoReag2 == userData)) && pointer.Estatus == type)
+                                .OrderBy(t => t.Id)
+                                .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                                .OrderByDescending(pointer => pointer.Id)
+                                .ToList();
+                            break;
+                        case 1:
+                            tickets = _db.tbl_TicketDetalle
+                                .Where(pointer => (
+                                (pointer.IdTecnicoAsignado == userData && pointer.IdTecnicoAsignadoReag == null) ||
+                                (pointer.IdTecnicoAsignadoReag == userData && pointer.IdTecnicoAsignadoReag2 == null) ||
+                                (pointer.IdTecnicoAsignadoReag2 == userData)) && pointer.Estatus == type)
+                                .OrderBy(t => t.FechaRegistro)
+                                .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                                .OrderByDescending(pointer => pointer.Id)
+                                .ToList();
+                            break;
+                        case 2:
+                            tickets = _db.tbl_TicketDetalle
+                                .Where(pointer => (
+                                (pointer.IdTecnicoAsignado == userData && pointer.IdTecnicoAsignadoReag == null) ||
+                                (pointer.IdTecnicoAsignadoReag == userData && pointer.IdTecnicoAsignadoReag2 == null) ||
+                                (pointer.IdTecnicoAsignadoReag2 == userData)) && pointer.Estatus == type)
+                                .OrderByDescending(t => t.FechaRegistro)
+                                .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                                .OrderByDescending(pointer => pointer.Id)
+                                .ToList();
+                            break;
+                        case 3:
+                            tickets = _db.tbl_TicketDetalle
+                                .Where(pointer => (
+                                (pointer.IdTecnicoAsignado == userData && pointer.IdTecnicoAsignadoReag == null) ||
+                                (pointer.IdTecnicoAsignadoReag == userData && pointer.IdTecnicoAsignadoReag2 == null) ||
+                                (pointer.IdTecnicoAsignadoReag2 == userData)) && pointer.Estatus == type)
+                                .OrderBy(t =>
+                                    t.Prioridad.Contains("tic") ? 1 :
+                                    t.Prioridad.Contains("Alt") ? 2 :
+                                    t.Prioridad.Contains("Med") ? 3 :
+                                    t.Prioridad.Contains("Baj") ? 4 : 1)
+                                .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                                .OrderByDescending(pointer => pointer.Id)
+                                .ToList();
+                            break;
+                    }
+
+                    totalElements = _db.tbl_TicketDetalle
+                        .Where(pointer => (
+                        (pointer.IdTecnicoAsignado == userData && pointer.IdTecnicoAsignadoReag == null) ||
+                        (pointer.IdTecnicoAsignadoReag == userData && pointer.IdTecnicoAsignadoReag2 == null) ||
+                        (pointer.IdTecnicoAsignadoReag2 == userData)) && pointer.Estatus == type)
+                        .Count();
+                }
+                else
+                {
+                    switch (idFiltro)
+
+                    {
+                        default:
+                            tickets = _db.tbl_TicketDetalle
+                                .Where(t => t.Estatus == type && t.GrupoResolutor == gruporesolutor)
+                                .OrderBy(t => t.Id)
+                                .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                                .ToList();
+                            break;
+                        case 1:
+                            tickets = _db.tbl_TicketDetalle
+                                .Where(t => t.Estatus == type && t.GrupoResolutor == gruporesolutor)
+                                .OrderBy(t => t.FechaRegistro)
+                                .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                                .ToList();
+                            break;
+                        case 2:
+                            tickets = _db.tbl_TicketDetalle
+                                .Where(t => t.Estatus == type && t.GrupoResolutor == gruporesolutor)
+                                .OrderByDescending(t => t.FechaRegistro)
+                                .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                                .ToList();
+                            break;
+                        case 3:
+                            tickets = _db.tbl_TicketDetalle
+                                .Where(t => t.Estatus == type && t.GrupoResolutor == gruporesolutor)
+                                .OrderBy(t =>
+                                    t.Prioridad.Contains("tic") ? 1 :
+                                    t.Prioridad.Contains("Alt") ? 2 :
+                                    t.Prioridad.Contains("Med") ? 3 :
+                                    t.Prioridad.Contains("Baj") ? 4 : 1)
+                                .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                                .ToList();
+                            break;
+                    }
+
+                    totalElements = _db.tbl_TicketDetalle
+                        .Where(t => t.Estatus == type && t.GrupoResolutor == gruporesolutor)
+                        .Count();
+                }
+            }
+
+            info.totalElements = totalElements;
+            info.tbl_TicketDetalles = tickets;
+
+            return info;
+        }
+  
+        public List<ticketResumenResolutor> ResumirTickets(List<tbl_TicketDetalle> tickets, string rol, int idFiltro) {
+            List<ticketResumenResolutor> ResumenTickets = new List<ticketResumenResolutor>();
+            var categorias = _db.cat_Categoria.ToList();
+            var subcats = _db.cat_SubCategoria.ToList();
+            var vinculaciones = _db.tbl_VinculacionDetalle.ToList();
+            var tbl_user = _db.tbl_User.ToList();
+            //Conversion a resumen
+            foreach (var ticket in tickets)
+            {
+                var Ticket_Resumido = new ticketResumenResolutor();
+                Ticket_Resumido.tickedID = ticket.Id;
+                Ticket_Resumido.categoria = categorias.FirstOrDefault(t => t.Id == ticket.Categoria).Categoria;
+                Ticket_Resumido.estatus = ticket.Estatus;
+                Ticket_Resumido.prioridad = ticket.Prioridad;
+                Ticket_Resumido.orden = 1;
+
+                Ticket_Resumido.descripcion = (subcats.FirstOrDefault(t => t.Id == ticket.SubCategoria) != null) ? 
+                    subcats.FirstOrDefault(t => t.Id == ticket.SubCategoria).SubCategoria : "Sin subcategoría";
+                //int sizeDescrip = 50;
+                //if (ticket.DescripcionIncidencia.Length > sizeDescrip)
+                //    Ticket_Resumido.descripcion = ticket.DescripcionIncidencia.Substring(0, sizeDescrip-1) + "...";
+                //else
+                //    Ticket_Resumido.descripcion = ticket.DescripcionIncidencia;
+
+                int idPrioridad = 1;
+                if (ticket.Prioridad == null) ticket.Prioridad = " - ";
+                if (ticket.Prioridad.Contains("Medi")) idPrioridad = 2;
+                if (ticket.Prioridad.Contains("Baj")) idPrioridad = 3;
+                Ticket_Resumido.idPrioridad = idPrioridad;
+
+                if (ticket.IdTicketPrincipal != null)
+                {
+                    Ticket_Resumido.idSubTicket = ticket.Id;
+                    Ticket_Resumido.isSubTicket = true;
+                    Ticket_Resumido.idTicketPadre = (int)ticket.IdTicketPrincipal;
+                    Ticket_Resumido.orden = 2;
+                }
+
+                if (vinculaciones.Where(t => t.TicketPrincipal == ticket.Id).Count() > 0)
+                    Ticket_Resumido.isPadre = true;
+
+                //if (!rol.Contains("cnico"))
+                //{
+                //    int? tecnicoAsignado = 0;
+                //    if (ticket.IdTecnicoAsignado != null) tecnicoAsignado = ticket.IdTecnicoAsignado;
+                //    if (ticket.IdTecnicoAsignadoReag != null) tecnicoAsignado = ticket.IdTecnicoAsignadoReag;
+                //    if (ticket.IdTecnicoAsignadoReag2 != null) tecnicoAsignado = ticket.IdTecnicoAsignadoReag2;
+                //    Ticket_Resumido.EmployeeAsignado1 = (tecnicoAsignado != 0) ? tbl_user.FirstOrDefault(t => t.Id == tecnicoAsignado).NombreTecnico : "";
+                //}
+
+                ResumenTickets.Add(Ticket_Resumido);
+            }
+
+            /* FILTRO */
+            if (idFiltro == 1) { ResumenTickets = ResumenTickets.OrderBy(x => x.orden).ThenBy(x => x.tickedID).ToList(); }                   //Del más antiguo al más reciente
+            else if (idFiltro == 2) { ResumenTickets = ResumenTickets.OrderBy(x => x.orden).ThenByDescending(x => x.tickedID).ToList(); }    //Del más reciente al más antiguo              
+            else if (idFiltro == 3) { ResumenTickets = ResumenTickets.OrderBy(x => x.orden).ThenBy(x => x.idPrioridad).ToList(); }          //Por prioridad
+
+            return ResumenTickets;
+        }
         public PartialViewResult dtaVincular(int[] list, string user) 
         {
 
@@ -1385,24 +1538,29 @@ namespace ServiceDesk.Controllers
             return lista;
         }
 
-        public void ActualizarRol(List<string> rol, int employeeId) {
+        public int ActualizarRol(List<string> rol, int employeeId) {
             var user = _db.tbl_User.Where(t => t.EmpleadoID == employeeId).FirstOrDefault();
             string nuevo_rol = "";
 
-            if (user == null) RedirectToAction("Login", "Home", new { error = employeeId });
+            if (user == null)
+            {
+                return 0;
+            }
+            else { 
+                //orden inverso al de home
+                if (rol.Contains("Directivo")) { nuevo_rol = "Directivo";  }
+                else if (rol.Contains("ServiceDesk")) { nuevo_rol = "ServiceDesk"; }
+                else if (rol.Contains("Técnico")) { nuevo_rol = "Tecnico"; }
+                else if (rol.Contains("Tecnico")) { nuevo_rol = "Tecnico"; }
+                else if (rol.Contains("Supervisor")) { nuevo_rol = "Supervisor"; }
+                else if(rol.Contains("Solicitante")) { nuevo_rol = "Solicitante"; }
 
-            //orden inverso al de home
-            if (rol.Contains("Directivo")) { nuevo_rol = "Directivo";  }
-            else if (rol.Contains("ServiceDesk")) { nuevo_rol = "ServiceDesk"; }
-            else if (rol.Contains("Técnico")) { nuevo_rol = "Tecnico"; }
-            else if (rol.Contains("Tecnico")) { nuevo_rol = "Tecnico"; }
-            else if (rol.Contains("Supervisor")) { nuevo_rol = "Supervisor"; }
-            else if(rol.Contains("Solicitante")) { nuevo_rol = "Solicitante"; }
+                user.Rol = nuevo_rol;
 
-            user.Rol = nuevo_rol;
-
-            _db.tbl_User.AddOrUpdate(user);
-            _db.SaveChanges();
+                _db.tbl_User.AddOrUpdate(user);
+                _db.SaveChanges();
+                return 1;
+            }
         }
         public string RoldeUsuario(int EmployeeID) //String que obtiene el Rol del usuario dado su ID 
         {
@@ -1426,5 +1584,29 @@ namespace ServiceDesk.Controllers
             return rol;
         }
 
+    }
+
+    class StringPrioridadComparer : IComparer<string>
+    {
+        public int Compare(string x, string y)
+        {
+            if (x == y)
+                return 0;
+
+            if (x.Contains("Crit") || (x.Contains("Alt") && !y.Contains("Crit")))
+                return -1;
+
+            if (y.Contains("Crit") || (y.Contains("Alt") && !x.Contains("Crit")))
+                return 1;
+
+            if (x.Contains("Medi") && y.Contains("Baj"))
+                return -1;
+
+            if (x.Contains("Baj") && y.Contains("Medi"))
+                return 1;
+
+            // default alphabetical sorting for all other cases
+            return x.CompareTo(y);
+        }
     }
 }

@@ -65,7 +65,16 @@ namespace ServiceDesk.Controllers
                     if (ticket == null) return RedirectToAction("NotFound", "Error");
 
                     if (ticket.TecnicoAsignado == null && ticket.TecnicoAsignadoReag == null && ticket.TecnicoAsignadoReag2 == null) { ViewBag.Regleta = "No muestra"; }
-                    
+
+                    // obtener id del tecnico asginado actualmente
+                    var idtecnicoasignado = ticket.IdTecnicoAsignado;
+                    idtecnicoasignado = (ticket.IdTecnicoAsignadoReag != null) ? ticket.IdTecnicoAsignadoReag : idtecnicoasignado;
+                    idtecnicoasignado = (ticket.IdTecnicoAsignadoReag2 != null) ? ticket.IdTecnicoAsignadoReag2 : idtecnicoasignado;
+                    var s = _db.tbl_User.FirstOrDefault(t => t.Id == idtecnicoasignado);
+                    idtecnicoasignado = s != null ? s.EmpleadoID : idtecnicoasignado;
+                    ViewBag.idTecnicoAsignado = idtecnicoasignado;
+                    ViewBag.EmployeeId = EmployeeId;
+
                     //Ticket no ha sido asignado entonces muestra los botones de asignación
                     if (ticket.TecnicoAsignado == null) { ViewBag.MuestraAsignacion = "SI"; }
 

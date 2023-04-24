@@ -1,4 +1,6 @@
-﻿@model ServiceDesk.ViewModels.vmDashbordResolutor
+﻿@using GridMvc
+@using GridMvc.Html
+@model ServiceDesk.ViewModels.vmDashbordResolutor
 <style>
     /*    * {
         margin: 0;
@@ -57,6 +59,7 @@
                 /* Opera */
                 box-shadow: 5px 5px 7px rgba(33,33,33,.7);
             }
+
     .divTickets {
         color: #000;
         background: #f9f9fa;
@@ -75,14 +78,51 @@
         /* Opera */
         box-shadow: 5px 5px 7px rgba(33,33,33,.7);
     }
- 
+
+    #cursorHoover:hover {
+        cursor: pointer;
+    }
+
+    .styled-table {
+        border-collapse: collapse;
+        margin: 25px 0;
+        font-size: 0.9em;
+        font-family: sans-serif;
+        min-width: 400px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    }
+        .styled-table thead tr {
+            background-color: #009879;
+            color: #ffffff;
+            text-align: left;
+        }
+        .styled-table th,
+        .styled-table td {
+            padding: 1px 10px;
+        }
+        .styled-table tbody tr {
+            border-bottom: 1px solid #dddddd;
+        }
+
+            .styled-table tbody tr:nth-of-type(even) {
+                background-color: #f3f3f3;
+            }
+
+            .styled-table tbody tr:last-of-type {
+                border-bottom: 2px solid #009879;
+            }
+            .styled-table tbody tr.active-row {
+                font-weight: bold;
+                color: #009879;
+            }
+
 </style>
 <script>
 @if (Model.lstResumenResolutor.Count == 1)
 {
     <text>
     $(document).ready(function () {
-        debugger;
+        //debugger;
         $(".labelS").removeClass("labelSelected");
 
         var temp = '#btn_' + '@Model.lstResumenResolutor[0].estatus';
@@ -91,12 +131,78 @@
         $(temp).addClass("labelSelected")
 
         console.log("Este usuario es: " + '@ViewBag.rol')
+
+        var conteo = "@ViewBag.Conteo";
+        if (conteo != "") { console.log("Conteo: " + conteo + " tickets") }
     });
 
     </text>
 }
+    $(document).ready(function () {
+        ClearView();
+        //hidePager();
+    })
+
+    function ChangedPage() {
+        var newPageSelector = document.getElementById("PageSelector");
+        var newPage = newPageSelector.value;
+        PagerGoToPage(newPage);
+        //$('#partialView').load('../DashBoard/GetResolutorTickets', { user: @ViewBag.user, type: typeTicket, idFiltro: filtroTicket , pageNumber: newPage });
+    }
+    function ChangedPageForward() {
+        var newPage = "@ViewBag.pageNumber";
+        if (newPage == "@ViewBag.totalPages") {
+            console.log("currently in last page");
+        } else {
+            PagerGoToPage(parseInt(newPage) + 1);
+        }
+    }
+    function ChangedPageBackward() {
+        var newPage = "@ViewBag.pageNumber";
+        PagerGoToPage(parseInt(newPage) - 1);
+    }
+    function PagerGoToPage(newPage) {
+        var typeTicket = "@ViewBag.type";
+        var filtroTicket = "@ViewBag.filtro";
+        if (typeTicket.includes("Espera")) typeTicket = "EnEspera";
+        if (typeTicket.includes("Garant")) typeTicket = "EnGarantía";
+        console.log("data: ");
+        console.log("pagina " + newPage + " de @ViewBag.totalPages");
+        console.log("typeTicket:" + typeTicket);
+        console.log("filtroTicket:" + filtroTicket);
+
+        var stringrol = '@ViewBag.rol';
+        if (stringrol.includes("ervice")) {
+            $('#partialView').load('../ServiceDesk/GetAllTickets', { user: @ViewBag.user, type: typeTicket, idFiltro: filtroTicket, pageNumber: newPage });
+        } else {
+            $('#partialView').load('../DashBoard/GetResolutorTickets', { user: @ViewBag.user, type: typeTicket, idFiltro: filtroTicket , pageNumber: newPage });
+        }
+    }
+    function hidePager() { document.getElementById('thpager').hidden = true; }
 </script>
-<div class="col-md-12" style="max-height:800px;margin-top:0px; overflow-y: scroll;">
+
+<div style="font-size: 1.5em; text-align: left; color:black;" id="thpager" >
+    <br />
+    <a class="glyphicon glyphicon-circle-arrow-left" onclick="ChangedPageBackward()"></a>
+    Página
+    <select onchange="ChangedPage()" id="PageSelector">
+        @for (int R = 1; R < ViewBag.totalPages + 1; R++)
+        {
+            if (R == ViewBag.pageNumber)
+            {
+                <option value="@R" selected> @R</option>
+            }
+            else
+            {
+                <option value="@R"> @R</option>
+            }
+        }
+    </select>
+    de @ViewBag.totalPages
+    <a class="glyphicon glyphicon-circle-arrow-right" onclick="ChangedPageForward()"></a>
+</div>
+
+<div class="col-md-12" style="max-height:800px;margin-top:0px; overflow-y: scroll;" id="SQUARES" >
     @if (Model.listaTareas.Count > 0)
     {
         foreach (var data in Model.listaTareas)
@@ -136,11 +242,12 @@
     }
     @foreach (var item in Model.lstResumenResolutor)
     {
-        <div class="col-sm-3 divTickets" style="margin-left:10px;margin-bottom:10px;">
+        <div class="col-sm-3 divTickets" style="margin-left:10px;margin-bottom:10px; ">
             @if (item.estatus == "Abierto" && item.isPadre == false && Model.lstResumenResolutor.Count() > 1)
             {
-                if (ViewBag.rol == "Supervisor") {
-                <input type="checkbox" id="check_@item.tickedID" name="vincular" class="form-check" style="position:absolute;" />
+                if (ViewBag.rol == "Supervisor")
+                {
+                    <input type="checkbox" id="check_@item.tickedID" name="vincular" class="form-check" style="position:absolute;" />
                 }
             }
 
@@ -154,7 +261,7 @@
                 {
                     <h2><b>Ticket ID: @item.tickedID</b></h2>
                 }
-                <p ><b>Categoria: @item.categoria</b></p>
+                <p><b>Categoria: @item.categoria</b></p>
                 <h2 style="margin-bottom:0px; margin-top:0px;">
                     @if (item.prioridad != null)
                     {
@@ -170,6 +277,10 @@
                         {
                             <i class="fa fa-circle OvalCancelado"></i>
                         }
+                        if (item.prioridad.Contains("tic"))
+                        {
+                            <i class="fa fa-circle " style="color:black;"></i>
+                        }
                     }
                     <b>Prioridad @item.prioridad</b>
                 </h2>
@@ -184,6 +295,204 @@
             </a>
         </div>
     }
-
 </div>
 
+
+<div class="col-md-12" style="max-height: 800px; margin-top: 0px; overflow-y: scroll; display: none; font-size: .7em;" id="TABLE">
+
+    <table style="color: black; font-size: 2em; " class="table table-striped grid-table">
+        <tr>
+            <th class="grid-header" style="width:170px">  </th>
+            <th class="grid-header" style="width:130px">Id</th>
+            <th class="grid-header" style="padding-right:10px">Categoría</th>
+            @*<th class="grid-header" style="padding-right:10px">Subcategoría</th>*@
+            <th class="grid-header" style="width:370px">Prioridad</th>
+            <th class="grid-header">Vinc - Subs</th>
+        </tr>
+
+        @if (Model.listaTareas.Count > 0)
+        {
+            foreach (var data in Model.listaTareas)
+            {
+                <tr style="cursor:pointer" class="grid-cell">
+                    <td style="cursor:pointer" class="grid-cell">
+
+                        @if (data.Estatus == "Abierto" && Model.listaTareas.Count() > 1)
+                        {
+                            if (ViewBag.rol == "Supervisor")
+                            {
+                                <input type="checkbox" id="check_@data.Id" name="vincular" class="form-check" style="position:absolute;" />
+                            }
+                        }
+                        else
+                        {
+                            if (ViewBag.rol == "Supervisor")
+                            {
+                                <h2 style=" margin-top: 1px; margin-bottom: 1px;">
+                                    <nobr>Técnico: @data.NombreTecnico</nobr>
+                                </h2>
+                            }
+                        }
+<!--<a style="text-decoration: none; " onclick="goToDetailTarea(@data.Id)">
+    <h2>
+        <b>Tarea ID: @data.Id</b>
+    </h2>
+    <p><b>Categoria: @data.Categoria</b></p>
+    <h2>
+        @if (data.Prioridad == "Baja")
+        {
+            <i class="fa fa-circle Oval"></i>
+        }
+        @if (data.Prioridad == "Media")
+        {
+            <i class="fa fa-circle OvalTrabajando"></i>
+        }
+        @if (data.Prioridad == "Alta")
+        {
+            <i class="fa fa-circle OvalCancelado"></i>
+        }
+        <b>Prioridad @data.Prioridad</b> <br />
+        Estatus: @data.Estatus-->
+                    @*.--------------------------------------------------------------------------f*@
+                    <!--</h2>
+</a>-->
+                    </td>
+                    <td>
+                        <h2 style=" margin-top: 1px; margin-bottom: 1px;">
+                            @data.Id
+                        </h2>
+                    </td>
+                    <td>
+                        <h2 style=" margin-top: 1px; margin-bottom: 1px;">
+                            @data.Categoria
+                        </h2>
+                    </td>                    
+                    <td>
+                        <h2 style=" margin-top: 1px; margin-bottom: 1px;">
+                            Estatus: @data.Estatus
+                        </h2>
+                    </td>
+                    <td>
+                        <h2 style=" margin-top: 1px; margin-bottom: 1px;">
+                            @if (data.Prioridad == "Baja")
+                            {
+                                <i class="fa fa-circle Oval"></i>
+                            }
+                            @if (data.Prioridad == "Media")
+                            {
+                                <i class="fa fa-circle OvalTrabajando"></i>
+                            }
+                            @if (data.Prioridad == "Alta")
+                            {
+                                <i class="fa fa-circle OvalCancelado"></i>
+                            }
+                            @data.Prioridad
+                        </h2>
+                    </td>
+
+                </tr>
+
+
+
+            }
+        }
+
+        @foreach (var item in Model.lstResumenResolutor)
+        {
+            int idTicket = (item.isSubTicket) ? item.idSubTicket : item.tickedID;
+            <tr style=" padding-top: 3px; padding-bottom: 3px; " class="grid-row">
+                <td>
+                    <div class="col-sm-3 ">
+                        @if (item.estatus == "Abierto" && item.isPadre == false && Model.lstResumenResolutor.Count() > 1)
+                        {
+                            if (ViewBag.rol == "Supervisor")
+                            {
+                                <input type="checkbox" id="check_@item.tickedID" name="vincular" class="form-check" style="padding-block: 0; margin: -6px 0 0;" />
+                            }
+                        }
+                        else
+                        {
+                            if (ViewBag.rol == "Supervisor")
+                            {
+                                <h2 style=" margin-top: 1px; margin-bottom: 1px;">
+                                    <nobr>@item.EmployeeAsignado1</nobr>
+                                </h2>
+                            }
+                        }
+                    </div>
+                </td>
+
+                <td onclick="goToDetail(@idTicket)" style="cursor:pointer" class="grid-cell">
+                    @if (item.isSubTicket == true)
+                    {
+                        <h2 style=" margin-top: 1px; margin-bottom: 1px;">
+                            SUB-@item.idSubTicket
+                        </h2>
+                    }
+                    else
+                    {
+                        <h2 style=" margin-top: 1px; margin-bottom: 1px;">
+                            @item.tickedID
+                        </h2>
+                    }
+                </td>
+
+                <td onclick="goToDetail(@idTicket)" style="cursor:pointer" class="grid-cell">
+                    <h2 style=" margin-top: 1px; margin-bottom: 1px;">
+                        @item.categoria
+                    </h2>
+                </td>
+
+                @*<td onclick="goToDetail(@idTicket)" style="cursor:pointer" class="grid-cell">
+                    <h2 style=" margin-top: 1px; margin-bottom: 1px;">
+                        @item.descripcion
+                    </h2>
+                </td>*@
+
+                <td onclick="goToDetail(@idTicket)" style="cursor:pointer" class="grid-cell">
+                    <h2 style=" margin-top: 1px; margin-bottom: 1px;">
+                        @if (item.prioridad != null)
+                        {
+                            if (item.prioridad.Contains("Baj"))
+                            {
+                                <i class="fa fa-circle Oval" style=" width: 5px; height: 5px;"></i>
+                            }
+                            if (item.prioridad.Contains("Medi"))
+                            {
+                                <i class="fa fa-circle OvalTrabajando" style=" width: 5px; height: 5px;"></i>
+                            }
+                            if (item.prioridad.Contains("Alt"))
+                            {
+                                <i class="fa fa-circle OvalCancelado" style=" width: 5px; height: 5px;"></i>
+                            }
+                            if (item.prioridad.Contains("tic"))
+                            {
+                                <i class="fa fa-circle " style="color: black; width: 5px; height: 5px;"></i>
+                            }
+                        }
+                          @item.prioridad
+                    </h2>
+                </td>
+
+                <td class="grid-cell">
+                    <a style="text-decoration: none; color: black;">
+                        @if (item.totVinculados > 0)
+                        {
+                            <span style="color: black; min-width: 0%; max-width: 0%; position: relative;">Tickets vinculados:&nbsp; @item.totVinculados</span>
+                        }
+                        @if (item.isSubTicket == true)
+                        {
+                            <span style="color: black; min-width: 0%;
+                                  max-width: 0%; position: relative;"
+                                  class="cursorHoover"
+                                  onclick="goToDetail(@item.idTicketPadre)">
+                                Ticket principal:&nbsp; @item.idTicketPadre
+                            </span>
+                        }
+                    </a>
+                </td>
+            </tr>
+
+        }
+    </table>
+</div>

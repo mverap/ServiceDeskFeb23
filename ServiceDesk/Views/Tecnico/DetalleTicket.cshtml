@@ -80,6 +80,9 @@
     var CCenProgreso = '@ViewBag.CC';
 
     $(document).ready(function () {
+        console.log("tecnico asignado: @ViewBag.idTecnicoAsignado");
+        console.log("employee actual: @ViewBag.EmployeeId");
+        if ("@ViewBag.idTecnicoAsignado" != "@ViewBag.EmployeeId") { Block_Actions(); }
 
         var butn = document.getElementById("btnGuardarCambioEstatus");
 

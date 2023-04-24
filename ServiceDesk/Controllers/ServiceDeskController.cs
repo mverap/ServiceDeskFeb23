@@ -26,6 +26,7 @@ namespace ServiceDesk.Controllers
         private readonly NotificacionesManager _noti = new NotificacionesManager();
         private readonly DocumentController _doc = new DocumentController();
         private readonly SupervisorController _spr = new SupervisorController();
+        private readonly DashBoardController _dsh = new DashBoardController();
         //============================================================================================================================================
         public ActionResult Index(int type = 0)
         {
@@ -274,18 +275,11 @@ namespace ServiceDesk.Controllers
             return PartialView("../ServiceDesk/PartialViews/_TicketResolutor", vm);
         }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -        
-        public PartialViewResult GetAllTickets(string type, int idFiltro = 0)
+        public PartialViewResult GetAllTickets1(string type, int idFiltro = 0) // Get tickets for dashboard sin optmimizar (get tickets by estatus)
         {
-            // Esta clase toma todos los tickets que tengan Estatus type, y los llama item
-            // y añade a una lista temporal listTemp:
-            // -Los hijos de cada Item
-            // -Cada Item si es Padre   ///Esto debe ser el que esta roto, por que si quito el segundo foreach ya no aparecen padres, solo hijos
-            // -Cada Item si no es padre ni es hijo
-            // Después toma todos los 
-            vmDashbordResolutor vm = new vmDashbordResolutor(); //vista en la que se mostraran los tickets al final
-            List<ticketResumenResolutor> lstTicketsResumen = new List<ticketResumenResolutor>(); //lista que se pasara a la vista vm
-            var lstCategoria = _db.cat_Categoria.Where(x => x.Activo == true); //lista llena de todos los tickets activos?
-            //lista llena de tickets y sus detalles si estos tickets tienen el Estatus type
+            vmDashbordResolutor vm = new vmDashbordResolutor(); 
+            List<ticketResumenResolutor> lstTicketsResumen = new List<ticketResumenResolutor>(); 
+            var lstCategoria = _db.cat_Categoria.Where(x => x.Activo == true);
             var details = _db.tbl_TicketDetalle.Where(x => x.Estatus == type).ToList();
 
             //lista de ids de tickets (int) sacados de la tabla VinculacionDetalle, columna idTicketChild, solo tickets activos
@@ -356,11 +350,8 @@ namespace ServiceDesk.Controllers
                     }
                 }
             };
-            //si la lista temporal existe, eliminar lista details y llenarla con la lista temporal
-            //  lista temporal: tickets que son padres o hijos ++++ error 
             if (lstTemp.Count > 0) { details = lstTemp; }
 
-            //por cada ticket en details
             details.ForEach(x =>
             {
                 int _idPrioridad = 0;
@@ -419,6 +410,71 @@ namespace ServiceDesk.Controllers
             }
 
             //vm.lstResumenResolutor = 
+            return PartialView("../DashBoard/PartialViews/_TicketResolutor", vm);
+        }
+
+        public PartialViewResult GetAllTickets(string type, int idFiltro = 0, int pageNumber = 1) // Get Tickets for Dashboard Optimizado
+        {
+            var user = Int32.Parse(Session["EmpleadoNo"].ToString());
+            if (pageNumber < 1) pageNumber = 1;
+            ViewBag.pageNumber = pageNumber;
+            ViewBag.type = type;
+            ViewBag.filtro = idFiltro;
+            ViewBag.user = user;
+            ViewBag.rol = "ServiceDesk";
+            if (type == "EnEspera") { type = "En Espera"; }
+            if (type == "EnGarantía") { type = "En Garantía"; }
+            int pageSize = 30; // cambiar cantidad de tickets que puede mostrarse en el dashboard al mismo tiempo
+            int totalElements = 0;
+            int totalPages = 0;
+
+            vmDashbordResolutor vm = new vmDashbordResolutor();
+            List<ticketResumenResolutor> lstTicketsResumen = new List<ticketResumenResolutor>();
+
+            List<tbl_TicketDetalle> tickets = new List<tbl_TicketDetalle>();
+            switch (idFiltro)
+            {
+                default:
+                    tickets = _db.tbl_TicketDetalle
+                        .Where(t => t.Estatus == type )
+                        .OrderBy(t => t.Id)
+                        .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                        .ToList();
+                    break;
+                case 1:
+                    tickets = _db.tbl_TicketDetalle
+                        .Where(t => t.Estatus == type )
+                        .OrderBy(x => x.FechaRegistro).ThenBy(x => x.Id) // Primero el más antiguo
+                        .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                        .ToList();
+                    break;
+                case 2:
+                    tickets = _db.tbl_TicketDetalle
+                        .Where(t => t.Estatus == type )
+                        .OrderByDescending(x => x.FechaRegistro).ThenBy(x => x.Id) // Primero el más reciente
+                        .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                        .ToList();
+                    break;
+                case 3:
+                    tickets = _db.tbl_TicketDetalle
+                        .Where(t => t.Estatus == type )
+                        .OrderBy(t =>
+                            t.Prioridad.Contains("tic") ? 1 : // crítico
+                            t.Prioridad.Contains("Alt") ? 2 : // alto o alta
+                            t.Prioridad.Contains("Med") ? 3 : // medio, media
+                            t.Prioridad.Contains("Baj") ? 4 : 1) // bajo o baja... en caso de noo tener asumir crítico
+                        .Skip((pageNumber - 1) * pageSize).Take(pageSize)
+                        .ToList();
+                    break;
+            } 
+            totalElements = _db.tbl_TicketDetalle
+                .Where(t => t.Estatus == type)
+                .Count();
+            totalPages = 1 + (totalElements / pageSize);
+            ViewBag.totalPages = totalPages;
+
+            vm.lstResumenResolutor = _dsh.ResumirTickets(tickets, " ", idFiltro);
+
             return PartialView("../DashBoard/PartialViews/_TicketResolutor", vm);
         }
 
@@ -1572,573 +1628,6 @@ namespace ServiceDesk.Controllers
         }
         //=======================================================CATALOGOS============================================================================
 
-
-
-
-
-
-
-        // DELETE BELOW AFTER ENTIRETY OF  REPORTES COMPONENT IS FUNCTIONAL
-
-        /***********Codigo MVP Pie Chart********/
-        public ActionResult Reportes(int EmployeeID)
-        {
-            ViewBag.user = EmployeeID;
-
-            return View();
-        }
-        public ActionResult PieChartPrioridad(DateTime? fechaInicial, DateTime? fechaFinal)
-        {
-            //tickets = detalle de tickets relacionados al strGrupoResolutor
-            var tickets = _db.VWDetalleTicket.ToList();
-
-            //Formateo de Fechas (cambio de DateTime? a DateTime, poner horas a 12:00:00)
-            DateTime fechaTemp;
-            if (fechaInicial != null)
-            {
-                fechaTemp = (DateTime)(fechaInicial);
-                fechaInicial = fechaTemp.Date;
-            }
-            if (fechaFinal != null)
-            {
-                fechaTemp = (DateTime)(fechaFinal);
-                fechaFinal = fechaTemp.Date;
-            }
-            //Quitar horas del campo FechaRegistro de la lista tickets 
-            foreach (var item in tickets)
-            {
-                var fechaSinHora = item.FechaRegistro;
-                item.FechaRegistro = fechaSinHora.Date;
-            }
-            //Eliminar tickets previos a fecha inicial  //      Filtro de fechas
-            var ticketsDespuesDeFiltro = tickets.ToList();
-            ticketsDespuesDeFiltro.Clear();
-
-            foreach (var item in tickets)
-            {
-                if (item.FechaRegistro < fechaFinal && item.FechaRegistro > fechaInicial && fechaInicial != null && fechaFinal != null)
-                {
-                    ticketsDespuesDeFiltro.Add(item);//Si hay fechas: Agrega a la lista lo que haya sido registrado después de f.inicial y antes de f.final
-                }
-                if (fechaFinal == null || fechaInicial == null)
-                {
-                    ticketsDespuesDeFiltro.Add(item); //Si no hay fechas, has tu chamba normalmente
-                    Console.WriteLine("debugger");
-                }
-            }
-            tickets = ticketsDespuesDeFiltro;
-            // END                                          Filtro de fechas
-
-            var cantTickets = tickets.Count();
-            var cantTickets2 = tickets.Count();
-            if (cantTickets != cantTickets2)
-            { }
-            var data = tickets.GroupBy(info => info.Prioridad).Select(group => new
-            {
-                Prioridad = group.Key,
-                Count = group.Count()
-            }).OrderBy(x => x.Prioridad);
-            DatosReportes datos = null;
-            String[] strPrioridad = new string[data.Count()];
-            int[] intCount = new int[data.Count()];
-            int i = 0;
-            foreach (var item in data)
-            {
-                strPrioridad[i] = item.Prioridad;
-                intCount[i] = item.Count;
-                i++;
-            }
-
-            datos = new DatosReportes
-
-            {
-                Column = strPrioridad,
-                Count = intCount
-
-            };
-
-            if (datos != null)
-            {
-                return View(datos);
-            }
-            else
-                return View();
-        }
-        public ActionResult PieChartCentro(DateTime? fechaInicial, DateTime? fechaFinal)
-        {
-            var tickets = _db.VWDetalleTicket.ToList();
-
-            //Formateo de Fechas (cambio de DateTime? a DateTime, poner horas a 12:00:00)
-            DateTime fechaTemp;
-            if (fechaInicial != null)
-            {
-                fechaTemp = (DateTime)(fechaInicial);
-                fechaInicial = fechaTemp.Date;
-            }
-            if (fechaFinal != null)
-            {
-                fechaTemp = (DateTime)(fechaFinal);
-                fechaFinal = fechaTemp.Date;
-            }
-            //Quitar horas del campo FechaRegistro de la lista tickets 
-            foreach (var item in tickets)
-            {
-                var fechaSinHora = item.FechaRegistro;
-                item.FechaRegistro = fechaSinHora.Date;
-            }
-            //Eliminar tickets previos a fecha inicial  //      Filtro de fechas
-            var ticketsDespuesDeFiltro = tickets.ToList();
-            ticketsDespuesDeFiltro.Clear();
-
-            foreach (var item in tickets)
-            {
-                if (item.FechaRegistro < fechaFinal && item.FechaRegistro > fechaInicial && fechaInicial != null && fechaFinal != null)
-                {
-                    ticketsDespuesDeFiltro.Add(item);//Si hay fechas: Agrega a la lista lo que haya sido registrado después de f.inicial y antes de f.final
-                }
-                if (fechaFinal == null || fechaInicial == null)
-                {
-                    ticketsDespuesDeFiltro.Add(item); //Si no hay fechas, has tu chamba normalmente
-                    Console.WriteLine("debugger");
-                }
-            }
-            tickets = ticketsDespuesDeFiltro;
-            // END                                          Filtro de fechas
-
-            var data = tickets.GroupBy(info => info.Centro).Select(group => new
-            {
-                Centro = group.Key,
-                Count = group.Count()
-            }).OrderBy(x => x.Centro);
-            DatosReportes datos = null;
-            String[] strPrioridad = new string[data.Count()];
-            int[] intCount = new int[data.Count()];
-            int i = 0;
-            foreach (var item in data)
-            {
-                strPrioridad[i] = item.Centro.ToString();
-                intCount[i] = item.Count;
-                i++;
-            }
-
-            datos = new DatosReportes
-            {
-                Column = strPrioridad,
-                Count = intCount
-            };
-
-            if (datos != null) { return View(datos); }
-            else return View();
-        }
-        public ActionResult PieChartEstatus(DateTime? fechaInicial, DateTime? fechaFinal)
-        {
-            var tickets = _db.VWDetalleTicket.ToList();
-
-            //Formateo de Fechas (cambio de DateTime? a DateTime, poner horas a 12:00:00)
-            DateTime fechaTemp;
-            if (fechaInicial != null)
-            {
-                fechaTemp = (DateTime)(fechaInicial);
-                fechaInicial = fechaTemp.Date;
-            }
-            if (fechaFinal != null)
-            {
-                fechaTemp = (DateTime)(fechaFinal);
-                fechaFinal = fechaTemp.Date;
-            }
-            //Quitar horas del campo FechaRegistro de la lista tickets 
-            foreach (var item in tickets)
-            {
-                var fechaSinHora = item.FechaRegistro;
-                item.FechaRegistro = fechaSinHora.Date;
-            }
-            //Eliminar tickets previos a fecha inicial  //      Filtro de fechas
-            var ticketsDespuesDeFiltro = tickets.ToList();
-            ticketsDespuesDeFiltro.Clear();
-
-            foreach (var item in tickets)
-            {
-                if (item.FechaRegistro < fechaFinal && item.FechaRegistro > fechaInicial && fechaInicial != null && fechaFinal != null)
-                {
-                    ticketsDespuesDeFiltro.Add(item);//Si hay fechas: Agrega a la lista lo que haya sido registrado después de f.inicial y antes de f.final
-                }
-                if (fechaFinal == null || fechaInicial == null)
-                {
-                    ticketsDespuesDeFiltro.Add(item); //Si no hay fechas, has tu chamba normalmente
-                    Console.WriteLine("debugger");
-                }
-            }
-            tickets = ticketsDespuesDeFiltro;
-            // END                                          Filtro de fechas
-
-            var data = tickets.GroupBy(info => info.Estatus).Select(group => new
-            {
-                Estatus = group.Key,
-                Count = group.Count()
-            }).OrderBy(x => x.Estatus);
-            DatosReportes datos = null;
-            String[] strColumnName = new string[data.Count()];
-            int[] intCount = new int[data.Count()];
-            int i = 0;
-            foreach (var item in data)
-            {
-                strColumnName[i] = item.Estatus;
-                intCount[i] = item.Count;
-                i++;
-            }
-
-            datos = new DatosReportes
-
-            {
-                Column = strColumnName,
-                Count = intCount
-
-            };
-
-            if (datos != null)
-            {
-                return View(datos);
-            }
-            else
-                return View();
-        }
-        public ActionResult PieChartTipo(DateTime? fechaInicial, DateTime? fechaFinal)
-        {
-            //var tickets = _db.tbl_TicketDetalle.Select(x => x.SubCategoria).ToList();
-            var categorias = _db.cat_MatrizCategoria.Where(a => _db.tbl_TicketDetalle.Any(b => b.SubCategoria == a.IDSubCategoria));            //instanciar, datos iniciales irrelevantes
-            var tickets = _db.tbl_TicketDetalle.ToList();
-            //Formateo de Fechas (cambio de DateTime? a DateTime, poner horas a 12:00:00)
-            DateTime fechaTemp;
-            if (fechaInicial != null)
-            {
-                fechaTemp = (DateTime)(fechaInicial);
-                fechaInicial = fechaTemp.Date;
-            }
-            if (fechaFinal != null)
-            {
-                fechaTemp = (DateTime)(fechaFinal);
-                fechaFinal = fechaTemp.Date;
-            }
-            //Quitar horas del campo FechaRegistro de la lista tickets 
-            foreach (var item in tickets)
-            {
-                var fechaSinHora = item.FechaRegistro;
-                item.FechaRegistro = fechaSinHora.Date;
-            }
-            //Eliminar tickets previos a fecha inicial  //      Filtro de fechas
-            var IntSubCats = new List<int>();
-            foreach (var item in tickets)
-            {
-                if (item.FechaRegistro < fechaFinal && item.FechaRegistro > fechaInicial && fechaInicial != null && fechaFinal != null)
-                {
-                    IntSubCats.Add(item.SubCategoria);
-                }
-                if (fechaFinal == null || fechaInicial == null)
-                {
-                    IntSubCats.Add(item.SubCategoria);
-                    Console.WriteLine("debugger");
-                }
-            }
-            // En este punto IntSubCats tiene una lista de ids de subcategorías filtrada por fechas -----------------------------------------------------------
-            // END                                          Filtro de fechas
-            categorias = _db.cat_MatrizCategoria.Where(Matriz => IntSubCats.Contains(Matriz.IDSubCategoria));
-            Console.Write("debug");
-
-            //-------------------------------------------------------------------------
-            var data = categorias.GroupBy(info => info.Incidencia).Select(group => new
-            {
-                Incidencia = group.Key,
-                Count = group.Count()
-            }).OrderBy(x => x.Incidencia);
-            DatosReportes datos = null;
-            String[] strColumnName = new string[data.Count()];
-            int[] intCount = new int[data.Count()];
-            int i = 0;
-            foreach (var item in data)
-            {
-                strColumnName[i] = item.Incidencia;
-                intCount[i] = item.Count;
-                i++;
-            }
-
-            datos = new DatosReportes
-            {
-                Column = strColumnName,
-                Count = intCount
-
-            };
-
-            if (datos != null) { return View(datos); }
-            else return View();
-        }
-        public ActionResult PieChartExpertiz(DateTime? fechaInicial, DateTime? fechaFinal)
-        {
-            //var tickets = _db.tbl_TicketDetalle.Select(x => x.SubCategoria).ToList();
-            var categorias = _db.cat_MatrizCategoria.Where(a => _db.tbl_TicketDetalle.Any(b => b.SubCategoria == a.IDSubCategoria));            //instanciar, datos iniciales irrelevantes
-            var tickets = _db.tbl_TicketDetalle.ToList();
-            //Formateo de Fechas (cambio de DateTime? a DateTime, poner horas a 12:00:00)
-            DateTime fechaTemp;
-            if (fechaInicial != null)
-            {
-                fechaTemp = (DateTime)(fechaInicial);
-                fechaInicial = fechaTemp.Date;
-            }
-            if (fechaFinal != null)
-            {
-                fechaTemp = (DateTime)(fechaFinal);
-                fechaFinal = fechaTemp.Date;
-            }
-            //Quitar horas del campo FechaRegistro de la lista tickets 
-            foreach (var item in tickets)
-            {
-                var fechaSinHora = item.FechaRegistro;
-                item.FechaRegistro = fechaSinHora.Date;
-            }
-            //Eliminar tickets previos a fecha inicial  //      Filtro de fechas
-            var IntSubCats = new List<int>();
-            foreach (var item in tickets)
-            {
-                if (item.FechaRegistro < fechaFinal && item.FechaRegistro > fechaInicial && fechaInicial != null && fechaFinal != null)
-                {
-                    IntSubCats.Add(item.SubCategoria);
-                }
-                if (fechaFinal == null || fechaInicial == null)
-                {
-                    IntSubCats.Add(item.SubCategoria);
-                    Console.WriteLine("debugger");
-                }
-            }
-            // En este punto IntSubCats tiene una lista de ids de subcategorías filtrada por fechas 
-            categorias = _db.cat_MatrizCategoria.Where(Matriz => IntSubCats.Contains(Matriz.IDSubCategoria));
-            Console.Write("debug");
-            // END                                          FIN Filtro de fechas
-
-            var data = categorias.GroupBy(info => info.NivelExpertiz).Select(group => new
-            {
-                NivelExpertiz = group.Key,
-                Count = group.Count()
-            }).OrderBy(x => x.NivelExpertiz);
-            DatosReportes datos = null;
-            String[] strColumnName = new string[data.Count()];
-            int[] intCount = new int[data.Count()];
-            int i = 0;
-            foreach (var item in data)
-            {
-                strColumnName[i] = item.NivelExpertiz;
-                intCount[i] = item.Count;
-                i++;
-            }
-
-            datos = new DatosReportes
-
-            {
-                Column = strColumnName,
-                Count = intCount
-
-            };
-
-            if (datos != null)
-            {
-                return View(datos);
-            }
-            else
-                return View();
-        }
-        public ActionResult PieChartSLA(DateTime? fechaInicial, DateTime? fechaFinal)
-        {
-            var tickets = _db.tbl_TicketDetalle.ToList();
-            var categorias = _db.cat_MatrizCategoria.Where(categoria => _db.tbl_TicketDetalle.Any(b => b.SubCategoria == categoria.IDSubCategoria));
-            //Formateo de Fechas (cambio de DateTime? a DateTime, poner horas a 12:00:00)
-            DateTime fechaTemp;
-            if (fechaInicial != null)
-            {
-                fechaTemp = (DateTime)(fechaInicial);
-                fechaInicial = fechaTemp.Date;
-            }
-            if (fechaFinal != null)
-            {
-                fechaTemp = (DateTime)(fechaFinal);
-                fechaFinal = fechaTemp.Date;
-            }
-            //Quitar horas del campo FechaRegistro de la lista tickets 
-            foreach (var item in tickets)
-            {
-                var fechaSinHora = item.FechaRegistro;
-                item.FechaRegistro = fechaSinHora.Date;
-            }
-            //Eliminar tickets previos a fecha inicial  //      Filtro de fechas
-            var IntSubCats = new List<int>();
-            foreach (var item in tickets)
-            {
-                if (item.FechaRegistro < fechaFinal && item.FechaRegistro > fechaInicial && fechaInicial != null && fechaFinal != null)
-                {
-                    IntSubCats.Add(item.SubCategoria);
-                }
-                if (fechaFinal == null || fechaInicial == null)
-                {
-                    IntSubCats.Add(item.SubCategoria);
-                    Console.WriteLine("debugger");
-                }
-            }
-            // En este punto IntSubCats tiene una lista de ids de subcategorías filtrada por fechas -----------------------------------------------------------
-            // END                                          Filtro de fechas
-            categorias = _db.cat_MatrizCategoria.Where(Matriz => IntSubCats.Contains(Matriz.IDSubCategoria));
-            Console.Write("debug");
-
-            var data = categorias.GroupBy(info => info.SLAObjetivo).Select(group => new
-            {
-                SLAObjetivo = group.Key,
-                Count = group.Count()
-            }).OrderBy(x => x.SLAObjetivo);
-            DatosReportes datos = null;
-            String[] strColumnName = new string[data.Count()];
-            int[] intCount = new int[data.Count()];
-            int i = 0;
-            foreach (var item in data)
-            {
-
-                strColumnName[i] = item.SLAObjetivo;
-                intCount[i] = item.Count;
-                i++;
-            }
-
-            datos = new DatosReportes
-
-            {
-                Column = strColumnName,
-                Count = intCount
-
-            };
-
-            if (datos != null)
-            {
-                return View(datos);
-            }
-            else
-                return View();
-        }
-        public ActionResult PieChartResolutor(DateTime? fechaInicial, DateTime? fechaFinal)
-        {
-            //tickets = detalle de tickets relacionados al strGrupoResolutor
-            var tickets = _db.VWDetalleTicket.ToList();
-
-            //Formateo de Fechas (cambio de DateTime? a DateTime, poner horas a 12:00:00)
-            DateTime fechaTemp;
-            if (fechaInicial != null)
-            {
-                fechaTemp = (DateTime)(fechaInicial);
-                fechaInicial = fechaTemp.Date;
-            }
-            if (fechaFinal != null)
-            {
-                fechaTemp = (DateTime)(fechaFinal);
-                fechaFinal = fechaTemp.Date;
-            }
-            //Quitar horas del campo FechaRegistro de la lista tickets 
-            foreach (var item in tickets)
-            {
-                var fechaSinHora = item.FechaRegistro;
-                item.FechaRegistro = fechaSinHora.Date;
-            }
-            //Eliminar tickets previos a fecha inicial  //      Filtro de fechas
-            var ticketsDespuesDeFiltro = tickets.ToList();
-            ticketsDespuesDeFiltro.Clear();
-
-            foreach (var item in tickets)
-            {
-                if (item.FechaRegistro < fechaFinal && item.FechaRegistro > fechaInicial && fechaInicial != null && fechaFinal != null)
-                {
-                    ticketsDespuesDeFiltro.Add(item);//Si hay fechas: Agrega a la lista lo que haya sido registrado después de f.inicial y antes de f.final
-                }
-                if (fechaFinal == null || fechaInicial == null)
-                {
-                    ticketsDespuesDeFiltro.Add(item); //Si no hay fechas, has tu chamba normalmente
-                    Console.WriteLine("debugger");
-                }
-            }
-            tickets = ticketsDespuesDeFiltro;
-            // END                                          Filtro de fechas
-
-            var cantTickets = tickets.Count();
-            var cantTickets2 = tickets.Count();
-            if (cantTickets != cantTickets2)
-            { }
-            var data = tickets.GroupBy(info => info.GrupoResolutor).Select(group => new
-            {
-                Resolutor = group.Key,
-                Count = group.Count()
-            }).OrderBy(x => x.Resolutor);
-            DatosReportes datos = null;
-            String[] strResolutor = new string[data.Count()];
-            int[] intCount = new int[data.Count()];
-            int i = 0;
-            foreach (var item in data)
-            {
-                strResolutor[i] = item.Resolutor;
-                intCount[i] = item.Count;
-                i++;
-            }
-
-            datos = new DatosReportes
-            {
-                Column = strResolutor,
-                Count = intCount
-
-            };
-
-            if (datos != null)
-            {
-                return View(datos);
-            }
-            else
-                return View();
-        }
-        /***********FIN CODIGO Pie Chart MVP********/
-
-        /***********Codigo MVP Grid********/
-        //                                                 
-        [HttpGet]
-        public ViewResult GridTickets(int EmployeeId)
-        {
-            ViewBag.user = EmployeeId;
-            var detalle = new DetalleSelectedTicketVm();
-            //String strGrupoResolutor = _db.tbl_User.Where(x => x.EmpleadoID == EmployeeId).Select(x => x.GrupoResolutor).SingleOrDefault();
-            var dtoViewDetalle = _db.VWDetalleTicket.OrderByDescending(pointer => pointer.Id).ToList();
-            detalle.ViewDetalleTickets = dtoViewDetalle;
-            //Eliminar las horas antes de enviar los datos al grid 
-            foreach (var ticket in detalle.ViewDetalleTickets)
-            {
-                var fechaSinHora = ticket.FechaRegistro;
-                ticket.FechaRegistro = fechaSinHora.Date;
-            }
-            return View(detalle);
-        }
-        private byte[] ConvertToBytes(int EmployeeID)
-        {
-            String strGrupoResolutor = _db.tbl_User.Where(x => x.EmpleadoID == EmployeeID).Select(x => x.GrupoResolutor).SingleOrDefault();
-            var list = _db.VWDetalleTicket.Where(pointer => pointer.GrupoResolutor == strGrupoResolutor).OrderByDescending(pointer => pointer.Id).ToList();
-            byte[] result;
-
-            var ms = new MemoryStream();
-            var sw = new StreamWriter(ms);
-
-            foreach (var item in list)
-            {
-
-                sw.Write(item.Id);
-                sw.WriteLine();
-            }
-            //return ms.ToArray();
-            return System.IO.File.ReadAllBytes(@"c:\Reporte.xlsx");
-            //return list.SelectMany(x => x).toArray(); 
-        }
-        public FileResult ExportToCSV(int EmployeeID)
-        {
-            byte[] fileBytes = ConvertToBytes(EmployeeID);
-            string fileName = "Reporte.xls";
-            return File(fileBytes, System.Net.Mime.MediaTypeNames.Application.Octet, fileName);
-        }
-        /***********FIN CODIGO GRID MVP********/
 
     }
 }
